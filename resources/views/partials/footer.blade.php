@@ -1,0 +1,9 @@
+<footer class="pc-footer">
+  <div class="footer-wrapper container-fluid">
+    <div class="row">
+      <div class="col-sm my-1">
+        <p class="m-0">Copyright © {{ date('Y') }} {{ config('app.name') }}</p>
+      </div>
+    </div>
+  </div>
+</footer>

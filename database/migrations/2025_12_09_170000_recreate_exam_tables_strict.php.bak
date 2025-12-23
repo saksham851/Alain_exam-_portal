@@ -1,0 +1,64 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // Drop existing tables in reverse order of dependency
+        Schema::dropIfExists('questions');
+        Schema::dropIfExists('sub_case_studies'); // Check if this exists, else ignore
+        Schema::dropIfExists('case_studies');
+
+        // Create case_studies
+        Schema::create('case_studies', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('exam_id')->constrained('exams')->onDelete('cascade');
+            $table->string('title');
+            $table->longText('content')->nullable();
+            $table->integer('order_no');
+            $table->timestamps();
+        });
+
+        // Create sub_case_studies
+        Schema::create('sub_case_studies', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('case_study_id')->constrained('case_studies')->onDelete('cascade');
+            $table->string('title');
+            $table->longText('content')->nullable();
+            $table->integer('order_no');
+            $table->timestamps();
+        });
+
+        // Create questions
+        Schema::create('questions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('sub_case_id')->constrained('sub_case_studies')->onDelete('cascade');
+            $table->text('question_text');
+            $table->text('option_a');
+            $table->text('option_b');
+            $table->text('option_c');
+            $table->text('option_d');
+            $table->enum('correct_option', ['a', 'b', 'c', 'd']);
+            $table->float('ig_weight')->default(0);
+            $table->float('dm_weight')->default(0);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('questions');
+        Schema::dropIfExists('sub_case_studies');
+        Schema::dropIfExists('case_studies');
+    }
+};
