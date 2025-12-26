@@ -28,6 +28,112 @@
                     <i class="ti ti-plus me-1"></i> Create Exam
                 </a>
             </div>
+            
+            <!-- Filters Section -->
+            <div class="card-body">
+                <form method="GET" action="{{ route('admin.exams.index') }}" id="filterForm">
+                    <!-- Search Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-search me-1"></i>SEARCH EXAMS
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="ti ti-search text-muted"></i>
+                                </span>
+                                <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                       placeholder="Search by exam name or code..." value="{{ request('search') }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters Grid -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-category me-1"></i>CATEGORY
+                            </label>
+                            <select name="category_id" class="form-select">
+                                <option value="">All Categories</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-certificate me-1"></i>CERTIFICATION TYPE
+                            </label>
+                            <select name="certification_type" class="form-select">
+                                <option value="">All Types</option>
+                                @foreach($certificationTypes as $type)
+                                    <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
+                                        {{ $type }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-clock me-1"></i>DURATION (MINUTES)
+                            </label>
+                            <input type="number" name="duration" class="form-control" 
+                                   placeholder="Enter exact duration" min="0" value="{{ request('duration') }}">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{{ route('admin.exams.index') }}" class="btn btn-light px-4">
+                                    <i class="ti ti-refresh me-1"></i> Reset
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="ti ti-filter me-1"></i> Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Active Filters Indicator -->
+            @if(request()->hasAny(['search', 'category_id', 'certification_type', 'duration']))
+            <div class="card-body border-top border-bottom bg-light-subtle py-3">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small fw-semibold">
+                        <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
+                    </span>
+                    @if(request('search'))
+                        <span class="badge rounded-pill bg-dark">
+                            <i class="ti ti-search me-1"></i>{{ request('search') }}
+                        </span>
+                    @endif
+                    @if(request('category_id'))
+                        <span class="badge rounded-pill bg-info">
+                            <i class="ti ti-category me-1"></i>{{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('certification_type'))
+                        <span class="badge rounded-pill bg-success">
+                            <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
+                        </span>
+                    @endif
+                    @if(request('duration') !== null && request('duration') !== '')
+                        <span class="badge rounded-pill bg-primary">
+                            <i class="ti ti-clock me-1"></i>{{ request('duration') }} mins
+                        </span>
+                    @endif
+                </div>
+            </div>
+            @endif
+            
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">

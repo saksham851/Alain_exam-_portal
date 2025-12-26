@@ -9,13 +9,60 @@ use App\Models\Exam;
 class ExamController extends Controller
 {
     // SHOW ALL EXAMS
-    public function index()
+    public function index(Request $request)
     {
-        $exams = Exam::where('status', 1)
-            ->with('category') // Eager load category
-            ->orderBy('created_at', 'desc')
-            ->paginate(15); // 15 per page with pagination
-        return view('admin.exams.index', compact('exams'));
+        // Get filter parameters
+        $search = $request->get('search');
+        $categoryId = $request->get('category_id');
+        $certificationType = $request->get('certification_type');
+        $duration = $request->get('duration');
+
+        // Base query
+        $query = Exam::where('status', 1)
+            ->with('category'); // Eager load category
+
+        // Search by exam name or code
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('exam_code', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Filter by category
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        // Filter by certification type (through category relationship)
+        if ($certificationType) {
+            $query->whereHas('category', function($q) use ($certificationType) {
+                $q->where('certification_type', $certificationType);
+            });
+        }
+
+        // Filter by exact duration
+        if ($duration !== null && $duration !== '') {
+            $query->where('duration_minutes', $duration);
+        }
+
+        $exams = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Append query parameters to pagination links
+        $exams->appends($request->all());
+
+        // Get all categories for filter dropdown
+        $categories = \App\Models\ExamCategory::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Get all unique certification types for filter dropdown
+        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+            ->distinct()
+            ->orderBy('certification_type')
+            ->pluck('certification_type');
+
+        return view('admin.exams.index', compact('exams', 'categories', 'certificationTypes'));
     }
 
     // CREATE FORM

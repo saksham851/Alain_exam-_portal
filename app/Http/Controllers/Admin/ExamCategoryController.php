@@ -9,14 +9,44 @@ use App\Models\ExamCategory;
 class ExamCategoryController extends Controller
 {
     // List all categories
-    public function index()
+    public function index(Request $request)
     {
-        $categories = ExamCategory::where('status', 1)
-            ->withCount('exams')
-            ->orderBy('name')
-            ->paginate(15);
+        // Get filter parameters
+        $search = $request->get('search');
+        $certificationType = $request->get('certification_type');
+        $examCount = $request->get('exam_count');
+
+        // Base query
+        $query = ExamCategory::where('status', 1)
+            ->withCount('exams');
+
+        // Search by category name
+        if ($search) {
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+
+        // Filter by certification type
+        if ($certificationType) {
+            $query->where('certification_type', $certificationType);
+        }
+
+        // Filter by exact exam count
+        if ($examCount !== null && $examCount !== '') {
+            $query->has('exams', '=', $examCount);
+        }
+
+        $categories = $query->orderBy('name')->paginate(15);
+
+        // Append query parameters to pagination links
+        $categories->appends($request->all());
+
+        // Get all unique certification types for filter dropdown
+        $certificationTypes = ExamCategory::where('status', 1)
+            ->distinct()
+            ->orderBy('certification_type')
+            ->pluck('certification_type');
         
-        return view('admin.exam-categories.index', compact('categories'));
+        return view('admin.exam-categories.index', compact('categories', 'certificationTypes'));
     }
 
     // Create form
