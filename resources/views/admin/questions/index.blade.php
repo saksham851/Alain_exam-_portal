@@ -28,6 +28,129 @@
                     <i class="ti ti-plus me-1"></i> Add Question
                 </a>
             </div>
+            
+            <!-- Filters Section -->
+            <div class="card-body border-bottom bg-light">
+                <form method="GET" action="{{ route('admin.questions.index') }}" id="filterForm">
+                    <div class="row g-3 align-items-end">
+                        <!-- Exam Filter (Primary) -->
+                        <div class="col-md-3">
+                            <label for="exam" class="form-label fw-semibold">
+                                <i class="ti ti-book me-1"></i>Exam
+                            </label>
+                            <select name="exam" id="exam" class="form-select" onchange="handleExamChange()">
+                                <option value="">All Exams</option>
+                                @foreach($exams as $exam)
+                                    <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
+                                        {{ $exam->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Case Study Filter (Dependent on Exam) -->
+                        <div class="col-md-3">
+                            <label for="case_study" class="form-label fw-semibold">
+                                <i class="ti ti-file-text me-1"></i>Case Study
+                            </label>
+                            <select name="case_study" id="case_study" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All Case Studies</option>
+                                @foreach($caseStudies as $caseStudy)
+                                    <option value="{{ $caseStudy->id }}" {{ request('case_study') == $caseStudy->id ? 'selected' : '' }}>
+                                        {{ $caseStudy->title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="col-md-2">
+                            <label for="category" class="form-label fw-semibold">
+                                <i class="ti ti-category me-1"></i>Category
+                            </label>
+                            <select name="category" id="category" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All Categories</option>
+                                <option value="ig" {{ request('category') == 'ig' ? 'selected' : '' }}>IG</option>
+                                <option value="dm" {{ request('category') == 'dm' ? 'selected' : '' }}>DM</option>
+                            </select>
+                        </div>
+
+                        <!-- Question Type Filter -->
+                        <div class="col-md-2">
+                            <label for="question_type" class="form-label fw-semibold">
+                                <i class="ti ti-list-check me-1"></i>Type
+                            </label>
+                            <select name="question_type" id="question_type" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All Types</option>
+                                <option value="single" {{ request('question_type') == 'single' ? 'selected' : '' }}>Single Choice</option>
+                                <option value="multiple" {{ request('question_type') == 'multiple' ? 'selected' : '' }}>Multiple Choice</option>
+                            </select>
+                        </div>
+
+                        <!-- Clear Filters Button -->
+                        <div class="col-md-2">
+                            @if(request()->hasAny(['exam', 'category', 'case_study', 'question_type']))
+                                <a href="{{ route('admin.questions.index') }}" class="btn btn-outline-secondary w-100">
+                                    <i class="ti ti-x me-1"></i>Clear
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Active Filters Display -->
+                    @if(request()->hasAny(['exam', 'category', 'case_study', 'question_type']))
+                        <div class="mt-3">
+                            <small class="text-muted fw-semibold">Active Filters:</small>
+                            <div class="d-inline-flex flex-wrap gap-2 ms-2">
+                                @if(request('exam'))
+                                    @php
+                                        $selectedExam = $exams->firstWhere('id', request('exam'));
+                                    @endphp
+                                    @if($selectedExam)
+                                        <span class="badge bg-primary">
+                                            Exam: {{ $selectedExam->name }}
+                                        </span>
+                                    @endif
+                                @endif
+                                @if(request('case_study'))
+                                    @php
+                                        $selectedCaseStudy = $caseStudies->firstWhere('id', request('case_study'));
+                                    @endphp
+                                    @if($selectedCaseStudy)
+                                        <span class="badge bg-info">
+                                            Case Study: {{ $selectedCaseStudy->title }}
+                                        </span>
+                                    @endif
+                                @endif
+                                @if(request('category'))
+                                    <span class="badge bg-warning">
+                                        Category: {{ request('category') == 'ig' ? 'IG - Internal Governance' : 'DM - Decision Making' }}
+                                    </span>
+                                @endif
+                                @if(request('question_type'))
+                                    <span class="badge bg-success">
+                                        Type: {{ request('question_type') == 'single' ? 'Single Choice' : 'Multiple Choice' }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                </form>
+            </div>
+            
+            <script>
+            function handleExamChange() {
+                const form = document.getElementById('filterForm');
+                const caseStudySelect = document.getElementById('case_study');
+                
+                // Clear case study selection when exam changes
+                caseStudySelect.value = '';
+                
+                // Submit the form to reload with filtered case studies
+                form.submit();
+            }
+            </script>
+            
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">

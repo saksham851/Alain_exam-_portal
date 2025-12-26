@@ -12,14 +12,57 @@ use App\Models\CaseStudy;
 
 class QuestionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $questions = Question::where('status', 1)
-            ->with(['caseStudy.section.exam', 'options'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $query = Question::where('status', 1)
+            ->with(['caseStudy.section.exam', 'options']);
+
+        // Filter by Exam (Primary Filter)
+        if ($request->filled('exam')) {
+            $query->whereHas('caseStudy.section', function($q) use ($request) {
+                $q->where('exam_id', $request->exam);
+            });
+        }
+
+        // Filter by Case Study (depends on Exam selection)
+        if ($request->filled('case_study')) {
+            $query->where('case_study_id', $request->case_study);
+        }
+
+        // Filter by Category (IG or DM)
+        if ($request->filled('category')) {
+            if ($request->category === 'ig') {
+                $query->where('ig_weight', '>', 0);
+            } elseif ($request->category === 'dm') {
+                $query->where('dm_weight', '>', 0);
+            }
+        }
+
+        // Filter by Question Type
+        if ($request->filled('question_type')) {
+            $query->where('question_type', $request->question_type);
+        }
+
+        $questions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         
-        return view('admin.questions.index', compact('questions'));
+        // Get all exams for filter dropdown
+        $exams = Exam::where('status', 1)
+            ->orderBy('name')
+            ->get();
+        
+        // Get case studies based on selected exam (if any)
+        $caseStudiesQuery = CaseStudy::where('status', 1)
+            ->with('section.exam');
+        
+        if ($request->filled('exam')) {
+            $caseStudiesQuery->whereHas('section', function($q) use ($request) {
+                $q->where('exam_id', $request->exam);
+            });
+        }
+        
+        $caseStudies = $caseStudiesQuery->orderBy('title')->get();
+        
+        return view('admin.questions.index', compact('questions', 'caseStudies', 'exams'));
     }
 
     public function create()
