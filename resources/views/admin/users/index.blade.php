@@ -55,19 +55,13 @@
                         </div>
                         
                         <div class="col-md-2">
-                            <label class="form-label">Min Attempts</label>
-                            <input type="number" name="attempts_min" class="form-control" 
-                                   placeholder="Min" min="0" value="{{ request('attempts_min') }}">
+                            <label class="form-label">No. of Attempts</label>
+                            <input type="number" name="attempts" class="form-control" 
+                                   placeholder="Attempts" min="0" value="{{ request('attempts') }}">
                         </div>
                         
-                        <div class="col-md-2">
-                            <label class="form-label">Max Attempts</label>
-                            <input type="number" name="attempts_max" class="form-control" 
-                                   placeholder="Max" min="0" value="{{ request('attempts_max') }}">
-                        </div>
-                        
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100 me-2">
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-25 me-2">
                                 <i class="ti ti-filter me-1"></i> Filter
                             </button>
                             <a href="{{ route('admin.users.index') }}" class="btn btn-secondary" title="Clear Filters">
@@ -79,7 +73,7 @@
             </div>
             
             <!-- Active Filters Indicator -->
-            @if(request()->hasAny(['exam_id', 'category_id', 'attempts_min', 'attempts_max']))
+            @if(request()->hasAny(['exam_id', 'category_id', 'attempts']))
             <div class="card-body border-bottom bg-light py-2">
                 <div class="d-flex align-items-center">
                     <small class="text-muted me-2"><i class="ti ti-filter-check"></i> Active Filters:</small>
@@ -93,11 +87,8 @@
                             Category: {{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
                         </span>
                     @endif
-                    @if(request('attempts_min'))
-                        <span class="badge bg-success me-1">Min Attempts: {{ request('attempts_min') }}</span>
-                    @endif
-                    @if(request('attempts_max'))
-                        <span class="badge bg-warning me-1">Max Attempts: {{ request('attempts_max') }}</span>
+                    @if(request('attempts'))
+                        <span class="badge bg-success me-1">Attempts: {{ request('attempts') }}</span>
                     @endif
                 </div>
             </div>

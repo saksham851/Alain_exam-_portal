@@ -14,8 +14,7 @@ class UserController extends Controller
         // Get filter parameters
         $examId = $request->get('exam_id');
         $categoryId = $request->get('category_id');
-        $attemptsMin = $request->get('attempts_min');
-        $attemptsMax = $request->get('attempts_max');
+        $attempts = $request->get('attempts');
 
         // Base query - only show students, not admins
         $query = User::where('role', 'student')
@@ -36,21 +35,32 @@ class UserController extends Controller
             });
         }
 
-        // Filter by number of attempts
-        if ($attemptsMin !== null || $attemptsMax !== null) {
-            $query->whereHas('studentExams', function($q) use ($attemptsMin, $attemptsMax) {
-                $q->withCount('attempts');
-                
-                if ($attemptsMin !== null) {
-                    $q->having('attempts_count', '>=', $attemptsMin);
-                }
-                if ($attemptsMax !== null) {
-                    $q->having('attempts_count', '<=', $attemptsMax);
-                }
+        // Filter by exact number of attempts
+        if ($attempts !== null) {
+            $query->where(function($q) use ($attempts, $examId, $categoryId) {
+                $q->whereHas('studentExams', function($subQuery) use ($attempts, $examId, $categoryId) {
+                    // Apply exam filter if set
+                    if ($examId) {
+                        $subQuery->where('exam_id', $examId);
+                    }
+                    
+                    // Apply category filter if set
+                    if ($categoryId) {
+                        $subQuery->whereHas('exam', function($examQuery) use ($categoryId) {
+                            $examQuery->where('category_id', $categoryId);
+                        });
+                    }
+                    
+                    // Count attempts for this student exam - exact match
+                    $subQuery->whereHas('attempts', function($attemptQuery) {}, '=', $attempts);
+                });
             });
         }
 
         $users = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Append query parameters to pagination links
+        $users->appends($request->all());
 
         // Get all exams and categories for filter dropdowns
         $exams = \App\Models\Exam::where('status', 1)
