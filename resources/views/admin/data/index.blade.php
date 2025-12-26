@@ -31,7 +31,7 @@
                     Download all your exam data in a single CSV file with complete hierarchy:
                 </p>
                 <ul class="mb-3">
-                    <li>Exam → Case Study → Sub Case Study → Question</li>
+                    <li>Exam → Section → Case Study → Question</li>
                     <li>All question options and correct answers</li>
                     <li>Easy to understand format</li>
                 </ul>
@@ -50,7 +50,7 @@
             </div>
             <div class="card-body">
                 <p class="text-muted">
-                    Upload a CSV file to create exams, case studies, and questions in bulk:
+                    Upload a CSV file to create exams, sections, case studies, and questions in bulk:
                 </p>
                 
                 <div class="alert alert-info">
@@ -97,22 +97,22 @@
                                 <td>60</td>
                             </tr>
                             <tr>
-                                <td><strong>Case Study Title</strong></td>
-                                <td>Title of the case study</td>
+                                <td><strong>Section Title</strong></td>
+                                <td>Title of the section</td>
                                 <td>Introduction to Laravel</td>
                             </tr>
                             <tr>
-                                <td><strong>Case Study Order</strong></td>
+                                <td><strong>Section Order</strong></td>
                                 <td>Display order number</td>
                                 <td>1</td>
                             </tr>
                             <tr>
-                                <td><strong>Sub Case Study Title</strong></td>
-                                <td>Title of the sub case study</td>
+                                <td><strong>Case Study Title</strong></td>
+                                <td>Title of the case study</td>
                                 <td>Basic Concepts</td>
                             </tr>
                             <tr>
-                                <td><strong>Sub Case Study Order</strong></td>
+                                <td><strong>Case Study Order</strong></td>
                                 <td>Display order number</td>
                                 <td>1</td>
                             </tr>
@@ -170,7 +170,7 @@
                         <ul class="mb-0 mt-2">
                             <li>Make sure your CSV follows the exact format</li>
                             <li>Download the sample file if you're unsure</li>
-                            <li>This will create new exams, case studies, and questions</li>
+                            <li>This will create new exams, sections, case studies, and questions</li>
                             <li>Duplicate exams will be reused (not created again)</li>
                         </ul>
                     </div>

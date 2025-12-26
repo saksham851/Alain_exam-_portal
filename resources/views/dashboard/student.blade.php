@@ -16,11 +16,6 @@
                         <span class="badge bg-light-success text-success mt-1">{{ auth()->user()->status == 1 ? 'Active' : 'Inactive' }}</span>
                     </div>
                 </div>
-                <div class="text-end">
-                    <button class="btn btn-light-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                        <i class="ti ti-lock me-1"></i> Change Password
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -39,9 +34,9 @@
                                 <th>Exam Title</th>
                                 <th>Duration</th>
                                 <th>Status</th>
-                                <th>Expiry</th>
                                 <th>Attempts</th>
                                 <th>Action</th>
+                                <th>Answer</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,11 +56,6 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <small>{{ \Carbon\Carbon::parse($exam->expiry_date)->format('M d, Y') }}</small>
-                                    <br>
-                                    <small class="text-muted">{{ \Carbon\Carbon::parse($exam->expiry_date)->diffForHumans() }}</small>
-                                </td>
-                                <td>
                                     <div>
                                         <span class="fw-bold text-primary">{{ $exam->attempts_left }}</span> left
                                     </div>
@@ -74,7 +64,7 @@
                                 <td>
                                     @if($exam->can_attempt)
                                         <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-primary btn-sm rounded-pill">
-                                            <i class="ti ti-play me-1"></i>Start Exam
+                                            <i class="ti ti-play "></i>Start
                                         </a>
                                     @elseif($exam->status === 'expired')
                                         <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>
@@ -85,6 +75,11 @@
                                             <i class="ti ti-lock me-1"></i>No Attempts
                                         </button>
                                     @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('exams.answer-key', $exam->id) }}" class="btn btn-sm btn-outline-success rounded-pill" title="Download Answer Key">
+                                        <i class="ti ti-download"></i>
+                                    </a>
                                 </td>
                             </tr>
                             @endforeach

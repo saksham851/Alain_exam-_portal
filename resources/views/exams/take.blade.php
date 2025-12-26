@@ -17,7 +17,10 @@
         align-items: center;
         position: relative;
         z-index: 1;
-        gap: 3rem; /* Space for the line */
+        width: 100%;
+        max-width: 900px; /* Limit width so it doesn't overflow */
+        justify-content: space-between;
+        margin: 0 auto;
     }
     .step-connector {
         position: absolute;
@@ -28,6 +31,9 @@
         background-color: #e9ecef;
         z-index: 0;
         transform: translateY(-50%);
+        max-width: 900px;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
     .section-step {
         width: 40px;
@@ -56,6 +62,13 @@
         background-color: #d1e7dd;
         border-color: #198754;
         color: #198754;
+    }
+    .animate-label {
+        animation: fadeInDown 0.3s ease-out;
+    }
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 
@@ -107,49 +120,56 @@
     </div>
 
     <!-- STICKY HEADER -->
-    <div class="card sticky-timer mb-4 border-top border-primary border-4">
+    <div class="card sticky-timer mb-4 overflow-hidden border-0 shadow-sm">
         <div class="card-body py-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-0 text-primary">{{ $exam->name }}</h5>
-                    <div class="text-muted small">
+                    <h5 class="mb-0 text-primary fw-bold">{{ $exam->name }}</h5>
+                    <div class="text-muted small mt-1">
                         Question <span x-text="currentIndex + 1"></span> of <span x-text="totalSlides"></span>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-4">
                     <div class="text-end">
-                        <p class="mb-0 text-muted small text-uppercase fw-bold">Time Remaining</p>
-                        <h3 class="mb-0 text-danger fw-bold" x-text="formattedTime">--:--:--</h3>
+                        <p class="mb-0 text-muted extra-small text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Time Remaining</p>
+                        <h3 class="mb-0 text-danger fw-bold" x-text="formattedTime" style="letter-spacing: -1px;">--:--:--</h3>
                     </div>
                     <div>
-                         <button type="button" class="btn btn-outline-danger btn-sm" @click="confirmSubmit('quit')">
-                            <i class="ti ti-power"></i> Quit
+                         <button type="button" class="btn btn-outline-danger btn-sm px-3" @click="confirmSubmit('quit')">
+                            <i class="ti ti-power me-1"></i> Quit
                          </button>
                     </div>
                 </div>
             </div>
-            
-            <!-- SECTION STEPPER WITH LINE -->
-            <div class="section-stepper-container">
-                <div class="step-connector"></div>
-                <div class="section-stepper">
-                    @foreach($sectionsMap as $secId => $secData)
-                        <div class="section-step" 
-                             :class="{ 
-                                'active': currentSectionId === {{ $secId }},
-                                'passed': currentSectionId > {{ $secId }}
-                             }"
-                             title="{{ $secData['title'] }}">
-                            {{ $secData['index'] }}
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+        </div>
+        <!-- TOTAL PROGRESS BAR AT THE BOTTOM -->
+        <div class="progress rounded-0" style="height: 6px; background-color: #f0f4f8;">
+            <div class="progress-bar bg-primary transition-width" role="progressbar" 
+                 :style="`width: ${progressPercentage}%`"
+                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    </div>
 
-            <!-- PROGRESS BAR -->
-            <div class="progress" style="height: 4px;">
-                <div class="progress-bar bg-primary transition-width" role="progressbar" 
-                     :style="`width: ${progressPercentage}%`"></div>
+    <!-- SECTION STEPPER BELOW HEADER -->
+    <div class="container mb-4 mt-5">
+        <div class="section-stepper-container">
+            <div class="step-connector"></div>
+            <div class="section-stepper">
+                @foreach($sectionsMap as $secId => $secData)
+                    <div class="section-step" 
+                         :class="{ 
+                            'active': currentSectionId === {{ $secId }},
+                            'passed': currentSectionId > {{ $secId }}
+                         }"
+                         title="{{ $secData['title'] }}">
+                        <template x-if="currentSectionId === {{ $secId }}">
+                            <div class="position-absolute" style="top: -28px; left: 50%; transform: translateX(-50%); white-space: nowrap;">
+                                <span class="text-uppercase fw-bold text-primary animate-label" style="font-size: 0.7rem; letter-spacing: 1px;">Section</span>
+                            </div>
+                        </template>
+                        {{ $secData['index'] }}
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>
@@ -177,7 +197,7 @@
                 </div>
 
                 <!-- 2. ORIGINAL STYLE BOTTOM CARD: Sub-Case & Question -->
-                <div class="card mb-4 border-start border-4 border-info">
+                <div class="card mb-4 border-start border-4 border-info case-study-card">
                     <div class="card-header bg-light">
                         <h6 class="mb-0 text-uppercase fw-bold text-info">
                             <i class="ti ti-arrow-right me-2"></i> {{ $slide['case_title'] }}
@@ -230,8 +250,9 @@
         @endforeach
 
         <!-- NAVIGATION ACTIONS -->
-        <div class="card fixed-bottom border-top shadow-lg" style="z-index: 999;">
-            <div class="card-body py-3">
+        <div style="height: 100px;"></div> 
+        <div class="fixed-bottom border-top shadow-lg bg-white" style="z-index: 999; bottom: 0;">
+            <div class="py-3">
                 <div class="container d-flex justify-content-between">
                     
                     <button type="button" class="btn btn-outline-secondary btn-lg px-4" 
@@ -256,7 +277,6 @@
                 </div>
             </div>
         </div>
-        <div style="height: 100px;"></div> 
 
     </form>
 </div>
@@ -323,19 +343,40 @@
                     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 },
 
+                handleScrollLogic(oldSecId) {
+                    const slide = document.querySelector(`.slide-container[x-show="currentIndex === ${this.currentIndex}"]`);
+                    if(!slide) return;
+                    
+                    const newSecId = parseInt(slide.getAttribute('data-section-id'));
+                    this.currentSectionId = newSecId;
+
+                    if (newSecId !== oldSecId) {
+                        // Section changed: Scroll to very top to read the new scenario
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        // Same section: Focus on the Question/Case Study card
+                        const targetCard = slide.querySelector('.case-study-card');
+                        if (targetCard) {
+                            const offset = 160; // Extra room for sticky timer and header
+                            const targetTop = targetCard.getBoundingClientRect().top + window.pageYOffset - offset;
+                            window.scrollTo({ top: targetTop, behavior: 'smooth' });
+                        }
+                    }
+                },
+
                 nextSlide() {
                     if (this.currentIndex < this.totalSlides - 1) {
+                        const oldSecId = this.currentSectionId;
                         this.currentIndex++;
-                        window.scrollTo(0, 0);
-                        this.updateCurrentSection();
+                        this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },
 
                 prevSlide() {
                     if (this.currentIndex > 0) {
+                        const oldSecId = this.currentSectionId;
                         this.currentIndex--;
-                        window.scrollTo(0, 0);
-                        this.updateCurrentSection();
+                        this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },
 

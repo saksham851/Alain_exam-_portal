@@ -131,6 +131,8 @@ Route::middleware(['auth', 'student'])->prefix('exams')->name('exams.')->group(f
     Route::get('/{id}/take', [\App\Http\Controllers\Student\ExamController::class, 'take'])->name('take');
     Route::post('/{id}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('submit');
     Route::get('/result/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('result');
+    Route::get('/download/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'download'])->name('download');
+    Route::get('/{id}/answer-key', [\App\Http\Controllers\Student\ExamController::class, 'downloadAnswerKey'])->name('answer-key');
 });
 
 

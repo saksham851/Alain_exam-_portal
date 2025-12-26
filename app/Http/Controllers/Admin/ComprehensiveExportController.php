@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Exam;
+use App\Models\Section;
 use App\Models\CaseStudy;
-use App\Models\SubCaseStudy;
 use App\Models\Question;
 use App\Models\QuestionOption;
 
@@ -16,7 +16,7 @@ class ComprehensiveExportController extends Controller
     public function exportComplete()
     {
         $questions = Question::where('status', 1)
-            ->with(['subCase.caseStudy.exam', 'options'])
+            ->with(['caseStudy.section.exam', 'options'])
             ->get();
         
         $filename = 'complete_exam_data_' . date('Y-m-d_His') . '.csv';
@@ -32,10 +32,10 @@ class ComprehensiveExportController extends Controller
             fputcsv($file, [
                 'Exam Name',
                 'Exam Duration (mins)',
+                'Section Title',
+                'Section Order',
                 'Case Study Title',
                 'Case Study Order',
-                'Sub Case Study Title',
-                'Sub Case Study Order',
                 'Question Text',
                 'Question Type',
                 'Internal Governance (IG)?',
@@ -59,12 +59,12 @@ class ComprehensiveExportController extends Controller
                 $isDM = $question->dm_weight > 0 ? 'Yes' : 'No';
                 
                 $row = [
-                    $question->subCase->caseStudy->exam->name ?? '',
-                    $question->subCase->caseStudy->exam->duration_minutes ?? '',
-                    $question->subCase->caseStudy->title ?? '',
-                    $question->subCase->caseStudy->order_no ?? '',
-                    $question->subCase->title ?? '',
-                    $question->subCase->order_no ?? '',
+                    $question->caseStudy->section->exam->name ?? '',
+                    $question->caseStudy->section->exam->duration_minutes ?? '',
+                    $question->caseStudy->section->title ?? '',
+                    $question->caseStudy->section->order_no ?? '',
+                    $question->caseStudy->title ?? '',
+                    $question->caseStudy->order_no ?? '',
                     strip_tags($question->question_text),
                     $questionType,
                     $isIG,
@@ -118,8 +118,8 @@ class ComprehensiveExportController extends Controller
                     ]
                 );
 
-                // Get or create Case Study
-                $caseStudy = CaseStudy::firstOrCreate(
+                // Get or create Section (formerly Case Study)
+                $section = Section::firstOrCreate(
                     [
                         'exam_id' => $exam->id,
                         'title' => $data[2]
@@ -131,10 +131,10 @@ class ComprehensiveExportController extends Controller
                     ]
                 );
 
-                // Get or create Sub Case Study
-                $subCaseStudy = SubCaseStudy::firstOrCreate(
+                // Get or create Case Study (formerly Sub Case Study)
+                $caseStudy = CaseStudy::firstOrCreate(
                     [
-                        'case_study_id' => $caseStudy->id,
+                        'section_id' => $section->id,
                         'title' => $data[4]
                     ],
                     [
@@ -160,7 +160,7 @@ class ComprehensiveExportController extends Controller
 
                 // Create Question
                 $question = Question::create([
-                    'sub_case_id' => $subCaseStudy->id,
+                    'case_study_id' => $caseStudy->id,
                     'question_text' => $data[6],
                     'question_type' => $questionType,
                     'ig_weight' => $igWeight,
@@ -212,10 +212,10 @@ class ComprehensiveExportController extends Controller
             fputcsv($file, [
                 'Exam Name',
                 'Exam Duration (mins)',
+                'Section Title',
+                'Section Order',
                 'Case Study Title',
                 'Case Study Order',
-                'Sub Case Study Title',
-                'Sub Case Study Order',
                 'Question Text',
                 'Question Type',
                 'Internal Governance (IG)?',

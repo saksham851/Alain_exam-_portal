@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\StudentExam;
-use App\Models\Exam;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
@@ -45,7 +44,9 @@ class ExamController extends Controller
         // Get exam details for student
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
-            ->with('exam.sections.caseStudies.questions')
+            ->with(['exam.sections.caseStudies.questions', 'attempts' => function($query) {
+                $query->where('status', 'submitted')->orderBy('created_at', 'desc');
+            }])
             ->firstOrFail();
             
         $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
@@ -55,7 +56,10 @@ class ExamController extends Controller
         $exam->expiry_date = $studentExam->expiry_date;
         $exam->student_exam_id = $studentExam->id;
         
-        return view('exams.show', compact('exam'));
+        // Get all completed attempts
+        $attempts = $studentExam->attempts;
+        
+        return view('exams.show', compact('exam', 'attempts'));
     }
     
     /**
@@ -144,7 +148,7 @@ class ExamController extends Controller
             ->firstOrFail();
             
         // Use DB Transaction to handle high concurrency (100-200 users)
-        \Illuminate\Support\Facades\DB::transaction(function () use ($attempt, $request, $id, $studentExam) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($attempt, $request) {
             // Save answers
             $answers = $request->input('answers', []);
             $answerData = [];
@@ -200,6 +204,8 @@ class ExamController extends Controller
             \Illuminate\Support\Facades\Log::error('Exam Completion Webhook Failed: ' . $e->getMessage());
         }
 
+        // Email notification removed as per request
+
         // Note: attempts_used is now incremented in start(), so we don't do it here.
         
         return redirect()->route('exams.result', $attempt->id);
@@ -220,4 +226,89 @@ class ExamController extends Controller
         
         return view('exams.result', compact('attempt'));
     }
+    
+    /**
+     * Download exam result PDF
+     */
+    public function download($attemptId)
+    {
+        $attempt = \App\Models\ExamAttempt::with(['studentExam.student', 'studentExam.exam.sections.caseStudies.questions', 'answers'])
+            ->findOrFail($attemptId);
+            
+        // Verify ownership
+        if ($attempt->studentExam->student_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        // Get all questions from the exam
+        $allQuestions = [];
+        foreach ($attempt->studentExam->exam->sections as $section) {
+            foreach ($section->caseStudies as $caseStudy) {
+                foreach ($caseStudy->questions as $question) {
+                    $allQuestions[] = $question->id;
+                }
+            }
+        }
+
+        // Prepare questions data with attempted status
+        $questionsData = [];
+        $answeredQuestionIds = $attempt->answers->pluck('question_id')->toArray();
+        
+        foreach ($allQuestions as $questionId) {
+            $answer = $attempt->answers->firstWhere('question_id', $questionId);
+            
+            $questionsData[] = [
+                'is_attempted' => in_array($questionId, $answeredQuestionIds),
+                'is_correct' => $answer ? ($answer->is_correct ?? false) : false,
+            ];
+        }
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.exam-result', compact('attempt', 'questionsData'));
+        
+        return $pdf->download('exam-result-' . $attempt->id . '.pdf');
+    }
+    
+    /**
+     * Download answer key PDF for an exam
+     */
+    public function downloadAnswerKey($id)
+    {
+        $studentId = auth()->id();
+        
+        // Get exam details for student
+        $studentExam = StudentExam::where('student_id', $studentId)
+            ->where('exam_id', $id)
+            ->with(['exam.sections.caseStudies.questions.options'])
+            ->firstOrFail();
+            
+        $exam = $studentExam->exam;
+        
+        // Collect all questions with their correct answers
+        $answerKey = [];
+        $questionNumber = 1;
+        
+        foreach ($exam->sections as $section) {
+            foreach ($section->caseStudies as $caseStudy) {
+                foreach ($caseStudy->questions as $question) {
+                    // Get correct options - use option_key (A, B, C, D) instead of option_text
+                    $correctOptions = $question->options->where('is_correct', true)->pluck('option_key')->toArray();
+                    
+                    $answerKey[] = [
+                        'number' => $questionNumber,
+                        'question_text' => $question->question_text,
+                        'correct_answers' => $correctOptions,
+                        'category' => $question->category,
+                        'marks' => $question->marks,
+                    ];
+                    
+                    $questionNumber++;
+                }
+            }
+        }
+        
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.answer-key', compact('exam', 'answerKey'));
+        
+        return $pdf->download('answer-key-' . $exam->name . '.pdf');
+    }
+    
 }
