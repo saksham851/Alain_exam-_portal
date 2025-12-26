@@ -139,6 +139,8 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
+                                <th>Last Login</th>
+                                <th>Last Activity</th>
                                 <th>Attempts</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -158,6 +160,39 @@
                                 </td>
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->phone ?? 'N/A' }}</td>
+                                <td>
+                                    @if($user->last_login_at)
+                                        <div class="d-flex flex-column">
+                                            <span class="text-muted small">{{ $user->last_login_at->format('M d, Y') }}</span>
+                                            <span class="text-muted" style="font-size: 0.75rem;">{{ $user->last_login_at->format('h:i A') }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">Never</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @php
+                                        $lastAttempt = $user->examAttempts()
+                                            ->whereNotNull('started_at')
+                                            ->orderBy('started_at', 'desc')
+                                            ->with('studentExam.exam')
+                                            ->first();
+                                    @endphp
+                                    
+                                    @if($lastAttempt && $lastAttempt->started_at)
+                                        <div class="d-flex flex-column">
+                                            @if($lastAttempt->studentExam && $lastAttempt->studentExam->exam)
+                                                <span class="fw-semibold text-dark mb-1" style="font-size: 0.85rem;">
+                                                    {{ Str::limit($lastAttempt->studentExam->exam->name, 25) }}
+                                                </span>
+                                            @endif
+                                            <span class="text-muted small">{{ $lastAttempt->started_at->format('M d, Y') }}</span>
+                                            <span class="text-muted" style="font-size: 0.75rem;">{{ $lastAttempt->started_at->format('h:i A') }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-muted">No attempts</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <a href="{{ route('admin.attempts.by-user', $user->id) }}" class="badge bg-light-info text-info">
                                         {{ $user->studentExams->sum(fn($se) => $se->attempts->count()) }} attempts

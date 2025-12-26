@@ -31,6 +31,7 @@ class User extends Authenticatable
         'is_blocked',
         'status',
         'remember_token',
+        'last_login_at',
     ];
 
     /**
@@ -55,6 +56,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_blocked' => 'boolean',
             'status' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -67,5 +69,16 @@ class User extends Authenticatable
     public function examAttempts()
     {
         return $this->hasManyThrough(ExamAttempt::class, StudentExam::class, 'student_id', 'student_exam_id');
+    }
+
+    /**
+     * Get the user's most recent exam attempt
+     */
+    public function getLastExamAttemptAttribute()
+    {
+        return $this->examAttempts()
+            ->whereNotNull('started_at')
+            ->orderBy('started_at', 'desc')
+            ->first();
     }
 }
