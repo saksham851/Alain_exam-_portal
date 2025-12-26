@@ -17,7 +17,7 @@ class ExamController extends Controller
         
         // Get exams assigned to the logged-in student
         $studentExams = StudentExam::where('student_id', $studentId)
-            ->with('exam')
+            ->with('exam.category')
             ->get();
         
         // Extract the exam objects with student-specific data

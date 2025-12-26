@@ -24,7 +24,7 @@ class DashboardController extends Controller
                 return (object)[
                     'id' => $studentExam->exam->id,
                     'title' => $studentExam->exam->name,
-                    'duration' => $studentExam->exam->duration,
+                    'duration' => $studentExam->exam->duration_minutes,
                     'status' => $isExpired ? 'expired' : 'active',
                     'expiry_date' => $studentExam->expiry_date,
                     'attempts_left' => $attemptsLeft,

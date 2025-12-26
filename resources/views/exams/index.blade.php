@@ -25,8 +25,8 @@
         <div class="card h-100">
             <div class="card-body d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-light-primary text-primary">{{ $exam->category ?? 'General' }}</span>
-                    <span class="text-muted text-sm"><i class="ti ti-clock me-1"></i>{{ $exam->duration }} mins</span>
+                    <span class="badge bg-light-primary text-primary">{{ $exam->category->name ?? 'General' }}</span>
+                    <span class="text-muted text-sm"><i class="ti ti-clock me-1"></i>{{ $exam->duration_minutes }} mins</span>
                 </div>
                 
                 <h4 class="card-title mb-2">{{ $exam->name }}</h4>

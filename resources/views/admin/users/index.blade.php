@@ -150,9 +150,16 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="avtar avtar-s bg-light-primary text-primary">
-                                            {{ strtoupper(substr($user->first_name, 0, 1)) }}
-                                        </div>
+                                        @if($user->profile_picture)
+                                            <img src="{{ asset('storage/' . $user->profile_picture) }}" 
+                                                 alt="{{ $user->first_name }}" 
+                                                 class="rounded-circle" 
+                                                 style="width: 40px; height: 40px; object-fit: cover;">
+                                        @else
+                                            <div class="avtar avtar-s bg-light-primary text-primary">
+                                                {{ strtoupper(substr($user->first_name, 0, 1)) }}
+                                            </div>
+                                        @endif
                                         <div class="ms-3">
                                             <h6 class="mb-0">{{ $user->first_name }} {{ $user->last_name }}</h6>
                                         </div>
