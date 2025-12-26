@@ -12,6 +12,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         // Get filter parameters
+        $search = $request->get('search');
         $examId = $request->get('exam_id');
         $categoryId = $request->get('category_id');
         $attempts = $request->get('attempts');
@@ -20,6 +21,16 @@ class UserController extends Controller
         $query = User::where('role', 'student')
             ->where('status', 1)
             ->with(['studentExams.exam.category', 'studentExams.attempts']);
+
+        // Search by name or email
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', '%' . $search . '%')
+                  ->orWhere('last_name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%')
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $search . '%']);
+            });
+        }
 
         // Filter by exam
         if ($examId) {

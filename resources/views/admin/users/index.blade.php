@@ -26,12 +26,31 @@
                 <h5>All Students</h5>
             </div>
             
-            <!-- Advanced Filters -->
-            <div class="card-body border-bottom">
+            <!-- Filters Section -->
+            <div class="card-body">
                 <form method="GET" action="{{ route('admin.users.index') }}" id="filterForm">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Exam Name</label>
+                    <!-- Search Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-search me-1"></i>SEARCH STUDENTS
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="ti ti-search text-muted"></i>
+                                </span>
+                                <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                       placeholder="Search by name or email..." value="{{ request('search') }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters Grid -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-book me-1"></i>EXAM NAME
+                            </label>
                             <select name="exam_id" class="form-select">
                                 <option value="">All Exams</option>
                                 @foreach($exams as $exam)
@@ -42,8 +61,10 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-3">
-                            <label class="form-label">Exam Category</label>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-category me-1"></i>EXAM CATEGORY
+                            </label>
                             <select name="category_id" class="form-select">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $category)
@@ -54,41 +75,57 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-2">
-                            <label class="form-label">No. of Attempts</label>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-muted small mb-2">
+                                <i class="ti ti-clipboard-list me-1"></i>NUMBER OF ATTEMPTS
+                            </label>
                             <input type="number" name="attempts" class="form-control" 
-                                   placeholder="Attempts" min="0" value="{{ request('attempts') }}">
+                                   placeholder="Enter number of attempts" min="0" value="{{ request('attempts') }}">
                         </div>
-                        
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-25 me-2">
-                                <i class="ti ti-filter me-1"></i> Filter
-                            </button>
-                            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary" title="Clear Filters">
-                                <i class="ti ti-x"></i>
-                            </a>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{{ route('admin.users.index') }}" class="btn btn-light px-4">
+                                    <i class="ti ti-refresh me-1"></i> Reset
+                                </a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="ti ti-filter me-1"></i> Apply Filters
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
             </div>
             
             <!-- Active Filters Indicator -->
-            @if(request()->hasAny(['exam_id', 'category_id', 'attempts']))
-            <div class="card-body border-bottom bg-light py-2">
-                <div class="d-flex align-items-center">
-                    <small class="text-muted me-2"><i class="ti ti-filter-check"></i> Active Filters:</small>
+            @if(request()->hasAny(['search', 'exam_id', 'category_id', 'attempts']))
+            <div class="card-body border-top border-bottom bg-light-subtle py-3">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small fw-semibold">
+                        <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
+                    </span>
+                    @if(request('search'))
+                        <span class="badge rounded-pill bg-dark">
+                            <i class="ti ti-search me-1"></i>{{ request('search') }}
+                        </span>
+                    @endif
                     @if(request('exam_id'))
-                        <span class="badge bg-primary me-1">
-                            Exam: {{ $exams->firstWhere('id', request('exam_id'))->name ?? 'Unknown' }}
+                        <span class="badge rounded-pill bg-primary">
+                            <i class="ti ti-book me-1"></i>{{ $exams->firstWhere('id', request('exam_id'))->name ?? 'Unknown' }}
                         </span>
                     @endif
                     @if(request('category_id'))
-                        <span class="badge bg-info me-1">
-                            Category: {{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
+                        <span class="badge rounded-pill bg-info">
+                            <i class="ti ti-category me-1"></i>{{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
                         </span>
                     @endif
                     @if(request('attempts'))
-                        <span class="badge bg-success me-1">Attempts: {{ request('attempts') }}</span>
+                        <span class="badge rounded-pill bg-success">
+                            <i class="ti ti-clipboard-list me-1"></i>{{ request('attempts') }} Attempts
+                        </span>
                     @endif
                 </div>
             </div>
