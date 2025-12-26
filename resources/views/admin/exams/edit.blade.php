@@ -34,21 +34,41 @@
                     @endif
 
                     <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Exam Name</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Exam Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" value="{{ old('name', optional($exam)->name) }}" required>
                             @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Exam Code <span class="text-danger">*</span></label>
+                            <input type="text" name="exam_code" class="form-control" value="{{ old('exam_code', optional($exam)->exam_code) }}" required>
+                            @error('exam_code') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Exam Category <span class="text-danger">*</span></label>
+                            <select name="category_id" class="form-select" required>
+                                <option value="">Select Category</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id', optional($exam)->category_id) == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }} ({{ $category->certification_type }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('category_id') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Duration (Minutes) <span class="text-danger">*</span></label>
+                            <input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes', optional($exam)->duration_minutes ?? 180) }}" required min="1">
+                            @error('duration_minutes') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
 
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Description</label>
                             <textarea name="description" class="form-control" rows="3">{{ old('description', optional($exam)->description) }}</textarea>
                             @error('description') <small class="text-danger">{{ $message }}</small> @enderror
-                        </div>
-
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Duration (Minutes)</label>
-                            <input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes', optional($exam)->duration_minutes ?? 180) }}" required min="1">
                         </div>
                     </div>
 

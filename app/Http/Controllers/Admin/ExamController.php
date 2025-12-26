@@ -12,6 +12,7 @@ class ExamController extends Controller
     public function index()
     {
         $exams = Exam::where('status', 1)
+            ->with('category') // Eager load category
             ->orderBy('created_at', 'desc')
             ->paginate(15); // 15 per page with pagination
         return view('admin.exams.index', compact('exams'));
@@ -21,7 +22,8 @@ class ExamController extends Controller
     public function create()
     {
         $exam = null;
-        return view('admin.exams.edit', compact('exam'));
+        $categories = \App\Models\ExamCategory::where('status', 1)->orderBy('name')->get();
+        return view('admin.exams.edit', compact('exam', 'categories'));
     }
 
     // SAVE NEW
@@ -29,12 +31,16 @@ class ExamController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'exam_code' => 'required|string|max:50|unique:exams,exam_code',
+            'category_id' => 'required|exists:exam_categories,id',
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer',
         ]);
 
         Exam::create([
             'name' => $request->name,
+            'exam_code' => $request->exam_code,
+            'category_id' => $request->category_id,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'status' => 1,
@@ -51,7 +57,8 @@ class ExamController extends Controller
 
         if (!$exam) return redirect()->back()->with('error', 'Exam Not Found');
 
-        return view('admin.exams.edit', compact('exam'));
+        $categories = \App\Models\ExamCategory::where('status', 1)->orderBy('name')->get();
+        return view('admin.exams.edit', compact('exam', 'categories'));
     }
 
     // UPDATE EXAM
@@ -59,6 +66,8 @@ class ExamController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'exam_code' => 'required|string|max:50|unique:exams,exam_code,' . $id,
+            'category_id' => 'required|exists:exam_categories,id',
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer',
         ]);
@@ -69,6 +78,8 @@ class ExamController extends Controller
 
         $exam->update([
             'name' => $request->name,
+            'exam_code' => $request->exam_code,
+            'category_id' => $request->category_id,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
         ]);

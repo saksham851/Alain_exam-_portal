@@ -9,16 +9,59 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Only show students, not admins
-        $users = User::where('role', 'student')
+        // Get filter parameters
+        $examId = $request->get('exam_id');
+        $categoryId = $request->get('category_id');
+        $attemptsMin = $request->get('attempts_min');
+        $attemptsMax = $request->get('attempts_max');
+
+        // Base query - only show students, not admins
+        $query = User::where('role', 'student')
             ->where('status', 1)
-            ->with(['studentExams.attempts']) // Eager load attempts (correct relationship name)
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->with(['studentExams.exam.category', 'studentExams.attempts']);
+
+        // Filter by exam
+        if ($examId) {
+            $query->whereHas('studentExams', function($q) use ($examId) {
+                $q->where('exam_id', $examId);
+            });
+        }
+
+        // Filter by exam category
+        if ($categoryId) {
+            $query->whereHas('studentExams.exam', function($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        }
+
+        // Filter by number of attempts
+        if ($attemptsMin !== null || $attemptsMax !== null) {
+            $query->whereHas('studentExams', function($q) use ($attemptsMin, $attemptsMax) {
+                $q->withCount('attempts');
+                
+                if ($attemptsMin !== null) {
+                    $q->having('attempts_count', '>=', $attemptsMin);
+                }
+                if ($attemptsMax !== null) {
+                    $q->having('attempts_count', '<=', $attemptsMax);
+                }
+            });
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Get all exams and categories for filter dropdowns
+        $exams = \App\Models\Exam::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
         
-        return view('admin.users.index', compact('users'));
+        $categories = \App\Models\ExamCategory::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        
+        return view('admin.users.index', compact('users', 'exams', 'categories'));
     }
 
     public function create()

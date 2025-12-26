@@ -34,6 +34,9 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Code</th>
+                                <th>Category</th>
+                                <th>Certification Type</th>
                                 <th>Duration</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -41,13 +44,34 @@
                         <tbody>
                             @forelse($exams as $exam)
                             <tr>
-                                <td style="width: 50%;">
+                                <td style="width: 25%;">
                                     <h5 class="mb-1 fw-bold">{{ $exam->name }}</h5>
                                     @if($exam->description)
                                         <small class="text-muted d-block">{{ Str::limit($exam->description, 80) }}</small>
                                     @endif
                                 </td>
-                                <td style="width: 20%;">
+                                <td style="width: 12%;">
+                                    @if($exam->exam_code)
+                                        <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td style="width: 15%;">
+                                    @if($exam->category)
+                                        <span class="badge bg-light-info">{{ $exam->category->name }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td style="width: 13%;">
+                                    @if($exam->category)
+                                        <span class="badge bg-light-success">{{ $exam->category->certification_type }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td style="width: 12%;">
                                     <span class="badge bg-light-primary">
                                         <i class="ti ti-clock me-1"></i>{{ $exam->duration_minutes }} mins
                                     </span>
@@ -69,7 +93,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center py-4">No exams found.</td>
+                                <td colspan="6" class="text-center py-4">No exams found.</td>
                             </tr>
                             @endforelse
                         </tbody>

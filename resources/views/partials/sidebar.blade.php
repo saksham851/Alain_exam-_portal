@@ -28,6 +28,12 @@
                 <span class="pc-mtext">Users</span>
             </a>
         </li>
+        <li class="pc-item {{ request()->routeIs('admin.exam-categories.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.exam-categories.index') }}" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-notebook"></i></span>
+                <span class="pc-mtext">Exam Categories</span>
+            </a>
+        </li>
         <li class="pc-item {{ request()->routeIs('admin.exams.*') ? 'active' : '' }}">
             <a href="{{ route('admin.exams.index') }}" class="pc-link">
                 <span class="pc-micon"><i class="ti ti-book"></i></span>

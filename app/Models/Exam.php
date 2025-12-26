@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Exam extends Model
 {
     protected $fillable = [
+        'category_id',
+        'exam_code',
         'name',
         'description',
         'duration_minutes',
@@ -16,6 +18,11 @@ class Exam extends Model
     protected $casts = [
         'status' => 'boolean',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(ExamCategory::class, 'category_id');
+    }
 
     public function sections()
     {

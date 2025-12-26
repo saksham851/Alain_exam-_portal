@@ -25,6 +25,84 @@
             <div class="card-header">
                 <h5>All Students</h5>
             </div>
+            
+            <!-- Advanced Filters -->
+            <div class="card-body border-bottom">
+                <form method="GET" action="{{ route('admin.users.index') }}" id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Exam Name</label>
+                            <select name="exam_id" class="form-select">
+                                <option value="">All Exams</option>
+                                @foreach($exams as $exam)
+                                    <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
+                                        {{ $exam->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label">Exam Category</label>
+                            <select name="category_id" class="form-select">
+                                <option value="">All Categories</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">Min Attempts</label>
+                            <input type="number" name="attempts_min" class="form-control" 
+                                   placeholder="Min" min="0" value="{{ request('attempts_min') }}">
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label class="form-label">Max Attempts</label>
+                            <input type="number" name="attempts_max" class="form-control" 
+                                   placeholder="Max" min="0" value="{{ request('attempts_max') }}">
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100 me-2">
+                                <i class="ti ti-filter me-1"></i> Filter
+                            </button>
+                            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary" title="Clear Filters">
+                                <i class="ti ti-x"></i>
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Active Filters Indicator -->
+            @if(request()->hasAny(['exam_id', 'category_id', 'attempts_min', 'attempts_max']))
+            <div class="card-body border-bottom bg-light py-2">
+                <div class="d-flex align-items-center">
+                    <small class="text-muted me-2"><i class="ti ti-filter-check"></i> Active Filters:</small>
+                    @if(request('exam_id'))
+                        <span class="badge bg-primary me-1">
+                            Exam: {{ $exams->firstWhere('id', request('exam_id'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('category_id'))
+                        <span class="badge bg-info me-1">
+                            Category: {{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('attempts_min'))
+                        <span class="badge bg-success me-1">Min Attempts: {{ request('attempts_min') }}</span>
+                    @endif
+                    @if(request('attempts_max'))
+                        <span class="badge bg-warning me-1">Max Attempts: {{ request('attempts_max') }}</span>
+                    @endif
+                </div>
+            </div>
+            @endif
+            
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">

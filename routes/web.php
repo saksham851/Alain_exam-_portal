@@ -74,6 +74,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('import/csv', [ExamController::class,'import'])->name('import');
     });
 
+    // --- Exam Categories ---
+    Route::resource('exam-categories', \App\Http\Controllers\Admin\ExamCategoryController::class);
+
     // --- Questions (Controller) ---
     Route::resource('questions', QuestionController::class);
     Route::get('questions-ajax/case-studies/{examId}', [QuestionController::class, 'getCaseStudies'])->name('questions.getCaseStudies');
