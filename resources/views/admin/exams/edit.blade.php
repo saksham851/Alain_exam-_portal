@@ -23,8 +23,13 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <h5>Exam Details</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Exam Details</h5>
+                @if(isset($exam))
+                    <a href="{{ route('admin.case-studies.clone.index', $exam->id) }}" class="btn btn-sm btn-outline-primary">
+                        📋 Clone Case Studies from Other Exams
+                    </a>
+                @endif
             </div>
             <div class="card-body">
                 <form action="{{ isset($exam) ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}" method="POST">

@@ -74,6 +74,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('import/csv', [ExamController::class,'import'])->name('import');
     });
 
+    // --- Case Study Cloning ---
+    Route::prefix('exams/{examId}/clone-case-studies')->name('case-studies.clone.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CaseStudyCloneController::class, 'showAvailableCaseStudies'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Admin\CaseStudyCloneController::class, 'cloneCaseStudies'])->name('store');
+    });
+
     // --- Exam Categories ---
     Route::resource('exam-categories', \App\Http\Controllers\Admin\ExamCategoryController::class);
 
