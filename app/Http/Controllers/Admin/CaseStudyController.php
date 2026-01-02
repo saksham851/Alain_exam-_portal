@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\CaseStudy;
 use App\Models\Section;
+use App\Models\Exam;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -24,6 +25,15 @@ class CaseStudyController extends Controller
 
     public function store(Request $request)
     {
+        // Check if exam is active
+        $section = Section::find($request->section_id);
+        if ($section) {
+            $exam = Exam::find($section->exam_id);
+            if ($exam && $exam->is_active == 1) {
+                return redirect()->back()->with('error', 'Cannot add case study to an active exam. Please deactivate the exam first.');
+            }
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'section_id' => 'required|exists:sections,id',
@@ -50,6 +60,15 @@ class CaseStudyController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Check if exam is active
+        $section = Section::find($request->section_id);
+        if ($section) {
+            $exam = Exam::find($section->exam_id);
+            if ($exam && $exam->is_active == 1) {
+                return redirect()->back()->with('error', 'Cannot modify case study in an active exam. Please deactivate the exam first.');
+            }
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'section_id' => 'required|exists:sections,id',
@@ -72,10 +91,17 @@ class CaseStudyController extends Controller
 
     public function destroy($id)
     {
-        $caseStudy = CaseStudy::find($id);
-        if($caseStudy) {
-            $caseStudy->update(['status' => 0]);
+        $caseStudy = CaseStudy::with('section.exam')->find($id);
+        if (!$caseStudy) {
+            return back()->with('error', 'Case Study not found');
         }
+
+        // Check if exam is active
+        if ($caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+            return back()->with('error', 'Cannot delete case study from an active exam. Please deactivate the exam first.');
+        }
+
+        $caseStudy->update(['status' => 0]);
         return back()->with('success', 'Case Study deleted successfully.');
     }
 }

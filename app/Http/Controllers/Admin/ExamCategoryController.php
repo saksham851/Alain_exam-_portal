@@ -59,6 +59,14 @@ class ExamCategoryController extends Controller
     // Store new category
     public function store(Request $request)
     {
+        // Handle new certification type
+        $certificationType = $request->certification_type;
+        if ($request->filled('new_certification_type')) {
+            $certificationType = $request->new_certification_type;
+        }
+
+        $request->merge(['certification_type' => $certificationType]);
+
         $request->validate([
             'name' => 'required|string|max:255|unique:exam_categories,name',
             'certification_type' => 'required|string|max:255',
@@ -66,7 +74,7 @@ class ExamCategoryController extends Controller
 
         ExamCategory::create([
             'name' => $request->name,
-            'certification_type' => $request->certification_type,
+            'certification_type' => $certificationType,
             'status' => 1,
         ]);
 
@@ -89,6 +97,14 @@ class ExamCategoryController extends Controller
     // Update category
     public function update(Request $request, $id)
     {
+        // Handle new certification type
+        $certificationType = $request->certification_type;
+        if ($request->filled('new_certification_type')) {
+            $certificationType = $request->new_certification_type;
+        }
+
+        $request->merge(['certification_type' => $certificationType]);
+
         $request->validate([
             'name' => 'required|string|max:255|unique:exam_categories,name,' . $id,
             'certification_type' => 'required|string|max:255',
@@ -102,7 +118,7 @@ class ExamCategoryController extends Controller
 
         $category->update([
             'name' => $request->name,
-            'certification_type' => $request->certification_type,
+            'certification_type' => $certificationType,
         ]);
 
         return redirect()->route('admin.exam-categories.index')

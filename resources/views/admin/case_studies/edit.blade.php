@@ -22,6 +22,16 @@
 
 <div class="row" x-data="caseStudyForm()">
     <div class="col-md-12">
+        @if(isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1)
+        <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
+            <i class="ti ti-lock" style="font-size: 20px; margin-top: 3px;"></i>
+            <div>
+                <strong>This Exam is Active/Locked</strong>
+                <p class="mb-0 mt-2">This exam is currently active. You cannot edit this section or add/delete case studies. Please deactivate the exam first.</p>
+            </div>
+        </div>
+        @endif
+
         <form id="caseStudyForm" action="{{ isset($caseStudy) ? route('admin.case-studies.update', $caseStudy->id) : route('admin.case-studies.store') }}" method="POST">
             @csrf
             @if(isset($caseStudy)) @method('PUT') @endif
@@ -30,7 +40,7 @@
                 <div class="card-header">
                     <h5>Main Section Details</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'style=opacity:0.5;pointer-events:none' : '' }}>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assign to Exam</label>
@@ -42,7 +52,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Title</label>
+                            <label class="form-label">Section Name</label>
                             <input type="text" name="title" class="form-control" value="{{ old('title', $caseStudy->title ?? '') }}" required>
                         </div>
                         <div class="col-md-12 mb-3">
@@ -54,7 +64,7 @@
             </div>
 
             <!-- Sub Case Studies Logic -->
-            <div class="card mt-3">
+            <div class="card mt-3" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'style=opacity:0.5;pointer-events:none' : '' }}>
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5>Case Studies</h5>
                     <button type="button" @click="addSubCase" class="btn btn-sm btn-light-primary"><i class="ti ti-plus"></i> Add Case Study</button>
@@ -84,7 +94,7 @@
 
             <div class="mt-3 text-end">
                 <a href="{{ route('admin.case-studies.index') }}" class="btn btn-secondary me-2">Cancel</a>
-                <button type="submit" class="btn btn-primary">Save Section</button>
+                <button type="submit" class="btn btn-primary" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'disabled' : '' }}>Save Section</button>
             </div>
         </form>
     </div>

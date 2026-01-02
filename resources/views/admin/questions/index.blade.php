@@ -29,16 +29,14 @@
                 </a>
             </div>
             
-            <!-- Filters Section -->
-            <div class="card-body border-bottom bg-light">
+            <!-- Compact Filters Section -->
+            <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route('admin.questions.index') }}" id="filterForm">
-                    <div class="row g-3 align-items-end">
-                        <!-- Exam Filter (Primary) -->
+                    <div class="row g-2 align-items-end">
+                        <!-- Exam Filter -->
                         <div class="col-md-3">
-                            <label for="exam" class="form-label fw-semibold">
-                                <i class="ti ti-book me-1"></i>Exam
-                            </label>
-                            <select name="exam" id="exam" class="form-select" onchange="handleExamChange()">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
+                            <select name="exam" id="exam" class="form-select form-select-sm" onchange="handleExamChange()">
                                 <option value="">All Exams</option>
                                 @foreach($exams as $exam)
                                     <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
@@ -48,12 +46,10 @@
                             </select>
                         </div>
 
-                        <!-- Case Study Filter (Dependent on Exam) -->
+                        <!-- Case Study Filter -->
                         <div class="col-md-3">
-                            <label for="case_study" class="form-label fw-semibold">
-                                <i class="ti ti-file-text me-1"></i>Case Study
-                            </label>
-                            <select name="case_study" id="case_study" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                            <label class="form-label fw-bold text-muted small mb-1">CASE STUDY</label>
+                            <select name="case_study" id="case_study" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Case Studies</option>
                                 @foreach($caseStudies as $caseStudy)
                                     <option value="{{ $caseStudy->id }}" {{ request('case_study') == $caseStudy->id ? 'selected' : '' }}>
@@ -65,10 +61,8 @@
 
                         <!-- Category Filter -->
                         <div class="col-md-2">
-                            <label for="category" class="form-label fw-semibold">
-                                <i class="ti ti-category me-1"></i>Category
-                            </label>
-                            <select name="category" id="category" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                            <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
+                            <select name="category" id="category" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Categories</option>
                                 <option value="ig" {{ request('category') == 'ig' ? 'selected' : '' }}>IG</option>
                                 <option value="dm" {{ request('category') == 'dm' ? 'selected' : '' }}>DM</option>
@@ -77,62 +71,50 @@
 
                         <!-- Question Type Filter -->
                         <div class="col-md-2">
-                            <label for="question_type" class="form-label fw-semibold">
-                                <i class="ti ti-list-check me-1"></i>Type
-                            </label>
-                            <select name="question_type" id="question_type" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                            <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                            <select name="question_type" id="question_type" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Types</option>
                                 <option value="single" {{ request('question_type') == 'single' ? 'selected' : '' }}>Single Choice</option>
                                 <option value="multiple" {{ request('question_type') == 'multiple' ? 'selected' : '' }}>Multiple Choice</option>
                             </select>
                         </div>
 
-                        <!-- Clear Filters Button -->
+                        <!-- Buttons -->
                         <div class="col-md-2">
-                            @if(request()->hasAny(['exam', 'category', 'case_study', 'question_type']))
-                                <a href="{{ route('admin.questions.index') }}" class="btn btn-outline-secondary w-100">
-                                    <i class="ti ti-x me-1"></i>Clear
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="{{ route('admin.questions.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters">
+                                    <i class="ti ti-rotate"></i>
                                 </a>
-                            @endif
+                                {{-- Hidden submit button to allow Enter key to submit if focused --}}
+                                <button type="submit" class="d-none"></button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Active Filters Display -->
+                    <!-- Active Filters Indicator -->
                     @if(request()->hasAny(['exam', 'category', 'case_study', 'question_type']))
-                        <div class="mt-3">
-                            <small class="text-muted fw-semibold">Active Filters:</small>
-                            <div class="d-inline-flex flex-wrap gap-2 ms-2">
-                                @if(request('exam'))
-                                    @php
-                                        $selectedExam = $exams->firstWhere('id', request('exam'));
-                                    @endphp
-                                    @if($selectedExam)
-                                        <span class="badge bg-primary">
-                                            Exam: {{ $selectedExam->name }}
-                                        </span>
-                                    @endif
+                        <div class="mt-2 d-flex align-items-center flex-wrap gap-2">
+                            <span class="text-muted small fw-semibold">
+                                <i class="ti ti-filter-check me-1"></i>ACTIVE:
+                            </span>
+                            @if(request('exam'))
+                                @php $selectedExam = $exams->firstWhere('id', request('exam')); @endphp
+                                @if($selectedExam)
+                                    <span class="badge rounded-pill bg-primary small">{{ $selectedExam->name }}</span>
                                 @endif
-                                @if(request('case_study'))
-                                    @php
-                                        $selectedCaseStudy = $caseStudies->firstWhere('id', request('case_study'));
-                                    @endphp
-                                    @if($selectedCaseStudy)
-                                        <span class="badge bg-info">
-                                            Case Study: {{ $selectedCaseStudy->title }}
-                                        </span>
-                                    @endif
+                            @endif
+                            @if(request('case_study'))
+                                @php $selectedCaseStudy = $caseStudies->firstWhere('id', request('case_study')); @endphp
+                                @if($selectedCaseStudy)
+                                    <span class="badge rounded-pill bg-info small">{{ $selectedCaseStudy->title }}</span>
                                 @endif
-                                @if(request('category'))
-                                    <span class="badge bg-warning">
-                                        Category: {{ request('category') == 'ig' ? 'IG - Internal Governance' : 'DM - Decision Making' }}
-                                    </span>
-                                @endif
-                                @if(request('question_type'))
-                                    <span class="badge bg-success">
-                                        Type: {{ request('question_type') == 'single' ? 'Single Choice' : 'Multiple Choice' }}
-                                    </span>
-                                @endif
-                            </div>
+                            @endif
+                            @if(request('category'))
+                                <span class="badge rounded-pill bg-warning small text-dark">{{ request('category') == 'ig' ? 'IG' : 'DM' }}</span>
+                            @endif
+                            @if(request('question_type'))
+                                <span class="badge rounded-pill bg-success small">{{ request('question_type') == 'single' ? 'Single' : 'Multiple' }}</span>
+                            @endif
                         </div>
                     @endif
                 </form>
@@ -200,15 +182,30 @@
                                     <span class="badge bg-light-success">{{ $question->options->where('is_correct', 1)->count() }} Correct</span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('admin.questions.edit', $question->id) }}" class="btn btn-icon btn-link-primary btn-sm" title="Edit Question">
-                                        <i class="ti ti-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $question->id }}">
-                                        @csrf @method('DELETE')
-                                        <button type="button" class="btn btn-icon btn-link-danger btn-sm" title="Delete Question" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')">
-                                            <i class="ti ti-trash"></i>
+                                    @php
+                                        $isActiveExamQuestion = $question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1;
+                                    @endphp
+                                    
+                                    @if($isActiveExamQuestion)
+                                        <button class="btn btn-icon btn-link-secondary btn-sm" style="opacity: 0.5; background: transparent; border: none;" title="Exam is active - cannot edit" disabled>
+                                            <i class="ti ti-edit"></i>
                                         </button>
-                                    </form>
+                                        <div class="d-inline-block">
+                                            <button class="btn btn-icon btn-link-secondary btn-sm" style="opacity: 0.5; background: transparent; border: none;" title="Exam is active - cannot delete" disabled>
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </div>
+                                    @else
+                                        <a href="{{ route('admin.questions.edit', $question->id) }}" class="btn btn-icon btn-link-primary btn-sm" title="Edit Question">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $question->id }}">
+                                            @csrf @method('DELETE')
+                                            <button type="button" class="btn btn-icon btn-link-danger btn-sm" title="Delete Question" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                             @empty

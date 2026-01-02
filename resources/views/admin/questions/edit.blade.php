@@ -22,12 +22,27 @@
 
 <div class="row" x-data="questionForm()">
     <div class="col-md-12">
+        @php
+            $isActiveExam = false;
+            if(isset($question) && $question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam) {
+                $isActiveExam = $question->caseStudy->section->exam->is_active == 1;
+            }
+        @endphp
+
+        <div id="activeExamWarning" class="alert alert-warning align-items-start gap-3 mb-4" role="alert" :class="isActiveExam ? 'd-flex' : 'd-none'" style="display: none;">
+            <i class="ti ti-lock" style="font-size: 20px; margin-top: 3px;"></i>
+            <div>
+                <strong>This Exam is Active/Locked</strong>
+                <p class="mb-0 mt-2">This exam is currently active. You cannot add or edit questions. Please deactivate the exam first.</p>
+            </div>
+        </div>
+
         <form action="{{ isset($question) ? route('admin.questions.update', $question->id) : route('admin.questions.store') }}" method="POST" id="questionForm">
             @csrf
             @if(isset($question)) @method('PUT') @endif
 
             <!-- Cascading Dropdowns -->
-            <div class="card">
+            <div class="card" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
                 <div class="card-header">
                     <h5>Select Location</h5>
                 </div>
@@ -70,7 +85,7 @@
             </div>
 
             <!-- Question Details -->
-            <div class="card mt-3">
+            <div class="card mt-3" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
                 <div class="card-header">
                     <h5>Question Details</h5>
                 </div>
@@ -186,7 +201,7 @@
 
             <div class="mt-3 text-end">
                 <a href="{{ route('admin.questions.index') }}" class="btn btn-secondary me-2">Cancel</a>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" :disabled="isActiveExam">
                     <i class="ti ti-check me-1"></i> Save Question
                 </button>
             </div>
@@ -234,6 +249,7 @@
 <script>
 function questionForm() {
     return {
+        isActiveExam: {{ $isActiveExam ? 'true' : 'false' }},
         questionType: '{{ $initialQuestionType }}',
         options: @json($initialOptions),
         singleCorrect: {{ $initialSingleCorrect }},
@@ -291,12 +307,18 @@ function questionForm() {
             if(!examId) {
                 this.caseStudies = [];
                 this.subCaseStudies = [];
+                this.isActiveExam = false;
                 return;
             }
 
             try {
                 const response = await fetch(`/admin/questions-ajax/case-studies/${examId}`);
-                this.caseStudies = await response.json();
+                const data = await response.json();
+                
+                // Check if any case study belongs to an active exam
+                this.isActiveExam = data.some(cs => cs.exam_is_active === 1);
+                
+                this.caseStudies = data;
                 
                 // Auto-select if editing
                 if(this.selectedCaseStudyId) {

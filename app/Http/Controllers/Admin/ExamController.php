@@ -46,6 +46,12 @@ class ExamController extends Controller
             $query->where('duration_minutes', $duration);
         }
 
+        // Filter by Active Status
+        // Filter by Active Status
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->input('is_active'));
+        }
+
         $exams = $query->orderBy('created_at', 'desc')->paginate(15);
 
         // Append query parameters to pagination links
@@ -111,6 +117,15 @@ class ExamController extends Controller
     // UPDATE EXAM
     public function update(Request $request, $id)
     {
+        $exam = Exam::find($id);
+        
+        if(!$exam) return redirect()->back()->with('error', 'Exam Not Found');
+
+        // Check if exam is locked and force edit checkbox is not checked
+        if ($exam->is_active == 1 && !$request->has('force_edit')) {
+            return redirect()->back()->with('error', 'This exam is locked. Check "Force Edit" to edit this active exam.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'exam_code' => 'required|string|max:50|unique:exams,exam_code,' . $id,
@@ -118,10 +133,6 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer',
         ]);
-
-        $exam = Exam::find($id);
-        
-        if(!$exam) return redirect()->back()->with('error', 'Exam Not Found');
 
         $exam->update([
             'name' => $request->name,
@@ -140,9 +151,16 @@ class ExamController extends Controller
     {
         $exam = Exam::find($id);
         
-        if ($exam) {
-            $exam->update(['status' => 0]); // soft delete logic
+        if (!$exam) {
+            return redirect()->back()->with('error', 'Exam Not Found');
         }
+
+        // Check if exam is locked
+        if ($exam->is_active == 1) {
+            return redirect()->back()->with('error', 'This exam is locked and cannot be deleted.');
+        }
+
+        $exam->update(['status' => 0]); // soft delete logic
 
         return redirect()->route('admin.exams.index')
             ->with('success', 'Exam Deleted Successfully!');
@@ -207,5 +225,15 @@ class ExamController extends Controller
 
         return redirect()->route('admin.exams.index')
             ->with('success', "Successfully imported $imported exams!");
+    }
+    public function toggleStatus($id)
+    {
+        $exam = Exam::findOrFail($id);
+        // Toggle the is_active status (assuming is_active is boolean or 0/1)
+        $exam->is_active = !$exam->is_active;
+        $exam->save();
+
+        $message = $exam->is_active ? 'Exam Activated Successfully!' : 'Exam Deactivated Successfully!';
+        return redirect()->back()->with('success', $message);
     }
 }

@@ -75,6 +75,12 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
+        // Check if exam is active
+        $caseStudy = CaseStudy::with('section.exam')->find($request->sub_case_id);
+        if ($caseStudy && $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot add question to an active exam. Please deactivate the exam first.');
+        }
+
         $request->validate([
             'sub_case_id' => 'required|exists:case_studies,id',
             'question_text' => 'required|string',
@@ -134,6 +140,12 @@ class QuestionController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Check if exam is active
+        $caseStudy = CaseStudy::with('section.exam')->find($request->sub_case_id);
+        if ($caseStudy && $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot modify question in an active exam. Please deactivate the exam first.');
+        }
+
         $request->validate([
             'sub_case_id' => 'required|exists:case_studies,id',
             'question_text' => 'required|string',
@@ -182,12 +194,18 @@ class QuestionController extends Controller
 
     public function destroy($id)
     {
-        $question = Question::find($id);
+        $question = Question::with('caseStudy.section.exam')->find($id);
         
-        if ($question) {
-            $question->update(['status' => 0]);
+        if (!$question) {
+            return back()->with('error', 'Question not found');
         }
-        
+
+        // Check if exam is active
+        if ($question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1) {
+            return back()->with('error', 'Cannot delete question from an active exam. Please deactivate the exam first.');
+        }
+
+        $question->update(['status' => 0]);
         return back()->with('success', 'Question deleted successfully!');
     }
 
@@ -197,9 +215,15 @@ class QuestionController extends Controller
     {
         // This actually fetches Sections for the Exam
         // The endpoint name in route is still 'questions.getCaseStudies' for now.
+        $exam = Exam::find($examId);
         $sections = Section::where('exam_id', $examId)
             ->where('status', 1)
             ->get(['id', 'title']);
+        
+        // Add exam active status to each section
+        $sections->each(function($section) use ($exam) {
+            $section->exam_is_active = $exam ? $exam->is_active : 0;
+        });
         
         return response()->json($sections);
     }

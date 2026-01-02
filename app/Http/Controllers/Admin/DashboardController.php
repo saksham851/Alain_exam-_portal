@@ -11,18 +11,54 @@ use App\Models\StudentExam;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        // Get dashboard statistics
-        $stats = [
-            'total_students' => User::where('role', 'student')->count(),
-            'active_exams' => Exam::where('status', 1)->count(),
-            'total_questions' => Question::where('status', 1)->count(),
-            'recent_attempts_count' => ExamAttempt::whereDate('created_at', today())->count(),
-        ];
+        // Get filter parameter for category
+        $selectedCategoryId = $request->get('exam_category_id');
 
-        // Get recent attempts with relationships
-        $recentAttempts = ExamAttempt::with(['studentExam.student', 'studentExam.exam'])
+        // Get dashboard statistics (filtered by category if selected)
+        if ($selectedCategoryId) {
+            // Filtered stats for selected category
+            $stats = [
+                'total_students' => \App\Models\StudentExam::whereHas('exam', function($q) use ($selectedCategoryId) {
+                    $q->where('category_id', $selectedCategoryId);
+                })->distinct('student_id')->count('student_id'),
+                
+                'active_exams' => Exam::where('status', 1)
+                    ->where('category_id', $selectedCategoryId)
+                    ->count(),
+                
+                'total_questions' => Question::where('status', 1)
+                    ->whereHas('caseStudy.section.exam', function($q) use ($selectedCategoryId) {
+                        $q->where('category_id', $selectedCategoryId);
+                    })->count(),
+                
+                'recent_attempts_count' => ExamAttempt::whereDate('created_at', today())
+                    ->whereHas('studentExam.exam', function($q) use ($selectedCategoryId) {
+                        $q->where('category_id', $selectedCategoryId);
+                    })->count(),
+                
+                'exam_categories' => 1, // Selected category
+                
+                'case_studies' => \App\Models\CaseStudy::where('status', 1)
+                    ->whereHas('section.exam', function($q) use ($selectedCategoryId) {
+                        $q->where('category_id', $selectedCategoryId);
+                    })->count(),
+            ];
+        } else {
+            // Total stats (no filter)
+            $stats = [
+                'total_students' => User::where('role', 'student')->count(),
+                'active_exams' => Exam::where('status', 1)->count(),
+                'total_questions' => Question::where('status', 1)->count(),
+                'recent_attempts_count' => ExamAttempt::whereDate('created_at', today())->count(),
+                'exam_categories' => \App\Models\ExamCategory::where('status', 1)->count(),
+                'case_studies' => \App\Models\CaseStudy::where('status', 1)->count(),
+            ];
+        }
+
+        // Get recent attempts (no filters, just latest 10)
+        $recentAttempts = ExamAttempt::with(['studentExam.student', 'studentExam.exam.category'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -33,6 +69,7 @@ class DashboardController extends Controller
                     'student_name' => $attempt->studentExam->student->first_name . ' ' . $attempt->studentExam->student->last_name,
                     'student_email' => $attempt->studentExam->student->email,
                     'exam_name' => $attempt->studentExam->exam->name,
+                    'exam_category' => $attempt->studentExam->exam->category ? $attempt->studentExam->exam->category->name : '-',
                     'total_score' => $attempt->total_score,
                     'is_passed' => $attempt->is_passed,
                     'created_at' => $attempt->created_at,
@@ -40,6 +77,83 @@ class DashboardController extends Controller
                 ];
             });
 
-        return view('dashboard.admin', compact('stats', 'recentAttempts'));
+        // Get all categories for filter dropdown
+        $categories = \App\Models\ExamCategory::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Get filter parameters for exam overview
+        $examSearch = $request->get('exam_search');
+        $examCategoryId = $request->get('exam_category_id');
+        $certificationType = $request->get('certification_type');
+
+        // Build query for exam overview
+        $examQuery = Exam::where('status', 1)
+            ->with(['category', 'sections.caseStudies'])
+            ->withCount([
+                'studentExams as student_count',
+                'studentExams as attempt_count' => function($q) {
+                    $q->has('attempts');
+                }
+            ]);
+
+        // Filter by exam name
+        if ($examSearch) {
+            $examQuery->where('name', 'like', '%' . $examSearch . '%');
+        }
+
+        // Filter by category
+        if ($examCategoryId) {
+            $examQuery->where('category_id', $examCategoryId);
+        }
+
+        // Filter by certification type
+        if ($certificationType) {
+            $examQuery->whereHas('category', function($q) use ($certificationType) {
+                $q->where('certification_type', $certificationType);
+            });
+        }
+
+        // Get exam overview data
+        $examOverview = $examQuery->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($exam) {
+                // Count questions for this exam through case studies
+                $questionCount = 0;
+                $caseStudyCount = 0;
+                
+                foreach ($exam->sections as $section) {
+                    $activeCaseStudies = $section->caseStudies->where('status', 1);
+                    $caseStudyCount += $activeCaseStudies->count();
+                    
+                    // Count questions for each case study
+                    foreach ($activeCaseStudies as $caseStudy) {
+                        $questionCount += \App\Models\Question::where('case_study_id', $caseStudy->id)
+                            ->where('status', 1)
+                            ->count();
+                    }
+                }
+
+                return (object)[
+                    'id' => $exam->id,
+                    'name' => $exam->name,
+                    'category' => $exam->category ? $exam->category->name : '-',
+                    'certification_type' => $exam->category ? $exam->category->certification_type : '-',
+                    'is_active' => $exam->is_active,
+                    'student_count' => $exam->student_count,
+                    'question_count' => $questionCount,
+                    'case_study_count' => $caseStudyCount,
+                    'attempt_count' => $exam->attempt_count,
+                ];
+            });
+
+        // Get certification types for filter
+        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+            ->distinct()
+            ->orderBy('certification_type')
+            ->pluck('certification_type');
+
+        return view('dashboard.admin', compact('stats', 'recentAttempts', 'categories', 'examOverview', 'certificationTypes'));
     }
 }

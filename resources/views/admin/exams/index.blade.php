@@ -23,38 +23,30 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">All Exams</h5>
+                <h5 class="mb-0">All Exams <span class="badge bg-light-secondary text-secondary ms-2 small">{{ \App\Models\Exam::where('status', 1)->count() }} Total</span></h5>
                 <a href="{{ route('admin.exams.create') }}" class="btn btn-primary btn-sm">
                     <i class="ti ti-plus me-1"></i> Create Exam
                 </a>
             </div>
             
-            <!-- Filters Section -->
-            <div class="card-body">
+            <!-- Compact Filters Section -->
+            <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route('admin.exams.index') }}" id="filterForm">
-                    <!-- Search Section -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-search me-1"></i>SEARCH EXAMS
-                            </label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-white border-end-0">
-                                    <i class="ti ti-search text-muted"></i>
-                                </span>
+                    <div class="row g-2 align-items-end">
+                        <!-- Search -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-muted small mb-1">SEARCH</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
-                                       placeholder="Search by exam name or code..." value="{{ request('search') }}">
+                                       placeholder="Name or code..." value="{{ request('search') }}">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Filters Grid -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-category me-1"></i>CATEGORY
-                            </label>
-                            <select name="category_id" class="form-select">
+                        <!-- Category -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
+                            <select name="category_id" class="form-select form-select-sm">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
@@ -63,12 +55,11 @@
                                 @endforeach
                             </select>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-certificate me-1"></i>CERTIFICATION TYPE
-                            </label>
-                            <select name="certification_type" class="form-select">
+
+                        <!-- Certification Type -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                            <select name="certification_type" class="form-select form-select-sm">
                                 <option value="">All Types</option>
                                 @foreach($certificationTypes as $type)
                                     <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
@@ -77,25 +68,32 @@
                                 @endforeach
                             </select>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-clock me-1"></i>DURATION (MINUTES)
-                            </label>
-                            <input type="number" name="duration" class="form-control" 
-                                   placeholder="Enter exact duration" min="0" value="{{ request('duration') }}">
-                        </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="d-flex gap-2 justify-content-end">
-                                <a href="{{ route('admin.exams.index') }}" class="btn btn-light px-4">
-                                    <i class="ti ti-refresh me-1"></i> Reset
+                        <!-- Duration -->
+                        <div class="col-md-1">
+                            <label class="form-label fw-bold text-muted small mb-1">MINS</label>
+                            <input type="number" name="duration" class="form-control form-control-sm" 
+                                   placeholder="Min" min="0" value="{{ request('duration') }}">
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-1">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <select name="is_active" class="form-select form-select-sm">
+                                <option value="">All</option>
+                                <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Active</option>
+                                <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
+                            </select>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="col-md-3">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="{{ route('admin.exams.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
+                                    <i class="ti ti-rotate"></i>
                                 </a>
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="ti ti-filter me-1"></i> Apply Filters
+                                <button type="submit" class="btn btn-sm btn-primary px-3">
+                                    <i class="ti ti-filter me-1"></i> Filter
                                 </button>
                             </div>
                         </div>
@@ -104,7 +102,15 @@
             </div>
             
             <!-- Active Filters Indicator -->
-            @if(request()->hasAny(['search', 'category_id', 'certification_type', 'duration']))
+            @php
+                $hasActiveFilters = request('search') || 
+                                  request('category_id') || 
+                                  request('certification_type') || 
+                                  (request()->has('duration') && request('duration') !== null) ||
+                                  request()->filled('is_active');
+            @endphp
+            
+            @if($hasActiveFilters)
             <div class="card-body border-top border-bottom bg-light-subtle py-3">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <span class="text-muted small fw-semibold">
@@ -113,6 +119,11 @@
                     @if(request('search'))
                         <span class="badge rounded-pill bg-dark">
                             <i class="ti ti-search me-1"></i>{{ request('search') }}
+                        </span>
+                    @endif
+                    @if(request()->filled('is_active'))
+                        <span class="badge rounded-pill {{ request('is_active') == 1 ? 'bg-success' : 'bg-danger' }}">
+                            <i class="ti ti-toggle-left me-1"></i>{{ request('is_active') == 1 ? 'Active' : 'Inactive' }}
                         </span>
                     @endif
                     @if(request('category_id'))
@@ -144,6 +155,7 @@
                                 <th>Category</th>
                                 <th>Certification Type</th>
                                 <th>Duration</th>
+                                <th>Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -182,19 +194,35 @@
                                         <i class="ti ti-clock me-1"></i>{{ $exam->duration_minutes }} mins
                                     </span>
                                 </td>
-                                <td class="text-end" style="width: 30%;">
+                                <td style="width: 10%;">
+                                    @if($exam->is_active == 1)
+                                        <span class="badge bg-success">Active</span>
+                                    @else
+                                        <span class="badge bg-danger">Inactive</span>
+                                    @endif
+                                </td>
+                                <td class="text-end" style="width: 25%;">
                                     <a href="{{ route('admin.case-studies.index', ['exam_id' => $exam->id]) }}" class="btn btn-icon btn-link-success btn-sm" title="Manage Case Studies">
                                         <i class="ti ti-file-text"></i>
                                     </a>
-                                    <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-icon btn-link-primary btn-sm" title="Edit Exam">
-                                        <i class="ti ti-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $exam->id }}">
-                                        @csrf @method('DELETE')
-                                        <button type="button" class="btn btn-icon btn-link-danger btn-sm" title="Delete Exam" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')">
+                                    @if($exam->is_active == 1)
+                                        <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-sm" title="Edit Exam" style="background: none; border: none; padding: 0; color: #0066cc;">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <button class="btn btn-sm" title="Active exam - cannot delete" disabled style="background: none; border: none; padding: 0; color: #999;">
                                             <i class="ti ti-trash"></i>
                                         </button>
-                                    </form>
+                                    @else
+                                        <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-sm" title="Edit Exam" style="background: none; border: none; padding: 0; color: #0066cc;">
+                                            <i class="ti ti-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $exam->id }}">
+                                            @csrf @method('DELETE')
+                                            <button type="button" class="btn btn-sm" title="Delete Exam" style="background: none; border: none; padding: 0; color: #dc3545;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                             @empty

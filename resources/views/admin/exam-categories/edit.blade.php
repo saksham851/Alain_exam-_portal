@@ -42,8 +42,20 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Certification Type <span class="text-danger">*</span></label>
-                            <input type="text" name="certification_type" class="form-control" value="{{ old('certification_type', optional($category)->certification_type) }}" required>
-                            @error('certification_type') <small class="text-danger">{{ $message }}</small> @enderror
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="flex-grow-1">
+                                    <select name="certification_type" id="certificationTypeSelect" class="form-select" required>
+                                        <option value="">Select Certification Type</option>
+                                        <option value="NIMCA" {{ old('certification_type', optional($category)->certification_type) == 'NIMCA' ? 'selected' : '' }}>NIMCA</option>
+                                    </select>
+                                    <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;">
+                                    @error('certification_type') <small class="text-danger">{{ $message }}</small> @enderror
+                                    @error('new_certification_type') <small class="text-danger">{{ $message }}</small> @enderror
+                                </div>
+                                <button type="button" id="addNewTypeBtn" class="btn btn-primary" style="white-space: nowrap;">
+                                    <i class="ti ti-plus me-1"></i> Add New
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -58,4 +70,42 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectElement = document.getElementById('certificationTypeSelect');
+    const newInputElement = document.getElementById('newCertificationTypeInput');
+    const addNewBtn = document.getElementById('addNewTypeBtn');
+    let isAddingNew = false;
+    
+    addNewBtn.addEventListener('click', function() {
+        if (!isAddingNew) {
+            // Show input field for new certification type
+            selectElement.style.display = 'none';
+            selectElement.required = false;
+            newInputElement.style.display = 'block';
+            newInputElement.required = true;
+            newInputElement.focus();
+            addNewBtn.innerHTML = '<i class="ti ti-x me-1"></i> Cancel';
+            addNewBtn.classList.remove('btn-primary');
+            addNewBtn.classList.add('btn-secondary');
+            isAddingNew = true;
+        } else {
+            // Hide input field and show dropdown
+            selectElement.style.display = 'block';
+            selectElement.required = true;
+            newInputElement.style.display = 'none';
+            newInputElement.required = false;
+            newInputElement.value = '';
+            addNewBtn.innerHTML = '<i class="ti ti-plus me-1"></i> Add New';
+            addNewBtn.classList.remove('btn-secondary');
+            addNewBtn.classList.add('btn-primary');
+            isAddingNew = false;
+        }
+    });
+});
+</script>
+@endpush
+
 @endsection

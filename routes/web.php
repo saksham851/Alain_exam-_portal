@@ -72,6 +72,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::delete('{id}', [ExamController::class,'destroy'])->name('destroy');
         Route::get('export/csv', [ExamController::class,'export'])->name('export');
         Route::post('import/csv', [ExamController::class,'import'])->name('import');
+        Route::put('{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('toggle-status');
     });
 
     // --- Case Study Cloning ---

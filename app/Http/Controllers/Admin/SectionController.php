@@ -11,13 +11,77 @@ use App\Models\Exam;
 
 class SectionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $sections = Section::where('status', 1)
-            ->with(['exam', 'caseStudies.questions'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        return view('admin.case_studies.index', ['caseStudies' => $sections]);
+        // Get filter parameters
+        $search = $request->get('search');
+        $examId = $request->get('exam_id');
+        $categoryId = $request->get('category_id');
+        $certificationType = $request->get('certification_type');
+        $isActive = $request->get('is_active');
+
+        // Base query
+        $query = Section::where('status', 1)
+            ->with(['exam.category', 'caseStudies.questions']);
+
+        // Search by section name
+        if ($search) {
+            $query->where('title', 'like', '%' . $search . '%');
+        }
+
+        // Filter by exam
+        if ($examId) {
+            $query->where('exam_id', $examId);
+        }
+
+        // Filter by category (through exam relationship)
+        if ($categoryId) {
+            $query->whereHas('exam', function($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        }
+
+        // Filter by certification type (through exam->category relationship)
+        if ($certificationType) {
+            $query->whereHas('exam.category', function($q) use ($certificationType) {
+                $q->where('certification_type', $certificationType);
+            });
+        }
+
+        // Filter by exam active/inactive status
+        if ($request->filled('is_active')) {
+            $query->whereHas('exam', function($q) use ($isActive) {
+                $q->where('is_active', $isActive);
+            });
+        }
+
+        $sections = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Append query parameters to pagination links
+        $sections->appends($request->all());
+
+        // Get all exams for filter dropdown
+        $exams = Exam::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Get all categories for filter dropdown
+        $categories = \App\Models\ExamCategory::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        // Get all unique certification types for filter dropdown
+        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+            ->distinct()
+            ->orderBy('certification_type')
+            ->pluck('certification_type');
+
+        return view('admin.case_studies.index', [
+            'caseStudies' => $sections,
+            'exams' => $exams,
+            'categories' => $categories,
+            'certificationTypes' => $certificationTypes
+        ]);
     }
 
     public function create()
@@ -29,6 +93,12 @@ class SectionController extends Controller
 
     public function store(Request $request)
     {
+        // Check if exam is active
+        $exam = Exam::find($request->exam_id);
+        if ($exam && $exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot add section to an active exam. Please deactivate the exam first.');
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'exam_id' => 'required|exists:exams,id',
@@ -74,6 +144,12 @@ class SectionController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Check if exam is active
+        $exam = Exam::find($request->exam_id);
+        if ($exam && $exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot modify section in an active exam. Please deactivate the exam first.');
+        }
+
         $request->validate([
             'title' => 'required|string|max:255',
             'exam_id' => 'required|exists:exams,id',
@@ -134,10 +210,17 @@ class SectionController extends Controller
 
     public function destroy($id)
     {
-        $section = Section::find($id);
-        if ($section) {
-           $section->update(['status' => 0]); 
+        $section = Section::with('exam')->find($id);
+        if (!$section) {
+            return back()->with('error', 'Section not found');
         }
+
+        // Check if exam is active
+        if ($section->exam && $section->exam->is_active == 1) {
+            return back()->with('error', 'Cannot delete section from an active exam. Please deactivate the exam first.');
+        }
+
+        $section->update(['status' => 0]); 
         return back()->with('success', 'Section deleted successfully.');
     }
 

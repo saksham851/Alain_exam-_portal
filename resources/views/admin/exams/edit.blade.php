@@ -26,9 +26,19 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Exam Details</h5>
                 @if(isset($exam))
-                    <a href="{{ route('admin.case-studies.clone.index', $exam->id) }}" class="btn btn-sm btn-outline-primary">
-                        📋 Clone Case Studies from Other Exams
-                    </a>
+                    <div class="d-flex gap-2">
+                        <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to change the status of this exam?');">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-sm {{ $exam->is_active ? 'btn-danger' : 'btn-success' }}">
+                                <i class="ti {{ $exam->is_active ? 'ti-lock' : 'ti-lock-open' }} me-1"></i>
+                                {{ $exam->is_active ? 'Deactivate / Unlock Exam' : 'Activate / Lock Exam' }}
+                            </button>
+                        </form>
+                        <a href="{{ route('admin.case-studies.clone.index', $exam->id) }}" class="btn btn-sm btn-outline-primary" id="cloneBtn">
+                            📋 Clone Case Studies from Other Exams
+                        </a>
+                    </div>
                 @endif
             </div>
             <div class="card-body">
@@ -36,6 +46,25 @@
                     @csrf
                     @if(isset($exam))
                         @method('PUT')
+                    @endif
+
+                    @if(isset($exam) && $exam->is_active == 1)
+                    <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
+                        <i class="ti ti-lock" style="font-size: 20px; margin-top: 3px;"></i>
+                        <div>
+                            <strong>This Exam is Active/Locked</strong>
+                            <p class="mb-0 mt-2">This exam is currently active and locked for editing. To make changes, please check the "Force Edit" checkbox below to confirm you want to edit this active exam.</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="force_edit" id="forceEdit" value="1">
+                            <label class="form-check-label" for="forceEdit">
+                                I understand this exam is active. <strong>Force Edit this exam</strong>
+                            </label>
+                        </div>
+                    </div>
                     @endif
 
                     <div class="row">
@@ -78,7 +107,7 @@
                     </div>
 
                     <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
                             {{ isset($exam) ? 'Update Exam' : 'Create Exam' }}
                         </button>
                         <a href="{{ route('admin.exams.index') }}" class="btn btn-secondary">Cancel</a>
@@ -88,4 +117,54 @@
         </div>
     </div>
 </div>
+
+@if(isset($exam) && $exam->is_active == 1)
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const forceEditCheckbox = document.getElementById('forceEdit');
+    const formInputs = document.querySelectorAll('input[name="name"], input[name="exam_code"], select[name="category_id"], input[name="duration_minutes"], textarea[name="description"]');
+    const cloneBtn = document.getElementById('cloneBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function updateFieldStates() {
+        const isChecked = forceEditCheckbox.checked;
+        
+        formInputs.forEach(input => {
+            input.disabled = !isChecked;
+            if (isChecked) {
+                input.style.opacity = '1';
+                input.style.pointerEvents = 'auto';
+            } else {
+                input.style.opacity = '0.5';
+                input.style.pointerEvents = 'none';
+                input.style.backgroundColor = '#f0f0f0';
+            }
+        });
+
+        // Handle clone button
+        if (cloneBtn) {
+            cloneBtn.disabled = !isChecked;
+            cloneBtn.style.opacity = isChecked ? '1' : '0.5';
+            cloneBtn.style.pointerEvents = isChecked ? 'auto' : 'none';
+        }
+
+        // Handle submit button
+        submitBtn.disabled = !isChecked;
+        if (!isChecked) {
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.pointerEvents = 'none';
+        } else {
+            submitBtn.style.opacity = '1';
+            submitBtn.style.pointerEvents = 'auto';
+        }
+    }
+
+    // Initial state
+    updateFieldStates();
+
+    // Listen to checkbox changes
+    forceEditCheckbox.addEventListener('change', updateFieldStates);
+});
+</script>
+@endif
 @endsection

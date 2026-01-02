@@ -13,10 +13,12 @@ class Exam extends Model
         'description',
         'duration_minutes',
         'status',
+        'is_active',
     ];
 
     protected $casts = [
         'status' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function category()

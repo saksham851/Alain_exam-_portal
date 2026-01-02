@@ -29,32 +29,24 @@
                 </a>
             </div>
             
-            <!-- Filters Section -->
-            <div class="card-body">
+            <!-- Compact Filters Section -->
+            <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route('admin.exam-categories.index') }}" id="filterForm">
-                    <!-- Search Section -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-search me-1"></i>SEARCH CATEGORIES
-                            </label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-white border-end-0">
-                                    <i class="ti ti-search text-muted"></i>
-                                </span>
+                    <div class="row g-2 align-items-end">
+                        <!-- Search -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-muted small mb-1">SEARCH</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
-                                       placeholder="Search by category name..." value="{{ request('search') }}">
+                                       placeholder="Category name..." value="{{ request('search') }}">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Filters Grid -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-certificate me-1"></i>CERTIFICATION TYPE
-                            </label>
-                            <select name="certification_type" class="form-select">
+                        <!-- Certification Type -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                            <select name="certification_type" class="form-select form-select-sm">
                                 <option value="">All Types</option>
                                 @foreach($certificationTypes as $type)
                                     <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
@@ -63,25 +55,22 @@
                                 @endforeach
                             </select>
                         </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-muted small mb-2">
-                                <i class="ti ti-clipboard-list me-1"></i>EXAM COUNT
-                            </label>
-                            <input type="number" name="exam_count" class="form-control" 
-                                   placeholder="Enter exact number of exams" min="0" value="{{ request('exam_count') }}">
-                        </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="d-flex gap-2 justify-content-end">
-                                <a href="{{ route('admin.exam-categories.index') }}" class="btn btn-light px-4">
-                                    <i class="ti ti-refresh me-1"></i> Reset
+                        <!-- Exam Count -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM COUNT</label>
+                            <input type="number" name="exam_count" class="form-control form-control-sm" 
+                                   placeholder="Count" min="0" value="{{ request('exam_count') }}">
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="col-md-3">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="{{ route('admin.exam-categories.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
+                                    <i class="ti ti-rotate"></i>
                                 </a>
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="ti ti-filter me-1"></i> Apply Filters
+                                <button type="submit" class="btn btn-sm btn-primary px-3">
+                                    <i class="ti ti-filter me-1"></i> Filter
                                 </button>
                             </div>
                         </div>
