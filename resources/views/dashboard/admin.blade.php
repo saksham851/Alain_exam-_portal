@@ -96,18 +96,18 @@
             <div class="row g-2 align-items-end">
               <!-- Search -->
               <div class="col-md-4">
-                <label class="form-label fw-bold text-muted small mb-1">SEARCH</label>
+                <label class="form-label fw-bold text-muted small mb-1">SEARCH BY NAME OR CODE</label>
                 <div class="input-group input-group-sm">
                   <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                   <input type="text" name="exam_search" class="form-control border-start-0 ps-0" 
-                         placeholder="Exam name..." value="{{ request('exam_search') }}">
+                         placeholder="Name or code..." value="{{ request('exam_search') }}" id="examSearchInput">
                 </div>
               </div>
 
               <!-- Exam Category -->
               <div class="col-md-3">
                 <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
-                <select name="exam_category_id" class="form-select form-select-sm">
+                <select name="exam_category_id" class="form-select form-select-sm" id="examCategorySelect">
                   <option value="">All Categories</option>
                   @foreach($categories as $category)
                     <option value="{{ $category->id }}" {{ request('exam_category_id') == $category->id ? 'selected' : '' }}>
@@ -120,7 +120,7 @@
               <!-- Certification Type -->
               <div class="col-md-2">
                 <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
-                <select name="certification_type" class="form-select form-select-sm">
+                <select name="certification_type" class="form-select form-select-sm" id="certificationTypeSelect">
                   <option value="">All Types</option>
                   @foreach($certificationTypes as $type)
                     <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
@@ -136,14 +136,45 @@
                   <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                     <i class="ti ti-rotate"></i>
                   </a>
-                  <button type="submit" class="btn btn-sm btn-primary px-3">
-                    <i class="ti ti-filter me-1"></i> Filter
-                  </button>
                 </div>
               </div>
             </div>
           </form>
         </div>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('examOverviewFilterForm');
+            const searchInput = document.getElementById('examSearchInput');
+            const categorySelect = document.getElementById('examCategorySelect');
+            const certificationTypeSelect = document.getElementById('certificationTypeSelect');
+            
+            let searchTimeout;
+            
+            // Auto-submit on dropdown change (instant)
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function() {
+                    filterForm.submit();
+                });
+            }
+            
+            if (certificationTypeSelect) {
+                certificationTypeSelect.addEventListener('change', function() {
+                    filterForm.submit();
+                });
+            }
+            
+            // Auto-submit on search input (debounced - 500ms delay)
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(function() {
+                        filterForm.submit();
+                    }, 500);
+                });
+            }
+        });
+        </script>
         
         <!-- Active Filters Indicator -->
         @php
@@ -182,9 +213,10 @@
             <table class="table table-hover mb-0">
               <thead>
                 <tr>
-                  <th>EXAM NAME</th>
-                  <th>Exam CATEGORY</th>
+                  <th>EXAM CATEGORY</th>
                   <th>CERTIFICATION TYPE</th>
+                  <th>EXAM NAME</th>
+                  <th>EXAM CODE</th>
                   <th>EXAM STATUS</th>
                   <th>STUDENTS</th>
                   <th>QUESTIONS</th>
@@ -196,13 +228,20 @@
                 @forelse($examOverview as $exam)
                 <tr>
                   <td>
-                    <h6 class="mb-0">{{ $exam->name }}</h6>
-                  </td>
-                  <td>
                     <span class="badge bg-light-info">{{ $exam->category }}</span>
                   </td>
                   <td>
                     <span class="badge bg-light-success">{{ $exam->certification_type }}</span>
+                  </td>
+                  <td>
+                    <h6 class="mb-0">{{ $exam->name }}</h6>
+                  </td>
+                  <td>
+                    @if($exam->exam_code)
+                      <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
+                    @else
+                      <span class="text-muted">-</span>
+                    @endif
                   </td>
                   <td>
                     @if($exam->is_active == 1)
@@ -226,7 +265,7 @@
                 </tr>
                 @empty
                 <tr>
-                  <td colspan="8" class="text-center text-muted py-4">
+                  <td colspan="10" class="text-center text-muted py-4">
                     No exams available.
                   </td>
                 </tr>

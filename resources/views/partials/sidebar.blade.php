@@ -25,7 +25,7 @@
         <li class="pc-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
             <a href="{{ route('admin.users.index') }}" class="pc-link">
                 <span class="pc-micon"><i class="ti ti-users"></i></span>
-                <span class="pc-mtext">Users</span>
+                <span class="pc-mtext">Students</span>
             </a>
         </li>
         <li class="pc-item {{ request()->routeIs('admin.exam-categories.*') ? 'active' : '' }}">

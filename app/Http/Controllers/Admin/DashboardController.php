@@ -97,9 +97,12 @@ class DashboardController extends Controller
                 }
             ]);
 
-        // Filter by exam name
+        // Filter by exam name or exam code
         if ($examSearch) {
-            $examQuery->where('name', 'like', '%' . $examSearch . '%');
+            $examQuery->where(function($q) use ($examSearch) {
+                $q->where('name', 'like', '%' . $examSearch . '%')
+                  ->orWhere('exam_code', 'like', '%' . $examSearch . '%');
+            });
         }
 
         // Filter by category
@@ -138,6 +141,7 @@ class DashboardController extends Controller
                 return (object)[
                     'id' => $exam->id,
                     'name' => $exam->name,
+                    'exam_code' => $exam->exam_code,
                     'category' => $exam->category ? $exam->category->name : '-',
                     'certification_type' => $exam->category ? $exam->category->certification_type : '-',
                     'is_active' => $exam->is_active,

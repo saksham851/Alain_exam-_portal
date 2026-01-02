@@ -46,25 +46,18 @@ class UserController extends Controller
             });
         }
 
-        // Filter by exact number of attempts
-        if ($attempts !== null) {
-            $query->where(function($q) use ($attempts, $examId, $categoryId) {
-                $q->whereHas('studentExams', function($subQuery) use ($attempts, $examId, $categoryId) {
-                    // Apply exam filter if set
-                    if ($examId) {
-                        $subQuery->where('exam_id', $examId);
-                    }
-                    
-                    // Apply category filter if set
-                    if ($categoryId) {
-                        $subQuery->whereHas('exam', function($examQuery) use ($categoryId) {
-                            $examQuery->where('category_id', $categoryId);
-                        });
-                    }
-                    
-                    // Count attempts for this student exam - exact match
-                    $subQuery->whereHas('attempts', function($attemptQuery) {}, '=', $attempts);
-                });
+        // Filter by minimum number of attempts
+        if ($attempts !== null && $attempts !== '') {
+            $attemptCount = (int)$attempts;
+            
+            // Use a subquery to count attempts per user
+            $query->whereIn('id', function($subQuery) use ($attemptCount) {
+                $subQuery->select('users.id')
+                    ->from('users')
+                    ->join('student_exams', 'users.id', '=', 'student_exams.student_id')
+                    ->join('exam_attempts', 'student_exams.id', '=', 'exam_attempts.student_exam_id')
+                    ->groupBy('users.id')
+                    ->havingRaw('COUNT(exam_attempts.id) >= ?', [$attemptCount]);
             });
         }
 

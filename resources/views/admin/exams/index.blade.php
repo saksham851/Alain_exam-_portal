@@ -35,7 +35,7 @@
                     <div class="row g-2 align-items-end">
                         <!-- Search -->
                         <div class="col-md-3">
-                            <label class="form-label fw-bold text-muted small mb-1">SEARCH</label>
+                            <label class="form-label fw-bold text-muted small mb-1">SEARCH BY NAME OR CODE</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
@@ -45,7 +45,7 @@
 
                         <!-- Category -->
                         <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
                             <select name="category_id" class="form-select form-select-sm">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $category)
@@ -58,7 +58,7 @@
 
                         <!-- Certification Type -->
                         <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                            <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
                             <select name="certification_type" class="form-select form-select-sm">
                                 <option value="">All Types</option>
                                 @foreach($certificationTypes as $type)
@@ -71,14 +71,14 @@
 
                         <!-- Duration -->
                         <div class="col-md-1">
-                            <label class="form-label fw-bold text-muted small mb-1">MINS</label>
+                            <label class="form-label fw-bold text-muted small mb-1">DURATION(MINS)</label>
                             <input type="number" name="duration" class="form-control form-control-sm" 
                                    placeholder="Min" min="0" value="{{ request('duration') }}">
                         </div>
 
                         <!-- Status -->
                         <div class="col-md-1">
-                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM STATUS</label>
                             <select name="is_active" class="form-select form-select-sm">
                                 <option value="">All</option>
                                 <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Active</option>
@@ -92,9 +92,6 @@
                                 <a href="{{ route('admin.exams.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
                                 </a>
-                                <button type="submit" class="btn btn-sm btn-primary px-3">
-                                    <i class="ti ti-filter me-1"></i> Filter
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -150,58 +147,58 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Code</th>
-                                <th>Category</th>
-                                <th>Certification Type</th>
-                                <th>Duration</th>
-                                <th>Status</th>
+                                <th>Exam Category</th>
+                                <th style="white-space: nowrap;">Certification Type</th>
+                                <th>Exam Name</th>
+                                <th>Exam Code</th>
+                                <th>Exam Status</th>
+                                <th>Exam Duration</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($exams as $exam)
                             <tr>
-                                <td style="width: 25%;">
-                                    <h5 class="mb-1 fw-bold">{{ $exam->name }}</h5>
-                                    @if($exam->description)
-                                        <small class="text-muted d-block">{{ Str::limit($exam->description, 80) }}</small>
-                                    @endif
-                                </td>
                                 <td style="width: 12%;">
-                                    @if($exam->exam_code)
-                                        <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td style="width: 15%;">
                                     @if($exam->category)
                                         <span class="badge bg-light-info">{{ $exam->category->name }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td style="width: 13%;">
+                                <td style="width: 13%; white-space: nowrap;">
                                     @if($exam->category)
                                         <span class="badge bg-light-success">{{ $exam->category->certification_type }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td style="width: 12%;">
-                                    <span class="badge bg-light-primary">
-                                        <i class="ti ti-clock me-1"></i>{{ $exam->duration_minutes }} mins
-                                    </span>
+                                <td style="width: 25%;">
+                                    <h5 class="mb-1 fw-bold">{{ $exam->name }}</h5>
+                                    @if($exam->description)
+                                        <small class="text-muted d-block">{{ Str::limit($exam->description, 40) }}</small>
+                                    @endif
                                 </td>
                                 <td style="width: 10%;">
+                                    @if($exam->exam_code)
+                                        <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td style="width: 9%;">
                                     @if($exam->is_active == 1)
                                         <span class="badge bg-success">Active</span>
                                     @else
                                         <span class="badge bg-danger">Inactive</span>
                                     @endif
                                 </td>
-                                <td class="text-end" style="width: 25%;">
+                                <td style="width: 11%;">
+                                    <span class="badge bg-light-primary">
+                                        <i class="ti ti-clock me-1"></i>{{ $exam->duration_minutes }} mins
+                                    </span>
+                                </td>
+                                <td class="text-end" style="width: 20%;">
                                     <a href="{{ route('admin.case-studies.index', ['exam_id' => $exam->id]) }}" class="btn btn-icon btn-link-success btn-sm" title="Manage Case Studies">
                                         <i class="ti ti-file-text"></i>
                                     </a>
@@ -227,7 +224,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center py-4">No exams found.</td>
+                                <td colspan="7" class="text-center py-4">No exams found.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -252,4 +249,55 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const searchInput = filterForm.querySelector('input[name="search"]');
+    const categorySelect = filterForm.querySelector('select[name="category_id"]');
+    const certificationTypeSelect = filterForm.querySelector('select[name="certification_type"]');
+    const durationInput = filterForm.querySelector('input[name="duration"]');
+    const statusSelect = filterForm.querySelector('select[name="is_active"]');
+    
+    let searchTimeout;
+    
+    // Auto-submit on dropdown change (instant)
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    if (certificationTypeSelect) {
+        certificationTypeSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    // Auto-submit on search input (debounced - 500ms delay)
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 500);
+        });
+    }
+    
+    // Auto-submit on duration input (debounced - 500ms delay)
+    if (durationInput) {
+        durationInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 500);
+        });
+    }
+});
+</script>
 @endsection

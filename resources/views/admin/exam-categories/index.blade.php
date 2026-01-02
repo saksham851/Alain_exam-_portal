@@ -23,7 +23,10 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">All Exam Categories</h5>
+                <h5 class="mb-0">
+                    All Exam Categories 
+                    <span class="badge bg-light-secondary ms-2">{{ $categories->total() }} Total</span>
+                </h5>
                 <a href="{{ route('admin.exam-categories.create') }}" class="btn btn-primary btn-sm">
                     <i class="ti ti-plus me-1"></i> Create Category
                 </a>
@@ -35,7 +38,7 @@
                     <div class="row g-2 align-items-end">
                         <!-- Search -->
                         <div class="col-md-4">
-                            <label class="form-label fw-bold text-muted small mb-1">SEARCH</label>
+                            <label class="form-label fw-bold text-muted small mb-1">SEARCH EXAM CATEGORY</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
@@ -45,7 +48,7 @@
 
                         <!-- Certification Type -->
                         <div class="col-md-3">
-                            <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                            <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
                             <select name="certification_type" class="form-select form-select-sm">
                                 <option value="">All Types</option>
                                 @foreach($certificationTypes as $type)
@@ -69,9 +72,6 @@
                                 <a href="{{ route('admin.exam-categories.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
                                 </a>
-                                <button type="submit" class="btn btn-sm btn-primary px-3">
-                                    <i class="ti ti-filter me-1"></i> Filter
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -109,7 +109,7 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Category Name</th>
+                                <th>Exam Category Name</th>
                                 <th>Certification Type</th>
                                 <th>Exams Count</th>
                                 <th class="text-end">Actions</th>
@@ -166,4 +166,41 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const searchInput = filterForm.querySelector('input[name="search"]');
+    const certificationTypeSelect = filterForm.querySelector('select[name="certification_type"]');
+    const examCountInput = filterForm.querySelector('input[name="exam_count"]');
+    
+    let searchTimeout;
+    
+    // Auto-submit on dropdown change (instant)
+    if (certificationTypeSelect) {
+        certificationTypeSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    // Auto-submit on search input (debounced - 500ms delay)
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 500);
+        });
+    }
+    
+    // Auto-submit on exam count input (debounced - 500ms delay)
+    if (examCountInput) {
+        examCountInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 500);
+        });
+    }
+});
+</script>
 @endsection

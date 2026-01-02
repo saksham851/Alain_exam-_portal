@@ -23,7 +23,10 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">All Sections</h5>
+                <h5 class="mb-0">
+                    All Sections 
+                    <span class="badge bg-light-secondary ms-2">{{ $caseStudies->total() }} Total</span>
+                </h5>
                 <a href="{{ route('admin.case-studies.create') }}" class="btn btn-primary btn-sm">
                     <i class="ti ti-plus me-1"></i> Add New Section
                 </a>
@@ -46,7 +49,7 @@
                         <!-- Category -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
-                            <select name="category_id" class="form-select form-select-sm">
+                            <select name="category_id" class="form-select form-select-sm" id="categorySelect">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
@@ -59,7 +62,7 @@
                         <!-- Certification Type -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
-                            <select name="certification_type" class="form-select form-select-sm">
+                            <select name="certification_type" class="form-select form-select-sm" id="certificationTypeSelect">
                                 <option value="">All Types</option>
                                 @foreach($certificationTypes as $type)
                                     <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
@@ -72,7 +75,7 @@
                         <!-- Exam -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                            <select name="exam_id" class="form-select form-select-sm">
+                            <select name="exam_id" class="form-select form-select-sm" id="examSelect">
                                 <option value="">All Exams</option>
                                 @foreach($exams as $exam)
                                     <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
@@ -85,7 +88,7 @@
                         <!-- Status -->
                         <div class="col-md-1">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM STATUS</label>
-                            <select name="is_active" class="form-select form-select-sm">
+                            <select name="is_active" class="form-select form-select-sm" id="statusSelect">
                                 <option value="">All</option>
                                 <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Active</option>
                                 <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
@@ -98,14 +101,59 @@
                                 <a href="{{ route('admin.case-studies.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
                                 </a>
-                                <button type="submit" class="btn btn-sm btn-primary px-3">
-                                    <i class="ti ti-filter me-1"></i> Filter
-                                </button>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
+            
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const filterForm = document.getElementById('filterForm');
+                const searchInput = filterForm.querySelector('input[name="search"]');
+                const categorySelect = document.getElementById('categorySelect');
+                const certificationTypeSelect = document.getElementById('certificationTypeSelect');
+                const examSelect = document.getElementById('examSelect');
+                const statusSelect = document.getElementById('statusSelect');
+                
+                let searchTimeout;
+                
+                // Auto-submit on dropdown change (instant)
+                if (categorySelect) {
+                    categorySelect.addEventListener('change', function() {
+                        filterForm.submit();
+                    });
+                }
+                
+                if (certificationTypeSelect) {
+                    certificationTypeSelect.addEventListener('change', function() {
+                        filterForm.submit();
+                    });
+                }
+                
+                if (examSelect) {
+                    examSelect.addEventListener('change', function() {
+                        filterForm.submit();
+                    });
+                }
+                
+                if (statusSelect) {
+                    statusSelect.addEventListener('change', function() {
+                        filterForm.submit();
+                    });
+                }
+                
+                // Auto-submit on search input (debounced - 500ms delay)
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(function() {
+                            filterForm.submit();
+                        }, 500);
+                    });
+                }
+            });
+            </script>
             
             <!-- Active Filters Indicator -->
             @php
@@ -156,7 +204,7 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Category</th>
+                                <th>Exam Category</th>
                                 <th>Certification Type</th>
                                 <th>Exam</th>
                                 <th>Section Name</th>

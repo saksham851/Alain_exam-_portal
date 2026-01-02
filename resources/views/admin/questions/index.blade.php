@@ -23,7 +23,10 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">All Questions</h5>
+                <h5 class="mb-0">
+                    All Questions 
+                    <span class="badge bg-light-secondary ms-2">{{ $questions->total() }} Total</span>
+                </h5>
                 <a href="{{ route('admin.questions.create') }}" class="btn btn-primary btn-sm">
                     <i class="ti ti-plus me-1"></i> Add Question
                 </a>

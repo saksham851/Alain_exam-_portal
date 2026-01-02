@@ -11,7 +11,7 @@
         </div>
         <ul class="breadcrumb">
           <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Users</li>
+          <li class="breadcrumb-item" aria-current="page">Students</li>
         </ul>
       </div>
     </div>
@@ -23,7 +23,10 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h5>All Students</h5>
+                <h5>
+                    All Students 
+                    <span class="badge bg-light-secondary ms-2">{{ $users->total() }} Total</span>
+                </h5>
             </div>
             
             <!-- Compact Filters Section -->
@@ -32,7 +35,7 @@
                     <div class="row g-2 align-items-end">
                         <!-- Search -->
                         <div class="col-md-3">
-                            <label class="form-label fw-bold text-muted small mb-1">SEARCH</label>
+                            <label class="form-label fw-bold text-muted small mb-1">SEARCH STUDENT</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
@@ -55,7 +58,7 @@
 
                         <!-- Exam Category -->
                         <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
                             <select name="category_id" class="form-select form-select-sm">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $category)
@@ -68,7 +71,7 @@
 
                         <!-- Attempts -->
                         <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">ATTEMPTS</label>
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM ATTEMPTS</label>
                             <input type="number" name="attempts" class="form-control form-control-sm" 
                                    placeholder="Attempts" min="0" value="{{ request('attempts') }}">
                         </div>
@@ -79,9 +82,6 @@
                                 <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
                                 </a>
-                                <button type="submit" class="btn btn-sm btn-primary px-3">
-                                    <i class="ti ti-filter me-1"></i> Filter
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -219,4 +219,49 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const searchInput = filterForm.querySelector('input[name="search"]');
+    const examSelect = filterForm.querySelector('select[name="exam_id"]');
+    const categorySelect = filterForm.querySelector('select[name="category_id"]');
+    const attemptsInput = filterForm.querySelector('input[name="attempts"]');
+    
+    let searchTimeout;
+    
+    // Auto-submit on dropdown change (instant)
+    if (examSelect) {
+        examSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    // Auto-submit on search input (debounced - 500ms delay)
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 500);
+        });
+    }
+    
+    // Auto-submit on attempts input (debounced - 500ms delay)
+    if (attemptsInput) {
+        attemptsInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 500);
+        });
+    }
+});
+</script>
 @endsection
