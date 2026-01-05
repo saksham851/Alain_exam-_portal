@@ -163,12 +163,9 @@ class DashboardController extends Controller
         
         // Build query for student details
         $studentQuery = User::where('role', 'student')
-            ->withCount([
-                'studentExams as enrolled_exams_count',
-                'studentExams as total_attempts_count' => function($q) {
-                    $q->has('attempts');
-                }
-            ]);
+            ->withCount('studentExams as enrolled_exams_count')
+            ->withSum('studentExams as total_attempts_allowed', 'attempts_allowed')
+            ->withSum('studentExams as total_attempts_used', 'attempts_used');
 
         // Filter by student name or email
         if ($studentSearch) {
@@ -192,12 +189,14 @@ class DashboardController extends Controller
                 
                 $averageScore = $attempts->count() > 0 ? $attempts->avg('total_score') : 0;
                 
+                $remainingAttempts = ($student->total_attempts_allowed ?? 0) - ($student->total_attempts_used ?? 0);
+
                 return (object)[
                     'id' => $student->id,
                     'name' => $student->first_name . ' ' . $student->last_name,
                     'email' => $student->email,
                     'enrolled_exams' => $student->enrolled_exams_count,
-                    'total_attempts' => $student->total_attempts_count,
+                    'total_attempts' => $remainingAttempts . ' left',
                     'average_score' => round($averageScore, 1),
                     'status' => $student->status,
                     'created_at' => $student->created_at,

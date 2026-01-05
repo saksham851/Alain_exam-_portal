@@ -167,6 +167,8 @@
                                 </td>
                                 <td>
                                     @php
+                                        // Always show the absolute latest activity for the user
+                                        // regardless of the current filters
                                         $lastAttempt = $user->examAttempts()
                                             ->whereNotNull('started_at')
                                             ->orderBy('started_at', 'desc')
@@ -190,7 +192,7 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('admin.attempts.by-user', $user->id) }}" class="badge bg-light-info text-info">
-                                        {{ $user->studentExams->sum(fn($se) => $se->attempts->count()) }} attempts
+                                        {{ $user->studentExams->sum('attempts_allowed') - $user->studentExams->sum('attempts_used') }} / {{ $user->studentExams->sum('attempts_allowed') }} left
                                     </a>
                                 </td>
                                 <td class="text-end">

@@ -20,7 +20,17 @@ class UserController extends Controller
         // Base query - only show students, not admins
         $query = User::where('role', 'student')
             ->where('status', 1)
-            ->with(['studentExams.exam.category', 'studentExams.attempts']);
+            ->with(['studentExams' => function($q) use ($examId, $categoryId) {
+                if ($examId) {
+                    $q->where('exam_id', $examId);
+                }
+                if ($categoryId) {
+                    $q->whereHas('exam', function($q2) use ($categoryId) {
+                        $q2->where('category_id', $categoryId);
+                    });
+                }
+            }, 'studentExams.exam.category', 'studentExams.attempts'])
+            ->withCount('examAttempts');
 
         // Search by name or email
         if ($search) {
