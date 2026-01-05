@@ -6,14 +6,57 @@ use App\Http\Controllers\Controller;
 use App\Models\ExamAttempt;
 use App\Models\AttemptAnswer;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class AttemptController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Build query for attempts
+        $query = ExamAttempt::with(['studentExam.student', 'studentExam.exam']);
+        
+        // Filter by time period if 'period' parameter is present
+        $period = $request->get('period');
+        if ($period) {
+            switch ($period) {
+                case '24h':
+                    $query->where('created_at', '>=', now()->subHours(24));
+                    break;
+                case '1week':
+                    $query->where('created_at', '>=', now()->subWeek());
+                    break;
+                case '1month':
+                    $query->where('created_at', '>=', now()->subMonth());
+                    break;
+                case '1year':
+                    $query->where('created_at', '>=', now()->subYear());
+                    break;
+            }
+        }
+        
+        // Filter by student name
+        $studentSearch = $request->get('student_search');
+        if ($studentSearch) {
+            $query->whereHas('studentExam.student', function($q) use ($studentSearch) {
+                $q->where(function($subQ) use ($studentSearch) {
+                    $subQ->where('first_name', 'like', '%' . $studentSearch . '%')
+                         ->orWhere('last_name', 'like', '%' . $studentSearch . '%')
+                         ->orWhere('email', 'like', '%' . $studentSearch . '%')
+                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $studentSearch . '%']);
+                });
+            });
+        }
+        
+        // Filter by exam name
+        $examSearch = $request->get('exam_search');
+        if ($examSearch) {
+            $query->whereHas('studentExam.exam', function($q) use ($examSearch) {
+                $q->where('name', 'like', '%' . $examSearch . '%');
+            });
+        }
+        
         // Get all attempts with student and exam information
-        $attempts = ExamAttempt::with(['studentExam.student', 'studentExam.exam'])
-            ->orderBy('created_at', 'desc')
+        $attempts = $query->orderBy('created_at', 'desc')
             ->paginate(20);
 
         // Transform for the view
@@ -24,8 +67,21 @@ class AttemptController extends Controller
             $attempt->percentage = $attempt->total_score; // Assuming total_score is already a percentage
             return $attempt;
         });
+        
+        // Pass filter values to the view
+        $selectedPeriod = $period;
+        
+        // Get all exams for the dropdown
+        $exams = \App\Models\Exam::where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+            
+        // Get all students for the dropdown
+        $students = \App\Models\User::where('role', 'student')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'email']);
 
-        return view('admin.attempts.index', compact('attempts'));
+        return view('admin.attempts.index', compact('attempts', 'selectedPeriod', 'studentSearch', 'examSearch', 'exams', 'students'));
     }
 
     public function show($id)

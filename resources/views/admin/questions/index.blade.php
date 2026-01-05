@@ -36,8 +36,34 @@
             <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route('admin.questions.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
+                        <!-- Certification Type Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
+                            <select name="certification_type" id="certification_type" class="form-select form-select-sm" onchange="handleCertificationTypeChange()">
+                                <option value="">All Types</option>
+                                @foreach($certificationTypes as $type)
+                                    <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
+                                        {{ $type }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Exam Category Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
+                            <select name="exam_category" id="exam_category" class="form-select form-select-sm" onchange="handleExamCategoryChange()">
+                                <option value="">All Categories</option>
+                                @foreach($examCategories as $examCategory)
+                                    <option value="{{ $examCategory->id }}" {{ request('exam_category') == $examCategory->id ? 'selected' : '' }}>
+                                        {{ $examCategory->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Exam Filter -->
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
                             <select name="exam" id="exam" class="form-select form-select-sm" onchange="handleExamChange()">
                                 <option value="">All Exams</option>
@@ -50,7 +76,7 @@
                         </div>
 
                         <!-- Case Study Filter -->
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">CASE STUDY</label>
                             <select name="case_study" id="case_study" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Case Studies</option>
@@ -63,10 +89,10 @@
                         </div>
 
                         <!-- Category Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
+                        <div class="col-md-1">
+                            <label class="form-label fw-bold text-muted small mb-1">Groups</label>
                             <select name="category" id="category" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Categories</option>
+                                <option value="">All Groups</option>
                                 <option value="ig" {{ request('category') == 'ig' ? 'selected' : '' }}>IG</option>
                                 <option value="dm" {{ request('category') == 'dm' ? 'selected' : '' }}>DM</option>
                             </select>
@@ -74,7 +100,7 @@
 
                         <!-- Question Type Filter -->
                         <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                            <label class="form-label fw-bold text-muted small mb-1">QUESTION TYPE</label>
                             <select name="question_type" id="question_type" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Types</option>
                                 <option value="single" {{ request('question_type') == 'single' ? 'selected' : '' }}>Single Choice</option>
@@ -83,7 +109,7 @@
                         </div>
 
                         <!-- Buttons -->
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="{{ route('admin.questions.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters">
                                     <i class="ti ti-rotate"></i>
@@ -95,11 +121,20 @@
                     </div>
 
                     <!-- Active Filters Indicator -->
-                    @if(request()->hasAny(['exam', 'category', 'case_study', 'question_type']))
+                    @if(request()->hasAny(['certification_type', 'exam_category', 'exam', 'category', 'case_study', 'question_type']))
                         <div class="mt-2 d-flex align-items-center flex-wrap gap-2">
                             <span class="text-muted small fw-semibold">
                                 <i class="ti ti-filter-check me-1"></i>ACTIVE:
                             </span>
+                            @if(request('certification_type'))
+                                <span class="badge rounded-pill bg-success small">{{ request('certification_type') }}</span>
+                            @endif
+                            @if(request('exam_category'))
+                                @php $selectedExamCategory = $examCategories->firstWhere('id', request('exam_category')); @endphp
+                                @if($selectedExamCategory)
+                                    <span class="badge rounded-pill bg-secondary small">{{ $selectedExamCategory->name }}</span>
+                                @endif
+                            @endif
                             @if(request('exam'))
                                 @php $selectedExam = $exams->firstWhere('id', request('exam')); @endphp
                                 @if($selectedExam)
@@ -124,6 +159,24 @@
             </div>
             
             <script>
+            function handleCertificationTypeChange() {
+                const form = document.getElementById('filterForm');
+                form.submit();
+            }
+
+            function handleExamCategoryChange() {
+                const form = document.getElementById('filterForm');
+                const examSelect = document.getElementById('exam');
+                const caseStudySelect = document.getElementById('case_study');
+                
+                // Clear exam and case study selections when exam category changes
+                examSelect.value = '';
+                caseStudySelect.value = '';
+                
+                // Submit the form to reload with filtered exams
+                form.submit();
+            }
+            
             function handleExamChange() {
                 const form = document.getElementById('filterForm');
                 const caseStudySelect = document.getElementById('case_study');
@@ -144,7 +197,7 @@
                                 <th style="width: 35%;">Question</th>
                                 <th>Case Study</th>
                                 <th>Type</th>
-                                <th>Category</th>
+                                <th>Groups</th>
                                 <th>Options</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -219,20 +272,10 @@
                         </tbody>
                     </table>
                 </div>
-                
-                @if($questions->hasPages())
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            Showing {{ $questions->firstItem() }} to {{ $questions->lastItem() }} of {{ $questions->total() }} entries
-                        </div>
-                        <div>
-                            {{ $questions->links() }}
-                        </div>
-                    </div>
-                </div>
-                @endif
             </div>
+            
+            {{-- Custom Pagination --}}
+            <x-custom-pagination :paginator="$questions" />
         </div>
     </div>
 </div>

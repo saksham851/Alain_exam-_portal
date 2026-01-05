@@ -158,6 +158,53 @@ class DashboardController extends Controller
             ->orderBy('certification_type')
             ->pluck('certification_type');
 
-        return view('dashboard.admin', compact('stats', 'recentAttempts', 'categories', 'examOverview', 'certificationTypes'));
+        // Get filter parameters for student details
+        $studentSearch = $request->get('student_search');
+        
+        // Build query for student details
+        $studentQuery = User::where('role', 'student')
+            ->withCount([
+                'studentExams as enrolled_exams_count',
+                'studentExams as total_attempts_count' => function($q) {
+                    $q->has('attempts');
+                }
+            ]);
+
+        // Filter by student name or email
+        if ($studentSearch) {
+            $studentQuery->where(function($q) use ($studentSearch) {
+                $q->where('first_name', 'like', '%' . $studentSearch . '%')
+                  ->orWhere('last_name', 'like', '%' . $studentSearch . '%')
+                  ->orWhere('email', 'like', '%' . $studentSearch . '%')
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $studentSearch . '%']);
+            });
+        }
+
+        // Get student details data
+        $studentDetails = $studentQuery->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($student) {
+                // Calculate average score from all attempts
+                $attempts = ExamAttempt::whereHas('studentExam', function($q) use ($student) {
+                    $q->where('student_id', $student->id);
+                })->get();
+                
+                $averageScore = $attempts->count() > 0 ? $attempts->avg('total_score') : 0;
+                
+                return (object)[
+                    'id' => $student->id,
+                    'name' => $student->first_name . ' ' . $student->last_name,
+                    'email' => $student->email,
+                    'enrolled_exams' => $student->enrolled_exams_count,
+                    'total_attempts' => $student->total_attempts_count,
+                    'average_score' => round($averageScore, 1),
+                    'status' => $student->status,
+                    'created_at' => $student->created_at,
+                    'joined_date' => $student->created_at->format('M d, Y'),
+                ];
+            });
+
+        return view('dashboard.admin', compact('stats', 'recentAttempts', 'categories', 'examOverview', 'certificationTypes', 'studentDetails'));
     }
 }

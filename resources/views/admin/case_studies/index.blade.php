@@ -268,18 +268,10 @@
                     </table>
                 </div>
                 
-                @if($caseStudies->hasPages())
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            Showing {{ $caseStudies->firstItem() }} to {{ $caseStudies->lastItem() }} of {{ $caseStudies->total() }} entries
-                        </div>
-                        <div>
-                            {{ $caseStudies->links() }}
-                        </div>
-                    </div>
                 </div>
-                @endif
+                
+                {{-- Custom Pagination --}}
+                <x-custom-pagination :paginator="$caseStudies" />
             </div>
         </div>
     </div>

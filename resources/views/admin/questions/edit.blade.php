@@ -110,9 +110,9 @@
                         </div>
 
                         <div class="col-md-12 mb-3">
-                            <label class="form-label">Question Category <span class="text-danger">*</span></label>
+                            <label class="form-label">Group <span class="text-danger">*</span></label>
                             <select name="question_category" class="form-select" required>
-                                <option value="">Select Category</option>
+                                <option value="">Select group</option>
                                 <option value="ig" {{ (isset($question) && $question->ig_weight > 0) ? 'selected' : '' }}>
                                     IG - Internal Governance
                                 </option>

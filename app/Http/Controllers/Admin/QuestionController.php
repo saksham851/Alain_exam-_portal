@@ -9,15 +9,23 @@ use App\Models\QuestionOption;
 use App\Models\Exam;
 use App\Models\Section;
 use App\Models\CaseStudy;
+use App\Models\ExamCategory; // Added this line
 
 class QuestionController extends Controller
 {
     public function index(Request $request)
     {
         $query = Question::where('status', 1)
-            ->with(['caseStudy.section.exam', 'options']);
+            ->with(['caseStudy.section.exam.category', 'options']);
 
-        // Filter by Exam (Primary Filter)
+        // Filter by Exam Category (Primary Filter)
+        if ($request->filled('exam_category')) {
+            $query->whereHas('caseStudy.section.exam', function($q) use ($request) {
+                $q->where('category_id', $request->exam_category);
+            });
+        }
+
+        // Filter by Exam (depends on Exam Category selection)
         if ($request->filled('exam')) {
             $query->whereHas('caseStudy.section', function($q) use ($request) {
                 $q->where('exam_id', $request->exam);
@@ -38,6 +46,13 @@ class QuestionController extends Controller
             }
         }
 
+        // Filter by Certification Type (through Exam Category)
+        if ($request->filled('certification_type')) {
+            $query->whereHas('caseStudy.section.exam.category', function($q) use ($request) {
+                $q->where('certification_type', $request->certification_type);
+            });
+        }
+
         // Filter by Question Type
         if ($request->filled('question_type')) {
             $query->where('question_type', $request->question_type);
@@ -45,10 +60,32 @@ class QuestionController extends Controller
 
         $questions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         
-        // Get all exams for filter dropdown
-        $exams = Exam::where('status', 1)
+        // Get all exam categories for filter dropdown
+        $examCategories = \App\Models\ExamCategory::where('status', 1)
             ->orderBy('name')
             ->get();
+
+        // Get all unique certification types for filter dropdown
+        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+            ->distinct()
+            ->orderBy('certification_type')
+            ->pluck('certification_type');
+        
+        // Get exams based on selected exam category (if any)
+        $examsQuery = Exam::where('status', 1);
+        
+        if ($request->filled('exam_category')) {
+            $examsQuery->where('category_id', $request->exam_category);
+        }
+
+        // Also filter exams by certification type if selected
+        if ($request->filled('certification_type')) {
+             $examsQuery->whereHas('category', function($q) use ($request) {
+                $q->where('certification_type', $request->certification_type);
+            });
+        }
+        
+        $exams = $examsQuery->orderBy('name')->get();
         
         // Get case studies based on selected exam (if any)
         $caseStudiesQuery = CaseStudy::where('status', 1)
@@ -62,7 +99,7 @@ class QuestionController extends Controller
         
         $caseStudies = $caseStudiesQuery->orderBy('title')->get();
         
-        return view('admin.questions.index', compact('questions', 'caseStudies', 'exams'));
+        return view('admin.questions.index', compact('questions', 'caseStudies', 'exams', 'examCategories', 'certificationTypes'));
     }
 
     public function create()

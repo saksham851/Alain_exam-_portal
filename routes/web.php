@@ -75,12 +75,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::put('{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('toggle-status');
     });
 
-    // --- Case Study Cloning ---
-    Route::prefix('exams/{examId}/clone-case-studies')->name('case-studies.clone.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\CaseStudyCloneController::class, 'showAvailableCaseStudies'])->name('index');
-        Route::post('/', [\App\Http\Controllers\Admin\CaseStudyCloneController::class, 'cloneCaseStudies'])->name('store');
-    });
-
     // --- Exam Categories ---
     Route::resource('exam-categories', \App\Http\Controllers\Admin\ExamCategoryController::class);
 
@@ -99,6 +93,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('case-studies', SectionController::class);
     Route::get('case-studies/export/csv', [SectionController::class, 'export'])->name('case-studies.export');
     Route::post('case-studies/import/csv', [SectionController::class, 'import'])->name('case-studies.import');
+
+    // --- Case Studies Bank ---
+    Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
+        Route::post('/copy', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'copy'])->name('copy');
+        Route::get('/sections/{examId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getSectionsByExam'])->name('sections');
+    });
 
     // --- Case Studies (formerly Sub Case Studies) ---
     // Similarly, we keep route name 'sub-case-studies' to minimize view breakage.

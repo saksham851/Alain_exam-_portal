@@ -232,18 +232,10 @@
                 </div>
                 
                 <!-- Pagination -->
-                @if($exams->hasPages())
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            Showing {{ $exams->firstItem() }} to {{ $exams->lastItem() }} of {{ $exams->total() }} entries
-                        </div>
-                        <div>
-                            {{ $exams->links() }}
-                        </div>
-                    </div>
                 </div>
-                @endif
+                
+                {{-- Custom Pagination --}}
+                <x-custom-pagination :paginator="$exams" />
             </div>
         </div>
     </div>

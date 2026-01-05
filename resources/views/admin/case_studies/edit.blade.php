@@ -65,6 +65,18 @@
 
             <!-- Sub Case Studies Logic -->
             <div class="card mt-3" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'style=opacity:0.5;pointer-events:none' : '' }}>
+                <!-- Warning Alert for Case Study Changes -->
+<div class="alert alert-warning alert-dismissible fade show d-flex align-items-start gap-2 m-3 mb-0" role="alert">
+                    <i class="ti ti-alert-triangle" style="font-size: 1.3rem; margin-top: 2px;"></i>
+                    <div>
+                        <strong>Important Notice for Admins:</strong> 
+                        <p class="mb-0 mt-1 small">
+                            When making changes to case studies, please be careful as your changes will affect all questions linked to this case study.
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5>Case Studies</h5>
                     <button type="button" @click="addSubCase" class="btn btn-sm btn-light-primary"><i class="ti ti-plus"></i> Add Case Study</button>

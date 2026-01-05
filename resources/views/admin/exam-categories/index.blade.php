@@ -149,18 +149,10 @@
                 </div>
                 
                 <!-- Pagination -->
-                @if($categories->hasPages())
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            Showing {{ $categories->firstItem() }} to {{ $categories->lastItem() }} of {{ $categories->total() }} entries
-                        </div>
-                        <div>
-                            {{ $categories->links() }}
-                        </div>
-                    </div>
                 </div>
-                @endif
+                
+                {{-- Custom Pagination --}}
+                <x-custom-pagination :paginator="$categories" />
             </div>
         </div>
     </div>

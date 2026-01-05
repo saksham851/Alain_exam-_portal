@@ -34,7 +34,7 @@
     <div class="col-md-6 col-xl-2">
       <div class="card h-100">
         <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Total Active Exams</h6>
+          <h6 class="mb-2 f-w-400 text-muted">Total Exams</h6>
           <h4 class="mb-2">{{ $stats['active_exams'] }} <span class="badge bg-light-success border border-success"><i class="ti ti-book"></i></span></h4>
           <p class="mb-0 text-muted text-sm">Available exams</p>
         </div>
@@ -82,6 +82,166 @@
     </div>
 </div>
 
+<!-- Student Details Table -->
+<div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+            <h5>Student Details</h5>
+        </div>
+        
+        <!-- Compact Filters Section -->
+        <div class="card-body bg-light-subtle py-3 border-bottom">
+          <form method="GET" action="{{ route('admin.dashboard') }}" id="studentDetailsFilterForm">
+            <!-- Preserve exam overview filters -->
+            @if(request('exam_search'))
+              <input type="hidden" name="exam_search" value="{{ request('exam_search') }}">
+            @endif
+            @if(request('exam_category_id'))
+              <input type="hidden" name="exam_category_id" value="{{ request('exam_category_id') }}">
+            @endif
+            @if(request('certification_type'))
+              <input type="hidden" name="certification_type" value="{{ request('certification_type') }}">
+            @endif
+            
+            <div class="row g-2 align-items-end">
+              <!-- Search -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-muted small mb-1">SEARCH BY NAME OR EMAIL</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
+                  <input type="text" name="student_search" class="form-control border-start-0 ps-0" 
+                         placeholder="Student name or email..." value="{{ request('student_search') }}" id="studentSearchInput">
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div class="col-md-6">
+                <div class="d-flex gap-1 justify-content-end">
+                  <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
+                    <i class="ti ti-rotate"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentFilterForm = document.getElementById('studentDetailsFilterForm');
+            const studentSearchInput = document.getElementById('studentSearchInput');
+            
+            let studentSearchTimeout;
+            
+            // Auto-submit on search input (debounced - 500ms delay)
+            if (studentSearchInput) {
+                studentSearchInput.addEventListener('input', function() {
+                    clearTimeout(studentSearchTimeout);
+                    studentSearchTimeout = setTimeout(function() {
+                        studentFilterForm.submit();
+                    }, 500);
+                });
+            }
+        });
+        </script>
+        
+        <!-- Active Filters Indicator -->
+        @php
+          $hasStudentFilters = request('student_search');
+        @endphp
+        
+        @if($hasStudentFilters)
+        <div class="card-body border-bottom bg-light-subtle py-3">
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="text-muted small fw-semibold">
+              <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
+            </span>
+            @if(request('student_search'))
+              <span class="badge rounded-pill bg-dark">
+                <i class="ti ti-search me-1"></i>{{ request('student_search') }}
+              </span>
+            @endif
+          </div>
+        </div>
+        @endif
+        
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>STUDENT NAME</th>
+                  <th>EMAIL</th>
+                  <th>ENROLLED EXAMS</th>
+                  <th>TOTAL ATTEMPTS</th>
+                  <th>AVERAGE SCORE</th>
+                  <th>STATUS</th>
+                  <th>JOINED DATE</th>
+                  <th class="text-end">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($studentDetails as $student)
+                <tr>
+                  <td>
+                    <h6 class="mb-0">{{ $student->name }}</h6>
+                  </td>
+                  <td>
+                    <span class="text-muted">{{ $student->email }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-light-primary">{{ $student->enrolled_exams }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-light-info">{{ $student->total_attempts }}</span>
+                  </td>
+                  <td>
+                    @if($student->average_score > 0)
+                      <span class="badge {{ $student->average_score >= 70 ? 'bg-light-success' : 'bg-light-warning' }}">
+                        {{ $student->average_score }}%
+                      </span>
+                    @else
+                      <span class="text-muted">-</span>
+                    @endif
+                  </td>
+                  <td>
+                    @if($student->status == 1)
+                      <span class="badge bg-success">Active</span>
+                    @else
+                      <span class="badge bg-danger">Inactive</span>
+                    @endif
+                  </td>
+                  <td>
+                    <span class="text-muted">{{ $student->joined_date }}</span>
+                  </td>
+                  <td class="text-end">
+                    <a href="{{ route('admin.attempts.by-user', $student->id) }}" 
+                       class="btn btn-sm btn-light-primary" 
+                       title="View Attempts">
+                      <i class="ti ti-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                @empty
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">
+                    @if($hasStudentFilters)
+                      No students found matching your filters.
+                    @else
+                      No students registered yet.
+                    @endif
+                  </td>
+                </tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
 <!-- Exam Overview Table -->
 <div class="row mb-4">
     <div class="col-md-12">
@@ -106,7 +266,7 @@
 
               <!-- Exam Category -->
               <div class="col-md-3">
-                <label class="form-label fw-bold text-muted small mb-1">CATEGORY</label>
+                <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
                 <select name="exam_category_id" class="form-select form-select-sm" id="examCategorySelect">
                   <option value="">All Categories</option>
                   @foreach($categories as $category)
@@ -119,7 +279,7 @@
 
               <!-- Certification Type -->
               <div class="col-md-2">
-                <label class="form-label fw-bold text-muted small mb-1">TYPE</label>
+                <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
                 <select name="certification_type" class="form-select form-select-sm" id="certificationTypeSelect">
                   <option value="">All Types</option>
                   @foreach($certificationTypes as $type)
@@ -281,12 +441,15 @@
 <div class="row">
     <!-- Recent Activity Table -->
     <div class="col-md-12 col-xl-8">
-      <div class="card tbl-card">
-        <div class="card-header">
-            <h5>Recent Activity</h5>
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Activity</h5>
+            <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-primary">
+              <i class="ti ti-eye me-1"></i> View All
+            </a>
         </div>
         
-        <div class="card-body">
+        <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover table-borderless mb-0">
               <thead>
@@ -319,11 +482,7 @@
                 @empty
                 <tr>
                   <td colspan="5" class="text-center text-muted py-4">
-                    @if($hasActiveFilters)
-                      No attempts found matching your filters.
-                    @else
-                      No recent attempts found. Students haven't attempted any exams yet.
-                    @endif
+                    No recent attempts found. Students haven't attempted any exams yet.
                   </td>
                 </tr>
                 @endforelse

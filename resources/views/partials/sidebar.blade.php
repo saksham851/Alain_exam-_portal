@@ -46,6 +46,12 @@
                 <span class="pc-mtext">Sections</span>
             </a>
         </li>
+        <li class="pc-item {{ request()->routeIs('admin.case-studies-bank.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.case-studies-bank.index') }}" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-database"></i></span>
+                <span class="pc-mtext">Case Studies Bank</span>
+            </a>
+        </li>
         <li class="pc-item {{ request()->routeIs('admin.questions.*') ? 'active' : '' }}">
             <a href="{{ route('admin.questions.index') }}" class="pc-link">
                 <span class="pc-micon"><i class="ti ti-question-mark"></i></span>

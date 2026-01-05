@@ -209,13 +209,12 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="p-3">
-                     {{-- Mock Links for now since it is array pagination in mock --}}
-                     @if(method_exists($users, 'links'))
-                        {{ $users->links() }}
-                     @endif
-                </div>
             </div>
+            
+            {{-- Custom Pagination --}}
+            @if(method_exists($users, 'links'))
+                <x-custom-pagination :paginator="$users" />
+            @endif
         </div>
     </div>
 </div>

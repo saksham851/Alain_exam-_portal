@@ -35,9 +35,6 @@
                                 {{ $exam->is_active ? 'Deactivate / Unlock Exam' : 'Activate / Lock Exam' }}
                             </button>
                         </form>
-                        <a href="{{ route('admin.case-studies.clone.index', $exam->id) }}" class="btn btn-sm btn-outline-primary" id="cloneBtn">
-                            📋 Clone Case Studies from Other Exams
-                        </a>
                     </div>
                 @endif
             </div>
@@ -123,7 +120,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const forceEditCheckbox = document.getElementById('forceEdit');
     const formInputs = document.querySelectorAll('input[name="name"], input[name="exam_code"], select[name="category_id"], input[name="duration_minutes"], textarea[name="description"]');
-    const cloneBtn = document.getElementById('cloneBtn');
     const submitBtn = document.getElementById('submitBtn');
 
     function updateFieldStates() {
@@ -140,13 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 input.style.backgroundColor = '#f0f0f0';
             }
         });
-
-        // Handle clone button
-        if (cloneBtn) {
-            cloneBtn.disabled = !isChecked;
-            cloneBtn.style.opacity = isChecked ? '1' : '0.5';
-            cloneBtn.style.pointerEvents = isChecked ? 'auto' : 'none';
-        }
 
         // Handle submit button
         submitBtn.disabled = !isChecked;
