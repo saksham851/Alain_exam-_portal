@@ -50,10 +50,10 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Exam <span class="text-danger">*</span></label>
-                            <select class="form-select" id="exam_id" @change="loadCaseStudies($event.target.value)" required>
+                            <select class="form-select" id="exam_id" @change="loadCaseStudies($event.target.value)" required {{ request('exam_id') ? 'style=pointer-events:none;background-color:#e9ecef;' : '' }}>
                                 <option value="">Select Exam</option>
                                 @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ (isset($question) && $question->caseStudy->section->exam_id == $exam->id) ? 'selected' : '' }}>
+                                    <option value="{{ $exam->id }}" {{ (request('exam_id', (isset($question) && $question->caseStudy->section->exam_id == $exam->id) ? $exam->id : '') == $exam->id) ? 'selected' : '' }}>
                                         {{ $exam->name }}
                                     </option>
                                 @endforeach
@@ -255,13 +255,15 @@ function questionForm() {
         singleCorrect: {{ $initialSingleCorrect }},
         caseStudies: [],
         subCaseStudies: [],
-        selectedExamId: {{ $selectedExamId ?? 'null' }},
-        selectedCaseStudyId: {{ $selectedCaseStudyId ?? 'null' }},
+        selectedExamId: {{ request('exam_id') ?? ($selectedExamId ?? 'null') }},
+        selectedCaseStudyId: {{ request('section_id') ?? ($selectedCaseStudyId ?? 'null') }},
         selectedSubCaseId: {{ $selectedSubCaseId ?? 'null' }},
 
         init() {
-            // Load initial data if editing
+            // Load initial data if editing or exam is pre-selected
             if(this.selectedExamId) {
+                // Set the exam dropdown value
+                document.getElementById('exam_id').value = this.selectedExamId;
                 this.loadCaseStudies(this.selectedExamId);
             }
 

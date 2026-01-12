@@ -92,46 +92,33 @@ class SectionController extends Controller
     }
 
     public function store(Request $request)
-    {
-        // Check if exam is active
-        $exam = Exam::find($request->exam_id);
-        if ($exam && $exam->is_active == 1) {
-            return redirect()->back()->with('error', 'Cannot add section to an active exam. Please deactivate the exam first.');
-        }
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'exam_id' => 'required|exists:exams,id',
-            'content' => 'nullable|string',
-            'sub_cases' => 'nullable|array',
-            'sub_cases.*.title' => 'required|string|max:255',
-            'sub_cases.*.content' => 'nullable|string',
-        ]);
-
-        // Create main section
-        $section = Section::create([
-            'exam_id' => $request->exam_id,
-            'title' => $request->title,
-            'content' => $request->content,
-            'order_no' => Section::where('exam_id', $request->exam_id)->max('order_no') + 1,
-            'status' => 1,
-        ]);
-
-        // Create case studies if provided
-        if ($request->has('sub_cases')) {
-            foreach ($request->sub_cases as $index => $caseData) {
-                CaseStudy::create([
-                    'section_id' => $section->id,
-                    'title' => $caseData['title'],
-                    'content' => $caseData['content'] ?? null,
-                    'order_no' => $index + 1,
-                    'status' => 1,
-                ]);
-            }
-        }
-
-        return redirect()->route('admin.case-studies.index')->with('success', 'Section created successfully.');
+{
+    // Check if exam is active
+    $exam = Exam::find($request->exam_id);
+    if ($exam && $exam->is_active == 1) {
+        return redirect()->back()->with('error', 'Cannot add section to an active exam. Please deactivate the exam first.');
     }
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'exam_id' => 'required|exists:exams,id',
+        'content' => 'nullable|string',
+    ]);
+
+    // Create main section
+    $section = Section::create([
+        'exam_id' => $request->exam_id,
+        'title' => $request->title,
+        'content' => $request->content,
+        'order_no' => Section::where('exam_id', $request->exam_id)->max('order_no') + 1,
+        'status' => 1,
+    ]);
+
+    return redirect()->route('admin.case-studies.index')
+        ->with('section_created_success', true)
+        ->with('created_exam_id', $request->exam_id)
+        ->with('created_section_id', $section->id);
+}
 
     public function edit($id)
     {
@@ -143,70 +130,31 @@ class SectionController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        // Check if exam is active
-        $exam = Exam::find($request->exam_id);
-        if ($exam && $exam->is_active == 1) {
-            return redirect()->back()->with('error', 'Cannot modify section in an active exam. Please deactivate the exam first.');
-        }
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'exam_id' => 'required|exists:exams,id',
-            'content' => 'nullable|string',
-            'sub_cases' => 'nullable|array',
-            'sub_cases.*.title' => 'required|string|max:255',
-            'sub_cases.*.content' => 'nullable|string',
-        ]);
-
-        $section = Section::find($id);
-        if (!$section || $section->status == 0) return back()->with('error', 'Section not found');
-
-        // Update main section
-        $section->update([
-            'exam_id' => $request->exam_id,
-            'title' => $request->title,
-            'content' => $request->content,
-        ]);
-
-        // Create, Update, or Delete Case Studies
-        $submittedIds = [];
-        
-        if ($request->has('sub_cases')) {
-            foreach ($request->sub_cases as $index => $caseData) {
-                // Determine if we are updating or creating
-                if (isset($caseData['id']) && $caseData['id']) {
-                    // Update existing
-                    $subCase = CaseStudy::find($caseData['id']);
-                    if ($subCase && $subCase->section_id == $section->id) {
-                        $subCase->update([
-                            'title' => $caseData['title'],
-                            'content' => $caseData['content'] ?? null,
-                            'order_no' => $index + 1,
-                        ]);
-                        $submittedIds[] = $subCase->id;
-                    }
-                } else {
-                    // Create new
-                    $newSubCase = CaseStudy::create([
-                        'section_id' => $section->id,
-                        'title' => $caseData['title'],
-                        'content' => $caseData['content'] ?? null,
-                        'order_no' => $index + 1,
-                        'status' => 1,
-                    ]);
-                    $submittedIds[] = $newSubCase->id;
-                }
-            }
-        }
-        
-        // Delete any Case Studies that were NOT submitted (removed from UI)
-        CaseStudy::where('section_id', $section->id)
-            ->whereNotIn('id', $submittedIds)
-            ->delete();
-
-        return redirect()->route('admin.case-studies.index')->with('success', 'Section updated successfully.');
+{
+    // Check if exam is active
+    $exam = Exam::find($request->exam_id);
+    if ($exam && $exam->is_active == 1) {
+        return redirect()->back()->with('error', 'Cannot modify section in an active exam. Please deactivate the exam first.');
     }
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'exam_id' => 'required|exists:exams,id',
+        'content' => 'nullable|string',
+    ]);
+
+    $section = Section::find($id);
+    if (!$section || $section->status == 0) return back()->with('error', 'Section not found');
+
+    // Update main section
+    $section->update([
+        'exam_id' => $request->exam_id,
+        'title' => $request->title,
+        'content' => $request->content,
+    ]);
+
+    return redirect()->route('admin.case-studies.index')->with('success', 'Section updated successfully.');
+}
 
     public function destroy($id)
     {

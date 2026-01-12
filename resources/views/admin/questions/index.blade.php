@@ -27,10 +27,59 @@
                     All Questions 
                     <span class="badge bg-light-secondary ms-2">{{ $questions->total() }} Total</span>
                 </h5>
-                <a href="{{ route('admin.questions.create') }}" class="btn btn-primary btn-sm">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
                     <i class="ti ti-plus me-1"></i> Add Question
-                </a>
+                </button>
             </div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-labelledby="addQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="addQuestionModalLabel">
+                    <i class="ti ti-help me-2 fs-4"></i> Add New Question
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">How would you like to add a question?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create from Scratch -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.questions.create', request()->only(['exam_id', 'section_id'])) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create Question from Scratch</h5>
+                                <p class="text-muted small mb-0">Start with a blank question.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone Question -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone question feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Question from Bank</h5>
+                                <p class="text-muted small mb-0">Copy an existing question.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
@@ -321,4 +370,14 @@
         </div>
     </div>
 </div>
+
+@if(request('open_modal'))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('addQuestionModal'));
+    modal.show();
+});
+</script>
+@endif
+
 @endsection

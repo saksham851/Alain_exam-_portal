@@ -21,6 +21,10 @@ class Exam extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $attributes = [
+        'is_active' => 0, // New exams are inactive by default
+    ];
+
     public function category()
     {
         return $this->belongsTo(ExamCategory::class, 'category_id');

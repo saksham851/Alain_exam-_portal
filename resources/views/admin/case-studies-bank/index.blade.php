@@ -22,12 +22,64 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     All Case Studies 
                     <span class="badge bg-light-secondary ms-2">{{ $caseStudies->total() }} Total</span>
                 </h5>
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCaseStudyModal">
+                    <i class="ti ti-plus me-1"></i> Add New Case Study
+                </button>
             </div>
+
+<!-- Add Case Study Modal -->
+<div class="modal fade" id="addCaseStudyModal" tabindex="-1" aria-labelledby="addCaseStudyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="addCaseStudyModalLabel">
+                    <i class="ti ti-file-text me-2 fs-4"></i> Add New Case Study
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">How would you like to add a case study?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create from Scratch -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.case-studies-bank.create', request()->only(['exam_id', 'section_id'])) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create Case Study from Scratch</h5>
+                                <p class="text-muted small mb-0">Start with a blank case study.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone Case Study -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone case study feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Case Study from Bank</h5>
+                                <p class="text-muted small mb-0">Copy an existing case study.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
@@ -85,47 +137,13 @@
                             </a>
                         </div>
                     </div>
-                </form>
             </div>
 
-            <form id="copyForm" action="{{ route('admin.case-studies-bank.copy') }}" method="POST">
-                @csrf
-
-            <!-- Copy Action Section -->
-            <div class="card-body bg-white py-3 border-bottom">
-                <div class="row align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small">Select Target Exam</label>
-                        <select id="targetExam" class="form-select form-select-sm" onchange="loadSections()">
-                            <option value="">Choose Exam...</option>
-                            @foreach($exams as $exam)
-                                <option value="{{ $exam->id }}">{{ $exam->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small">Select Target Section</label>
-                        <select name="target_section_id" id="targetSection" class="form-select form-select-sm" required>
-                            <option value="">Choose Section...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <button type="submit" class="btn btn-success" id="copyBtn" disabled>
-                            <i class="ti ti-copy me-1"></i> Copy Selected Case Studies
-                        </button>
-                        <small class="text-muted ms-2" id="selectedCount">0 selected</small>
-                    </div>
-                </div>
-            </div>
-                
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 50px;">
-                                    <input type="checkbox" id="selectAll" class="form-check-input">
-                                </th>
                                 <th>Case Study Title</th>
                                 <th>Current Section</th>
                                 <th>Current Exam</th>
@@ -138,9 +156,6 @@
                         <tbody>
                             @forelse($caseStudies as $caseStudy)
                             <tr>
-                                <td>
-                                    <input type="checkbox" name="case_study_ids[]" value="{{ $caseStudy->id }}" class="form-check-input case-study-checkbox">
-                                </td>
                                 <td>
                                     <strong>{{ $caseStudy->title }}</strong>
                                 </td>
@@ -330,4 +345,77 @@ document.getElementById('copyForm').addEventListener('submit', function(e) {
 // Initialize
 updateSelectedCount();
 </script>
+
+@if(session('case_study_created_success'))
+<!-- Case Studies Created Success Modal -->
+<div class="modal fade" id="caseStudiesCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="ti ti-check-circle me-2 fs-4"></i> Case Studies Created Successfully!
+                </h5>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">Would you like to add more case studies or proceed to add questions?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create Another Case Study -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.case-studies-bank.create', ['exam_id' => session('selected_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create Another Case Study</h5>
+                                <p class="text-muted small mb-0">Add more case studies to this or another section.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone Case Studies -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone case studies feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Case Studies to Section</h5>
+                                <p class="text-muted small mb-0">Copy existing case studies.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 3: Proceed -->
+                    <div class="col-12 mt-4">
+                        <a href="{{ route('admin.questions.index', ['open_modal' => 'create', 'exam_id' => session('selected_exam_id'), 'section_id' => session('selected_section_id')]) }}" class="btn btn-success w-100 py-2 fs-5">
+                            Proceed to Add Questions <i class="ti ti-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('caseStudiesCreatedSuccessModal'));
+    modal.show();
+});
+</script>
+@endif
+
+@if(request('open_modal'))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('addCaseStudyModal'));
+    modal.show();
+});
+</script>
+@endif
+
 @endsection

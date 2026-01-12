@@ -71,6 +71,68 @@ class CaseStudyBankController extends Controller
     }
 
     /**
+     * Show the form for creating a new case study
+     */
+    public function create()
+    {
+        $exams = Exam::where('status', 1)->orderBy('name')->get();
+        return view('admin.case-studies-bank.create', compact('exams'));
+    }
+
+    /**
+ * Store a new case study
+ */
+public function store(Request $request)
+{
+    $request->validate([
+        'section_id' => 'required|exists:sections,id',
+        'case_studies' => 'required|array|min:1',
+        'case_studies.*.title' => 'required|string|max:255',
+        'case_studies.*.content' => 'nullable|string',
+        'case_studies.*.order_no' => 'required|integer|min:1',
+    ]);
+
+    // Check if exam is active
+    $section = Section::with('exam')->findOrFail($request->section_id);
+    if ($section->exam && $section->exam->is_active == 1) {
+        return redirect()->back()->with('error', 'Cannot add case studies to an active exam. Please deactivate the exam first.');
+    }
+
+    DB::beginTransaction();
+    
+    try {
+        $createdCount = 0;
+        
+        foreach ($request->case_studies as $caseStudyData) {
+            CaseStudy::create([
+                'section_id' => $request->section_id,
+                'title' => $caseStudyData['title'],
+                'content' => $caseStudyData['content'] ?? null,
+                'order_no' => $caseStudyData['order_no'],
+                'status' => 1,
+            ]);
+            $createdCount++;
+        }
+        
+        DB::commit();
+        
+        $message = $createdCount > 1 
+            ? "Successfully created {$createdCount} case studies!" 
+            : 'Case Study created successfully!';
+        
+        return redirect()->route('admin.case-studies-bank.index')
+            ->with('case_study_created_success', true)
+            ->with('selected_exam_id', $request->exam_id)
+            ->with('selected_section_id', $request->section_id)
+            ->with('success', $message);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()->with('error', 'Error creating case studies: ' . $e->getMessage());
+    }
+}    
+
+    /**
      * Copy selected case studies to a target section
      */
     public function copy(Request $request)

@@ -27,10 +27,59 @@
                     All Sections 
                     <span class="badge bg-light-secondary ms-2">{{ $caseStudies->total() }} Total</span>
                 </h5>
-                <a href="{{ route('admin.case-studies.create') }}" class="btn btn-primary btn-sm">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSectionModal">
                     <i class="ti ti-plus me-1"></i> Add New Section
-                </a>
+                </button>
             </div>
+
+<!-- Add Section Modal -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="addSectionModalLabel">
+                    <i class="ti ti-layout-list me-2 fs-4"></i> Add New Section
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">How would you like to add a section?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create from Scratch -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.case-studies.create', request()->has('exam_id') ? ['exam_id' => request('exam_id')] : []) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create Section from Scratch</h5>
+                                <p class="text-muted small mb-0">Start with a blank section.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone Section -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone section feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Section from Another Exam</h5>
+                                <p class="text-muted small mb-0">Copy an existing section.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
@@ -276,5 +325,78 @@
         </div>
     </div>
 </div>
+
+@if(session('section_created_success'))
+<!-- Create Section Success Modal -->
+<div class="modal fade" id="createSectionSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="ti ti-check-circle me-2 fs-4"></i> Section Created Successfully!
+                </h5>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">Would you like to add another section or move to case studies?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create Another Section -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.case-studies.create', ['exam_id' => session('created_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create Another Section</h5>
+                                <p class="text-muted small mb-0">Start with a blank section.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone Another Section -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone section feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Another Section</h5>
+                                <p class="text-muted small mb-0">Copy an existing section.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 3: Proceed -->
+                    <div class="col-12 mt-4">
+                        <a href="{{ route('admin.case-studies-bank.index', ['open_modal' => 'create', 'exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}" class="btn btn-success w-100 py-2 fs-5">
+                            Proceed to Case Studies <i class="ti ti-arrow-right ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('createSectionSuccessModal'));
+    modal.show();
+});
+</script>
+@endif
+
+@if(request('open_modal'))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('addSectionModal'));
+    modal.show();
+});
+</script>
+@endif
 
 @endsection

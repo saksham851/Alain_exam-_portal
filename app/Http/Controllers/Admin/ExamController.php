@@ -90,17 +90,20 @@ class ExamController extends Controller
             'duration_minutes' => 'required|integer',
         ]);
 
-        Exam::create([
+        $exam = Exam::create([
             'name' => $request->name,
             'exam_code' => $request->exam_code,
             'category_id' => $request->category_id,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'status' => 1,
+            'is_active' => 0, // New exams start as inactive
         ]);
 
-        return redirect()->route('admin.exams.index')
-            ->with('success', 'Exam Created Successfully!');
+        return redirect()->route('admin.case-studies.index', [
+            'open_modal' => 'create',
+            'exam_id' => $exam->id
+        ])->with('success', 'Exam Created Successfully!');
     }
 
     // EDIT FORM
@@ -217,6 +220,7 @@ class ExamController extends Controller
                     'description' => $data[1] ?? null,
                     'duration_minutes' => $data[2] ?? 60,
                     'status' => 1,
+                    'is_active' => 0, // Imported exams start as inactive
                 ]);
                 $imported++;
             }

@@ -24,10 +24,59 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">All Exams <span class="badge bg-light-secondary text-secondary ms-2 small">{{ \App\Models\Exam::where('status', 1)->count() }} Total</span></h5>
-                <a href="{{ route('admin.exams.create') }}" class="btn btn-primary btn-sm">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createExamModal">
                     <i class="ti ti-plus me-1"></i> Create Exam
-                </a>
+                </button>
             </div>
+
+<!-- Create Exam Modal -->
+<div class="modal fade" id="createExamModal" tabindex="-1" aria-labelledby="createExamModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="createExamModalLabel">
+                    <i class="ti ti-school me-2 fs-4"></i> Create New Exam
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">How would you like to start?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Scratch -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.exams.create') }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-file-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create from Scratch</h5>
+                                <p class="text-muted small mb-0">Start with a blank exam and build it step by step.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Existing Exam</h5>
+                                <p class="text-muted small mb-0">Copy structure and content from an existing exam.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
@@ -277,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function() {
                 filterForm.submit();
-            }, 500);
+            }, 500);\
         });
     }
     
@@ -292,4 +341,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+@if(session('show_section_modal'))
+<!-- Exam Created Success Modal -->
+<div class="modal fade" id="examCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="ti ti-check-circle me-2 fs-4"></i> Exam Created Successfully!
+                </h5>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-1 text-center">Exam "<strong>{{ session('created_exam_name') }}</strong>" has been created.</p>
+                <p class="text-muted mb-4 text-center">How would you like to add sections?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.case-studies.index', ['open_modal' => 'create']) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-file-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Create Section from Scratch</h5>
+                                <p class="text-muted small mb-0">Start with a blank section.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.case-studies.index', ['open_modal' => 'clone']) }}" class="card h-100 border-2 border-success hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-success d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-success" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Section from Another Exam</h5>
+                                <p class="text-muted small mb-0">Copy an existing section.</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('examCreatedSuccessModal'));
+    modal.show();
+});
+</script>
+@endif
+
 @endsection

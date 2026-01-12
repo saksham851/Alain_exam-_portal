@@ -97,6 +97,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // --- Case Studies Bank ---
     Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'create'])->name('create');
+        Route::post('/store', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
         Route::post('/copy', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'copy'])->name('copy');
         Route::get('/sections/{examId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getSectionsByExam'])->name('sections');
     });
