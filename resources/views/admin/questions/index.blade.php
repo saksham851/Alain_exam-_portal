@@ -371,6 +371,70 @@
     </div>
 </div>
 
+@if(session('question_created_success'))
+<!-- Question Created Success Modal -->
+<div class="modal fade" id="questionCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i class="ti ti-check-circle me-2 fs-4"></i> Question Created Successfully!
+                </h5>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4 text-center">Would you like to add another question or finish?</p>
+                
+                <div class="row g-3">
+                    <!-- Option 1: Create Another Question -->
+                    <div class="col-md-6">
+                        <a href="{{ route('admin.questions.create', ['exam_id' => session('selected_exam_id'), 'section_id' => session('selected_section_id'), 'case_study_id' => session('selected_case_study_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Add Another Question</h5>
+                                <p class="text-muted small mb-0">Add more questions to this case study.</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Option 2: Clone Question -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone question feature coming soon!')">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    </div>
+                                </div>
+                                <h5 class="fw-bold mb-2">Clone Question from Bank</h5>
+                                <p class="text-muted small mb-0">Copy questions from other sections/exams.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 3: Finish -->
+                    <div class="col-12 mt-4">
+                        <a href="{{ route('admin.exams.index') }}" class="btn btn-success w-100 py-2 fs-5">
+                            Finish & Return to Exams <i class="ti ti-check ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = new bootstrap.Modal(document.getElementById('questionCreatedSuccessModal'));
+    modal.show();
+});
+</script>
+@endif
+
 @if(request('open_modal'))
 <script>
 document.addEventListener('DOMContentLoaded', function() {

@@ -159,6 +159,10 @@ class QuestionController extends Controller
         }
 
         return redirect()->route('admin.questions.index')
+            ->with('question_created_success', true)
+            ->with('selected_exam_id', $caseStudy->section->exam_id)
+            ->with('selected_section_id', $caseStudy->section_id)
+            ->with('selected_case_study_id', $request->sub_case_id)
             ->with('success', 'Question created successfully!');
     }
 

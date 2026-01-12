@@ -257,7 +257,7 @@ function questionForm() {
         subCaseStudies: [],
         selectedExamId: {{ request('exam_id') ?? ($selectedExamId ?? 'null') }},
         selectedCaseStudyId: {{ request('section_id') ?? ($selectedCaseStudyId ?? 'null') }},
-        selectedSubCaseId: {{ $selectedSubCaseId ?? 'null' }},
+        selectedSubCaseId: {{ request('case_study_id') ?? ($selectedSubCaseId ?? 'null') }},
 
         init() {
             // Load initial data if editing or exam is pre-selected
