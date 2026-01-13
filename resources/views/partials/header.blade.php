@@ -19,14 +19,7 @@
     <div class="ms-auto">
       <ul class="list-unstyled">
         {{-- @auth --}}
-        <li class="pc-h-item">
-            <a href="#" class="pc-head-link me-0" onclick="event.preventDefault(); document.getElementById('header-logout-form').submit();" title="Logout">
-                <i class="ti ti-power"></i>
-            </a>
-            <form id="header-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
-        </li>
+
         <li class="dropdown pc-h-item header-user-profile">
           <a class="pc-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" data-bs-auto-close="outside" aria-expanded="false">
             <img src="{{ asset('assets/images/user/avatar-2.jpg') }}" alt="user-image" class="user-avtar">

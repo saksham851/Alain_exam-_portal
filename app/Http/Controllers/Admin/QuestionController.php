@@ -9,6 +9,7 @@ use App\Models\QuestionOption;
 use App\Models\Exam;
 use App\Models\Section;
 use App\Models\CaseStudy;
+use Illuminate\Support\Facades\DB;
 use App\Models\ExamCategory; // Added this line
 
 class QuestionController extends Controller
@@ -102,12 +103,20 @@ class QuestionController extends Controller
         return view('admin.questions.index', compact('questions', 'caseStudies', 'exams', 'examCategories', 'certificationTypes'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $question = null;
         $exams = Exam::where('status', 1)->get();
         
-        return view('admin.questions.edit', compact('question', 'exams'));
+        $existingQuestions = collect();
+        if ($request->has('case_study_id')) {
+            $existingQuestions = Question::where('case_study_id', $request->case_study_id)
+                ->where('status', 1)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
+        return view('admin.questions.edit', compact('question', 'exams', 'existingQuestions'));
     }
 
     public function store(Request $request)
@@ -120,50 +129,127 @@ class QuestionController extends Controller
 
         $request->validate([
             'sub_case_id' => 'required|exists:case_studies,id',
-            'question_text' => 'required|string',
-            'question_type' => 'required|in:single,multiple',
-            'question_category' => 'required|in:ig,dm',
-            'options' => 'required|array|min:2',
-            'options.*.text' => 'required|string',
+            'existing_questions' => 'nullable|array',
+            'existing_questions.*.question_text' => 'required|string',
+            'existing_questions.*.question_type' => 'required|in:single,multiple',
+            'existing_questions.*.question_category' => 'required|in:ig,dm',
+            'existing_questions.*.options' => 'required|array|min:2',
+            'existing_questions.*.options.*.text' => 'required|string',
+            'questions' => 'nullable|array',
+            'questions.*.question_text' => 'required_with:questions|string',
+            'questions.*.question_type' => 'required_with:questions|in:single,multiple',
+            'questions.*.question_category' => 'required_with:questions|in:ig,dm',
+            'questions.*.options' => 'required_with:questions|array|min:2',
+            'questions.*.options.*.text' => 'required_with:questions|string',
         ]);
-
-        // Set weights based on category
-        $igWeight = $request->question_category === 'ig' ? 1 : 0;
-        $dmWeight = $request->question_category === 'dm' ? 1 : 0;
-
-        // Create question
-        // Note: The form still sends 'sub_case_id' because we didn't update the View form inputs yet
-        // But we are mapping it to 'case_study_id' for the DB.
-        $question = Question::create([
-            'case_study_id' => $request->sub_case_id,
-            'question_text' => $request->question_text,
-            'question_type' => $request->question_type,
-            'ig_weight' => $igWeight,
-            'dm_weight' => $dmWeight,
-            'status' => 1,
-        ]);
-
-        // Create options
-        foreach ($request->options as $index => $optionData) {
-            $isCorrect = 0;
-            if (isset($optionData['is_correct']) && ($optionData['is_correct'] == 1 || $optionData['is_correct'] === '1')) {
-                $isCorrect = 1;
-            }
-            
-            QuestionOption::create([
-                'question_id' => $question->id,
-                'option_key' => chr(65 + $index),
-                'option_text' => $optionData['text'],
-                'is_correct' => $isCorrect,
-            ]);
+        
+        if (empty($request->existing_questions) && empty($request->questions)) {
+             return redirect()->back()->with('error', 'Please add at least one question or edit existing ones.');
         }
 
-        return redirect()->route('admin.questions.index')
-            ->with('question_created_success', true)
-            ->with('selected_exam_id', $caseStudy->section->exam_id)
-            ->with('selected_section_id', $caseStudy->section_id)
-            ->with('selected_case_study_id', $request->sub_case_id)
-            ->with('success', 'Question created successfully!');
+        DB::beginTransaction();
+
+        try {
+            $createdCount = 0;
+            $updatedCount = 0;
+
+            // Update Existing Questions
+            if ($request->has('existing_questions')) {
+                foreach ($request->existing_questions as $qId => $qData) {
+                    $question = Question::find($qId);
+                    if ($question && $question->case_study_id == $request->sub_case_id) {
+                        $igWeight = $qData['question_category'] === 'ig' ? 1 : 0;
+                        $dmWeight = $qData['question_category'] === 'dm' ? 1 : 0;
+
+                        $question->update([
+                            'question_text' => $qData['question_text'],
+                            'question_type' => $qData['question_type'],
+                            'ig_weight' => $igWeight,
+                            'dm_weight' => $dmWeight,
+                        ]);
+
+                        // Handle Options - simpler to delete and recreate for consistency with strict key matching
+                        QuestionOption::where('question_id', $question->id)->delete();
+                        
+                        if (isset($qData['options']) && is_array($qData['options'])) {
+                            foreach ($qData['options'] as $index => $optionData) {
+                                $isCorrect = 0;
+                                if (isset($optionData['is_correct']) && ($optionData['is_correct'] == 1 || $optionData['is_correct'] === '1')) {
+                                    $isCorrect = 1;
+                                }
+                                
+                                QuestionOption::create([
+                                    'question_id' => $question->id,
+                                    'option_key' => chr(65 + $index),
+                                    'option_text' => $optionData['text'],
+                                    'is_correct' => $isCorrect,
+                                ]);
+                            }
+                        }
+                        $updatedCount++;
+                    }
+                }
+            }
+
+            // Create New Questions
+            if ($request->has('questions')) {
+                foreach ($request->questions as $qData) {
+                    // Skip if empty text (just in case)
+                    if(empty($qData['question_text'])) continue;
+
+                    // Set weights based on category
+                    $igWeight = $qData['question_category'] === 'ig' ? 1 : 0;
+                    $dmWeight = $qData['question_category'] === 'dm' ? 1 : 0;
+
+                    // Create question
+                    $question = Question::create([
+                        'case_study_id' => $request->sub_case_id,
+                        'question_text' => $qData['question_text'],
+                        'question_type' => $qData['question_type'],
+                        'ig_weight' => $igWeight,
+                        'dm_weight' => $dmWeight,
+                        'status' => 1,
+                    ]);
+
+                    // Create options
+                    if (isset($qData['options']) && is_array($qData['options'])) {
+                        foreach ($qData['options'] as $index => $optionData) {
+                            $isCorrect = 0;
+                            if (isset($optionData['is_correct']) && ($optionData['is_correct'] == 1 || $optionData['is_correct'] === '1')) {
+                                $isCorrect = 1;
+                            }
+                            
+                            QuestionOption::create([
+                                'question_id' => $question->id,
+                                'option_key' => chr(65 + $index),
+                                'option_text' => $optionData['text'],
+                                'is_correct' => $isCorrect,
+                            ]);
+                        }
+                    }
+                    $createdCount++;
+                }
+            }
+
+            DB::commit();
+
+            $messageParts = [];
+            if ($createdCount > 0) $messageParts[] = "created {$createdCount} new question(s)";
+            if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing question(s)";
+            
+            $message = "Successfully " . implode(' and ', $messageParts) . "!";
+
+            return redirect()->route('admin.questions.index')
+                ->with('question_created_success', true)
+                ->with('selected_exam_id', $caseStudy->section->exam_id)
+                ->with('selected_section_id', $caseStudy->section_id)
+                ->with('selected_case_study_id', $request->sub_case_id)
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error processing questions: ' . $e->getMessage());
+        }
     }
 
     public function edit($id)
@@ -274,9 +360,19 @@ class QuestionController extends Controller
         // This fetches CaseStudies for the Section
         $caseStudies = CaseStudy::where('section_id', $sectionId)
             ->where('status', 1)
-            ->get(['id', 'title']);
+            ->get(['id', 'title', 'order_no', 'content']);
         
         return response()->json($caseStudies);
+    }
+
+    public function getQuestions($caseStudyId)
+    {
+        $questions = Question::where('case_study_id', $caseStudyId)
+            ->where('status', 1)
+            ->with(['options'])
+            ->get(); // Return full objects
+            
+        return response()->json($questions);
     }
 
     // EXPORT TO CSV

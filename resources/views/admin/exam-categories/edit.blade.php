@@ -9,11 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">{{ isset($category) ? 'Edit Category' : 'Create Category' }}</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('admin.exam-categories.index') }}">Exam Categories</a></li>
-          <li class="breadcrumb-item" aria-current="page">{{ isset($category) ? 'Edit' : 'Create' }}</li>
-        </ul>
+
       </div>
     </div>
   </div>

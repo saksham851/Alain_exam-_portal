@@ -9,11 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">{{ isset($exam) ? 'Edit Exam' : 'Create Exam' }}</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('admin.exams.index') }}">Exams</a></li>
-          <li class="breadcrumb-item" aria-current="page">{{ isset($exam) ? 'Edit' : 'Create' }}</li>
-        </ul>
+
       </div>
     </div>
   </div>

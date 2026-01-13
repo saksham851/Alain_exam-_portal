@@ -9,10 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">Admin Dashboard</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Dashboard</li>
-        </ul>
+
       </div>
     </div>
   </div>
@@ -441,7 +438,7 @@
 <div class="row">
     <!-- Recent Activity Table -->
     <div class="col-md-12 col-xl-8">
-      <div class="card">
+      <div class="card h-100">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Recent Activity</h5>
             <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-primary">
@@ -495,7 +492,7 @@
 
     <!-- Quick Stats -->
     <div class="col-md-12 col-xl-4">
-      <div class="card">
+      <div class="card h-100">
         <div class="card-header">
           <h5>Quick Actions</h5>
         </div>

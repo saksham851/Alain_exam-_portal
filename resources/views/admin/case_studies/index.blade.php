@@ -9,10 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">Sections</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Sections</li>
-        </ul>
+
       </div>
     </div>
   </div>
@@ -95,6 +92,20 @@
                             </div>
                         </div>
 
+                        
+                        <!-- Exam -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
+                            <select name="exam_id" class="form-select form-select-sm" id="examSelect">
+                                <option value="">All Exams</option>
+                                @foreach($exams as $exam)
+                                    <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
+                                        {{ $exam->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Category -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
@@ -121,18 +132,6 @@
                             </select>
                         </div>
 
-                        <!-- Exam -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                            <select name="exam_id" class="form-select form-select-sm" id="examSelect">
-                                <option value="">All Exams</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
-                                        {{ $exam->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
 
                         <!-- Status -->
                         <div class="col-md-1">
@@ -331,49 +330,58 @@
 <div class="modal fade" id="createSectionSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-0">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title d-flex align-items-center">
                     <i class="ti ti-check-circle me-2 fs-4"></i> Section Created Successfully!
                 </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted mb-4 text-center">Would you like to add another section or move to case studies?</p>
                 
                 <div class="row g-3">
                     <!-- Option 1: Create Another Section -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <a href="{{ route('admin.case-studies.create', ['exam_id' => session('created_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 1.8rem;"></i>
                                     </div>
                                 </div>
-                                <h5 class="fw-bold mb-2">Create Another Section</h5>
-                                <p class="text-muted small mb-0">Start with a blank section.</p>
+                                <h6 class="fw-bold mb-2">Create Another Section</h6>
+                                <p class="text-muted small mb-0">Start blank.</p>
                             </div>
                         </a>
                     </div>
 
                     <!-- Option 2: Clone Another Section -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone section feature coming soon!')">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 1.8rem;"></i>
                                     </div>
                                 </div>
-                                <h5 class="fw-bold mb-2">Clone Another Section</h5>
-                                <p class="text-muted small mb-0">Copy an existing section.</p>
+                                <h6 class="fw-bold mb-2">Clone Section</h6>
+                                <p class="text-muted small mb-0">From existing.</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Option 3: Proceed -->
-                    <div class="col-12 mt-4">
-                        <a href="{{ route('admin.case-studies-bank.index', ['open_modal' => 'create', 'exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}" class="btn btn-success w-100 py-2 fs-5">
-                            Proceed to Case Studies <i class="ti ti-arrow-right ms-2"></i>
+                    <div class="col-md-4">
+                        <a href="{{ route('admin.case-studies-bank.index', ['open_modal' => 'create', 'exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}" class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                        <i class="ti ti-arrow-right text-primary" style="font-size: 1.8rem;"></i>
+                                    </div>
+                                </div>
+                                <h6 class="fw-bold mb-2">Add Case Studies</h6>
+                                <p class="text-muted small mb-0">Proceed to content.</p>
+                            </div>
                         </a>
                     </div>
                 </div>
@@ -384,6 +392,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show success alert first
+    showAlert.success('Section created successfully!', 'Success!');
+    
+    // Then show the modal
     var modal = new bootstrap.Modal(document.getElementById('createSectionSuccessModal'));
     modal.show();
 });

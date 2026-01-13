@@ -161,4 +161,132 @@ class UserController extends Controller
         
         return back()->with('success', 'Student deleted successfully!');
     }
+
+    /**
+     * Get student's assigned exams
+     */
+    public function getAssignedExams($studentId)
+    {
+        try {
+            $assignedExams = \App\Models\StudentExam::where('student_id', $studentId)
+                ->with('exam:id,name')
+                ->get()
+                ->map(function($studentExam) {
+                    return [
+                        'exam_id' => $studentExam->exam_id,
+                        'exam_name' => $studentExam->exam->name ?? 'Unknown'
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'exams' => $assignedExams
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching assigned exams: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get student's exam attempts information
+     */
+    public function getStudentExamAttempts($studentId, $examId)
+    {
+        try {
+            $studentExam = \App\Models\StudentExam::where('student_id', $studentId)
+                ->where('exam_id', $examId)
+                ->first();
+
+            if (!$studentExam) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Exam not assigned to this student'
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'attempts_allowed' => $studentExam->attempts_allowed,
+                    'attempts_used' => $studentExam->attempts_used,
+                    'attempts_remaining' => $studentExam->attempts_allowed - $studentExam->attempts_used,
+                    'is_assigned' => true
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching attempts: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Manage (increase/decrease) student exam attempts
+     */
+    public function manageAttempts(Request $request)
+    {
+        try {
+            $request->validate([
+                'student_id' => 'required|exists:users,id',
+                'exam_id' => 'required|exists:exams,id',
+                'attempts_adjustment' => 'required|integer'
+            ]);
+
+            $studentId = $request->student_id;
+            $examId = $request->exam_id;
+            $adjustment = $request->attempts_adjustment;
+
+            // Find or create student exam record
+            $studentExam = \App\Models\StudentExam::firstOrCreate(
+                [
+                    'student_id' => $studentId,
+                    'exam_id' => $examId
+                ],
+                [
+                    'attempts_allowed' => 0,
+                    'attempts_used' => 0,
+                    'expiry_date' => now()->addWeeks(4),
+                    'source' => 'Admin Manual',
+                    'status' => 1
+                ]
+            );
+
+            // Calculate new attempts
+            $newAttempts = $studentExam->attempts_allowed + $adjustment;
+
+            // Prevent negative attempts
+            if ($newAttempts < 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot reduce attempts below 0'
+                ], 400);
+            }
+
+            // Update attempts
+            $studentExam->attempts_allowed = $newAttempts;
+            $studentExam->save();
+
+            $student = User::find($studentId);
+            $exam = \App\Models\Exam::find($examId);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully updated attempts for {$student->first_name} {$student->last_name} - {$exam->name}. New total: {$newAttempts} attempts.",
+                'data' => [
+                    'attempts_allowed' => $studentExam->attempts_allowed,
+                    'attempts_used' => $studentExam->attempts_used,
+                    'attempts_remaining' => $studentExam->attempts_allowed - $studentExam->attempts_used
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating attempts: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

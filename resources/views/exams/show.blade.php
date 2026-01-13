@@ -9,11 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">{{ $exam->name }}</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('student.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('exams.index') }}">Exams</a></li>
-          <li class="breadcrumb-item" aria-current="page">{{ $exam->name }}</li>
-        </ul>
+
       </div>
     </div>
   </div>

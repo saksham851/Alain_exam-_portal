@@ -84,11 +84,24 @@ class SectionController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $section = null;
         $exams = Exam::where('status', 1)->get();
-        return view('admin.case_studies.edit', ['caseStudy' => $section, 'exams' => $exams]);
+        
+        $existingSections = collect();
+        if ($request->has('exam_id')) {
+            $existingSections = Section::where('exam_id', $request->exam_id)
+                ->where('status', 1)
+                ->orderBy('created_at', 'asc')
+                ->get();
+        }
+
+        return view('admin.case_studies.edit', [
+            'caseStudy' => $section, 
+            'exams' => $exams,
+            'existingSections' => $existingSections
+        ]);
     }
 
     public function store(Request $request)

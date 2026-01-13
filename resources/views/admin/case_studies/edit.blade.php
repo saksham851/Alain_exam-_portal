@@ -9,11 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">{{ isset($caseStudy) ? 'Edit Section' : 'Create Section' }}</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('admin.case-studies.index') }}">Sections</a></li>
-          <li class="breadcrumb-item" aria-current="page">{{ isset($caseStudy) ? 'Edit' : 'Create' }}</li>
-        </ul>
+
       </div>
     </div>
   </div>
@@ -59,7 +55,7 @@
                             <input type="text" name="title" class="form-control" value="{{ old('title', $caseStudy->title ?? '') }}" required>
                         </div>
                         <div class="col-md-12 mb-3">
-                            <label class="form-label">Description / Scenario</label>
+                            <label class="form-label">Description</label>
                             <textarea id="cs_description" name="content" class="form-control">{{ old('content', $caseStudy->content ?? '') }}</textarea>
                         </div>
                     </div>
@@ -72,18 +68,35 @@
             </div>
         </form>
 
-        @if(isset($caseStudy))
+
+
+        @if(isset($existingSections) && $existingSections->count() > 0)
         <div class="card mt-4">
-            <div class="card-header bg-light-info">
-                <h5 class="mb-0 text-info">
-                    <i class="ti ti-info-circle me-2"></i>Add Case Studies to This Section
-                </h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Existing Sections for Selected Exam</h5>
+                <span class="badge bg-light-primary">{{ $existingSections->count() }} Sections Found</span>
             </div>
-            <div class="card-body">
-                <p class="mb-3">To add case studies to this section, please use the <strong>Case Studies Bank</strong>.</p>
-                <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-info">
-                    <i class="ti ti-database me-1"></i> Go to Case Studies Bank
-                </a>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Section Name</th>
+                                <th>Description</th>
+                                <th class="text-end">Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($existingSections as $existingSection)
+                            <tr>
+                                <td><strong>{{ $existingSection->title }}</strong></td>
+                                <td>{{ Str::limit(strip_tags($existingSection->content), 60) }}</td>
+                                <td class="text-end text-muted">{{ $existingSection->created_at->format('d M Y, h:i A') }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         @endif

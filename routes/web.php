@@ -62,6 +62,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // --- Users ---
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     
+    // --- Manage Student Attempts ---
+    Route::get('users/{studentId}/assigned-exams', [\App\Http\Controllers\Admin\UserController::class, 'getAssignedExams']);
+    Route::get('users/{studentId}/exam/{examId}/attempts', [\App\Http\Controllers\Admin\UserController::class, 'getStudentExamAttempts']);
+    Route::post('users/manage-attempts', [\App\Http\Controllers\Admin\UserController::class, 'manageAttempts']);
+    
     // --- Exams (Controller) ---
     Route::prefix('exams')->name('exams.')->group(function () {
         Route::get('/', [ExamController::class,'index'])->name('index');
@@ -82,6 +87,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('questions', QuestionController::class);
     Route::get('questions-ajax/case-studies/{examId}', [QuestionController::class, 'getCaseStudies'])->name('questions.getCaseStudies');
     Route::get('questions-ajax/sub-case-studies/{caseStudyId}', [QuestionController::class, 'getSubCaseStudies'])->name('questions.getSubCaseStudies');
+    Route::get('questions-ajax/questions/{caseStudyId}', [QuestionController::class, 'getQuestions'])->name('questions.getQuestions');
     Route::get('questions/export/csv', [QuestionController::class, 'export'])->name('questions.export');
     Route::post('questions/import/csv', [QuestionController::class, 'import'])->name('questions.import');
 
@@ -101,6 +107,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::post('/store', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
         Route::post('/copy', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'copy'])->name('copy');
         Route::get('/sections/{examId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getSectionsByExam'])->name('sections');
+        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy'])->name('destroy');
     });
 
     // --- Case Studies (formerly Sub Case Studies) ---

@@ -9,10 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">Comprehensive Data Management</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Data Management</li>
-        </ul>
+
       </div>
     </div>
   </div>

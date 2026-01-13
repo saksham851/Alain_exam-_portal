@@ -9,10 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">Exam Management</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Exams</li>
-        </ul>
+
       </div>
     </div>
   </div>
@@ -347,10 +344,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="modal fade" id="examCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-0">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title d-flex align-items-center">
                     <i class="ti ti-check-circle me-2 fs-4"></i> Exam Created Successfully!
                 </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted mb-1 text-center">Exam "<strong>{{ session('created_exam_name') }}</strong>" has been created.</p>

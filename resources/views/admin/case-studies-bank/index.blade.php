@@ -9,10 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">Case Studies Bank</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Case Studies Bank</li>
-        </ul>
+
       </div>
     </div>
   </div>
@@ -138,6 +135,7 @@
                         </div>
                     </div>
             </div>
+            </form>
 
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -151,6 +149,7 @@
                                 <th>Exam Category</th>
                                 <th>Certification Type</th>
                                 <th class="text-center">Questions</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -196,6 +195,45 @@
                                 <td class="text-center">
                                     <span class="badge bg-light-success">{{ $caseStudy->questions->count() }} Questions</span>
                                 </td>
+                                <td class="text-end">
+                                    @php
+                                        // specific check for case study being in an active exam
+                                        $isActiveExam = $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1;
+                                    @endphp
+                                    <ul class="list-inline mb-0">
+                                        <li class="list-inline-item">
+                                            @if($isActiveExam)
+                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot edit">
+                                                    <button class="btn btn-icon btn-link-secondary btn-sm" disabled style="opacity: 0.5; border: none;">
+                                                        <i class="ti ti-edit f-18"></i>
+                                                    </button>
+                                                </span>
+                                            @else
+                                                <a href="{{ route('admin.case-studies-bank.edit', $caseStudy->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Case Study">
+                                                    <i class="ti ti-edit f-18"></i>
+                                                </a>
+                                            @endif
+                                        </li>
+                                        <li class="list-inline-item">
+                                            @if($isActiveExam)
+                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot delete">
+                                                    <button class="btn btn-icon btn-link-secondary btn-sm" disabled style="opacity: 0.5; border: none;">
+                                                        <i class="ti ti-trash f-18"></i>
+                                                    </button>
+                                                </span>
+                                            @else
+
+                                                <form action="{{ route('admin.case-studies-bank.destroy', $caseStudy->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $caseStudy->id }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="confirmDelete('{{ $caseStudy->id }}')" data-bs-toggle="tooltip" title="Delete Case Study">
+                                                        <i class="ti ti-trash f-18"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </li>
+                                    </ul>
+                                </td>
                             </tr>
                             @empty
                             <tr>
@@ -212,7 +250,7 @@
                 <x-custom-pagination :paginator="$caseStudies" />
             </div>
             </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -250,6 +288,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
+
+// Confirm Delete Function
+function confirmDelete(id) {
+    const form = document.getElementById('delete-form-' + id);
+    if(window.showAlert && window.showAlert.confirm) {
+        window.showAlert.confirm('Are you sure you want to delete this case study? This action cannot be undone.', 'Delete Case Study?', function() {
+            if(form) form.submit();
+        });
+    } else {
+        if(confirm('Are you sure you want to delete this case study?')) {
+            if(form) form.submit();
+        }
+    }
+}
 
 // Auto-submit filters on change
 document.getElementById('examCategoryFilter').addEventListener('change', function() {
@@ -351,49 +403,58 @@ updateSelectedCount();
 <div class="modal fade" id="caseStudiesCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-0">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title d-flex align-items-center">
                     <i class="ti ti-check-circle me-2 fs-4"></i> Case Studies Created Successfully!
                 </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted mb-4 text-center">Would you like to add more case studies or proceed to add questions?</p>
                 
                 <div class="row g-3">
                     <!-- Option 1: Create Another Case Study -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <a href="{{ route('admin.case-studies-bank.create', ['exam_id' => session('selected_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                        <i class="ti ti-plus text-primary" style="font-size: 1.8rem;"></i>
                                     </div>
                                 </div>
-                                <h5 class="fw-bold mb-2">Create Another Case Study</h5>
-                                <p class="text-muted small mb-0">Add more case studies to this or another section.</p>
+                                <h6 class="fw-bold mb-2">Create New</h6>
+                                <p class="text-muted small mb-0">Add case study.</p>
                             </div>
                         </a>
                     </div>
 
                     <!-- Option 2: Clone Case Studies -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone case studies feature coming soon!')">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                        <i class="ti ti-copy text-info" style="font-size: 1.8rem;"></i>
                                     </div>
                                 </div>
-                                <h5 class="fw-bold mb-2">Clone Case Studies to Section</h5>
-                                <p class="text-muted small mb-0">Copy existing case studies.</p>
+                                <h6 class="fw-bold mb-2">Clone Existing</h6>
+                                <p class="text-muted small mb-0">Copy case studies.</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Option 3: Proceed -->
-                    <div class="col-12 mt-4">
-                        <a href="{{ route('admin.questions.index', ['open_modal' => 'create', 'exam_id' => session('selected_exam_id'), 'section_id' => session('selected_section_id')]) }}" class="btn btn-success w-100 py-2 fs-5">
-                            Proceed to Add Questions <i class="ti ti-arrow-right ms-2"></i>
+                    <div class="col-md-4">
+                        <a href="{{ route('admin.questions.index', ['open_modal' => 'create', 'exam_id' => session('selected_exam_id'), 'section_id' => session('selected_section_id')]) }}" class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                        <i class="ti ti-arrow-right text-primary" style="font-size: 1.8rem;"></i>
+                                    </div>
+                                </div>
+                                <h6 class="fw-bold mb-2">Add Questions</h6>
+                                <p class="text-muted small mb-0">Proceed to questions.</p>
+                            </div>
                         </a>
                     </div>
                 </div>
@@ -403,6 +464,10 @@ updateSelectedCount();
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show success alert first
+    showAlert.success('{{ session('success') }}', 'Success!');
+    
+    // Then show the modal
     var modal = new bootstrap.Modal(document.getElementById('caseStudiesCreatedSuccessModal'));
     modal.show();
 });

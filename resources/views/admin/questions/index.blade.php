@@ -9,10 +9,7 @@
         <div class="page-header-title">
           <h5 class="m-b-10">Question Bank</h5>
         </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item" aria-current="page">Questions</li>
-        </ul>
+
       </div>
     </div>
   </div>
@@ -376,10 +373,11 @@
 <div class="modal fade" id="questionCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-success text-white border-0">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title d-flex align-items-center">
                     <i class="ti ti-check-circle me-2 fs-4"></i> Question Created Successfully!
                 </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <p class="text-muted mb-4 text-center">Would you like to add another question or finish?</p>
@@ -417,7 +415,7 @@
                     
                     <!-- Option 3: Finish -->
                     <div class="col-12 mt-4">
-                        <a href="{{ route('admin.exams.index') }}" class="btn btn-success w-100 py-2 fs-5">
+                        <a href="{{ route('admin.exams.index') }}" class="btn btn-primary w-100 py-2 fs-5">
                             Finish & Return to Exams <i class="ti ti-check ms-2"></i>
                         </a>
                     </div>
@@ -429,6 +427,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Show success alert first
+    showAlert.success('Question created successfully!', 'Success!');
+    
+    // Then show the modal
     var modal = new bootstrap.Modal(document.getElementById('questionCreatedSuccessModal'));
     modal.show();
 });
