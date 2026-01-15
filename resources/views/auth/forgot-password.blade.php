@@ -13,13 +13,14 @@
         @endif
         <p class="text-muted mb-4">Enter your email address and we'll send you a link to reset your password.</p>
 
-        <form method="POST" action="{{ route('password.email') }}">
+        <form method="POST" action="{{ route('password.email') }}" id="forgotPasswordForm">
             @csrf
 
             <div class="form-group mb-3">
                 <label class="form-label">Email Address</label>
-                <input type="email" name="email" class="form-control" placeholder="Email Address" value="{{ old('email') }}" required autofocus>
+                <input type="email" name="email" class="form-control" id="email" placeholder="Email Address" value="{{ old('email') }}" required autofocus>
                 @error('email') <small class="text-danger">{{ $message }}</small> @enderror
+                <small class="text-danger" id="emailError" style="display:none;"></small>
             </div>
 
             <div class="d-grid mt-4">
@@ -32,4 +33,35 @@
         </form>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('forgotPasswordForm');
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+
+        if(form) {
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                emailError.style.display = 'none';
+                emailError.innerText = '';
+
+                // Email Validation
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailInput.value || !emailRegex.test(emailInput.value)) {
+                    emailError.innerText = 'Please enter a valid email address.';
+                    emailError.style.display = 'block';
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                }
+            });
+
+            emailInput.addEventListener('input', () => {
+                emailError.style.display = 'none';
+            });
+        }
+    });
+</script>
 @endsection
