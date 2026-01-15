@@ -82,6 +82,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 
     // --- Exam Categories ---
+    Route::patch('exam-categories/{id}/activate', [\App\Http\Controllers\Admin\ExamCategoryController::class, 'activate'])->name('exam-categories.activate');
     Route::resource('exam-categories', \App\Http\Controllers\Admin\ExamCategoryController::class);
 
     // --- Questions (Controller) ---

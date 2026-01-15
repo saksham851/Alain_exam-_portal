@@ -35,13 +35,22 @@
                     <div class="row g-2 align-items-end">
 
                         <!-- Search -->
-                        <div class="col-md-7">
+                        <div class="col-md-5">
                             <label class="form-label fw-bold text-muted small mb-1">SEARCH EXAM CATEGORY</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
                                        placeholder="Category name..." value="{{ request('search') }}">
                             </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="active" {{ request('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            </select>
                         </div>
 
                         <!-- Exam Count -->
@@ -64,7 +73,7 @@
             </div>
             
             <!-- Active Filters Indicator -->
-            @if(request()->hasAny(['search', 'certification_type', 'exam_count']))
+            @if(request('search') || request('certification_type') || (request('exam_count') !== null && request('exam_count') !== '') || request('status') === 'inactive')
             <div class="card-body border-top border-bottom bg-light-subtle py-3">
                 <div class="d-flex align-items-center flex-wrap gap-2">
                     <span class="text-muted small fw-semibold">
@@ -79,6 +88,12 @@
                     @if(request('exam_count') !== null && request('exam_count') !== '')
                         <span class="badge rounded-pill bg-info">
                             <i class="ti ti-clipboard-list me-1"></i>{{ request('exam_count') }} Exams
+                        </span>
+                    @endif
+
+                    @if(request('status') === 'inactive')
+                        <span class="badge rounded-pill bg-danger">
+                            <i class="ti ti-trash-off me-1"></i>Inactive
                         </span>
                     @endif
                 </div>
@@ -108,6 +123,7 @@
                                 </td>
                                 <td class="text-end">
                                     <ul class="list-inline mb-0">
+                                        @if($category->status == 1)
                                         <li class="list-inline-item">
                                             <a href="{{ route('admin.exam-categories.edit', $category->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Category">
                                                 <i class="ti ti-edit f-18"></i>
@@ -121,6 +137,16 @@
                                                 </button>
                                             </form>
                                         </li>
+                                        @else
+                                        <li class="list-inline-item">
+                                            <form action="{{ route('admin.exam-categories.activate', $category->id) }}" method="POST" class="d-inline-block" id="activateForm{{ $category->id }}">
+                                                @csrf @method('PATCH')
+                                                <button type="button" class="avtar avtar-s btn-link-success btn-pc-default" style="border:none; background:none;" onclick="showActivateModal(document.getElementById('activateForm{{ $category->id }}'))" data-bs-toggle="tooltip" title="Activate Category">
+                                                    <i class="ti ti-check f-18"></i>
+                                                </button>
+                                            </form>
+                                        </li>
+                                        @endif
                                     </ul>
                                 </td>
                             </tr>
@@ -143,6 +169,24 @@
     </div>
 </div>
 
+
+<script>
+    function showActivateModal(form) {
+        if(typeof showAlert !== 'undefined' && showAlert.confirm) {
+             showAlert.confirm(
+                'Are you sure you want to activate this category?',
+                'Activate Category',
+                function() {
+                    form.submit();
+                }
+            );
+        } else {
+            if(confirm('Are you sure you want to activate this category?')) {
+                form.submit();
+            }
+        }
+    }
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const filterForm = document.getElementById('filterForm');

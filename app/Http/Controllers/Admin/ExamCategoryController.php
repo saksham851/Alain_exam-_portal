@@ -12,12 +12,20 @@ class ExamCategoryController extends Controller
     public function index(Request $request)
     {
         // Get filter parameters
+        // Get filter parameters
         $search = $request->get('search');
         $examCount = $request->get('exam_count');
+        $status = $request->get('status', 'active');
 
         // Base query
-        $query = ExamCategory::where('status', 1)
-            ->withCount('exams');
+        $query = ExamCategory::withCount('exams');
+
+        // Filter by status
+        if ($status === 'inactive') {
+            $query->where('status', 0);
+        } else {
+            $query->where('status', 1);
+        }
 
         // Search by category name
         if ($search) {
@@ -91,6 +99,19 @@ class ExamCategoryController extends Controller
 
         return redirect()->route('admin.exam-categories.index')
             ->with('success', 'Exam Category Updated Successfully!');
+    }
+
+    // Activate category (restore)
+    public function activate($id)
+    {
+        $category = ExamCategory::find($id);
+        
+        if ($category) {
+            $category->update(['status' => 1]);
+        }
+
+        return redirect()->route('admin.exam-categories.index', ['status' => 'inactive'])
+            ->with('success', 'Exam Category Activated Successfully!');
     }
 
     // Delete category (soft delete)
