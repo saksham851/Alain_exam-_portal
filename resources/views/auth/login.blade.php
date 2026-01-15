@@ -3,9 +3,8 @@
 @section('content')
 <div class="card my-5">
   <div class="card-body">
-    <div class="d-flex justify-content-between align-items-end mb-4">
+    <div class="mb-4">
       <h3 class="mb-0"><b>Login</b></h3>
-      <a href="{{ route('register') }}" class="link-primary">Don't have an account?</a>
     </div>
 
         @if (session('status'))
@@ -23,7 +22,12 @@
         </div>
         <div class="form-group mb-3">
           <label class="form-label">Password</label>
-          <input type="password" name="password" class="form-control" placeholder="Password" required>
+          <div class="input-group">
+            <input type="password" name="password" class="form-control" id="password" placeholder="Password" required>
+            <span class="input-group-text bg-white" id="togglePassword" style="cursor: pointer;">
+                <i class="ti ti-eye" id="eyeIcon"></i>
+            </span>
+          </div>
           @error('password') <small class="text-danger">{{ $message }}</small> @enderror
         </div>
         
@@ -40,5 +44,31 @@
         </div>
     </form>
   </div>
+
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+        const icon = document.getElementById('eyeIcon');
+        
+        if(togglePassword && password && icon) {
+            togglePassword.addEventListener('click', function (e) {
+                // toggle the type attribute
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // toggle the eye icon
+                if(type === 'password') {
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                } else {
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                }
+            });
+        }
+    });
+</script>
 @endsection

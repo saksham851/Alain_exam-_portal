@@ -72,6 +72,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('/', [ExamController::class,'index'])->name('index');
         Route::get('create', [ExamController::class,'create'])->name('create');
         Route::post('/', [ExamController::class,'store'])->name('store');
+        Route::post('{id}/clone', [ExamController::class,'clone'])->name('clone');
         Route::get('{id}/edit', [ExamController::class,'edit'])->name('edit');
         Route::put('{id}', [ExamController::class,'update'])->name('update');
         Route::delete('{id}', [ExamController::class,'destroy'])->name('destroy');
@@ -85,6 +86,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // --- Questions (Controller) ---
     Route::resource('questions', QuestionController::class);
+    Route::post('questions/clone', [QuestionController::class, 'clone'])->name('questions.clone');
     Route::get('questions-ajax/case-studies/{examId}', [QuestionController::class, 'getCaseStudies'])->name('questions.getCaseStudies');
     Route::get('questions-ajax/sub-case-studies/{caseStudyId}', [QuestionController::class, 'getSubCaseStudies'])->name('questions.getSubCaseStudies');
     Route::get('questions-ajax/questions/{caseStudyId}', [QuestionController::class, 'getQuestions'])->name('questions.getQuestions');
@@ -97,6 +99,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Ideally we should rename route to 'sections' but views heavily rely on route('admin.case-studies.*').
     // So we map: Route 'case-studies' -> SectionController.
     Route::resource('case-studies', SectionController::class);
+    Route::post('case-studies/clone', [SectionController::class, 'clone'])->name('case-studies.clone');
+    Route::get('case-studies/ajax/sections/{examId}', [SectionController::class, 'getSections'])->name('case-studies.getSections');
     Route::get('case-studies/export/csv', [SectionController::class, 'export'])->name('case-studies.export');
     Route::post('case-studies/import/csv', [SectionController::class, 'import'])->name('case-studies.import');
 

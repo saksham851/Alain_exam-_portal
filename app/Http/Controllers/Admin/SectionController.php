@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Section;
 use App\Models\CaseStudy;
 use App\Models\Exam;
+use Illuminate\Support\Facades\DB;
 
 class SectionController extends Controller
 {
@@ -41,9 +42,9 @@ class SectionController extends Controller
             });
         }
 
-        // Filter by certification type (through exam->category relationship)
+        // Filter by certification type (through exam relationship)
         if ($certificationType) {
-            $query->whereHas('exam.category', function($q) use ($certificationType) {
+            $query->whereHas('exam', function($q) use ($certificationType) {
                 $q->where('certification_type', $certificationType);
             });
         }
@@ -71,7 +72,8 @@ class SectionController extends Controller
             ->get(['id', 'name']);
 
         // Get all unique certification types for filter dropdown
-        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+        $certificationTypes = Exam::where('status', 1)
+            ->whereNotNull('certification_type')
             ->distinct()
             ->orderBy('certification_type')
             ->pluck('certification_type');
@@ -247,4 +249,104 @@ class SectionController extends Controller
         return redirect()->route('admin.case-studies.index')
             ->with('success', "Successfully imported $imported sections!");
     }
+
+    // AJAX: Get sections for an exam
+    public function getSections($examId)
+    {
+        $sections = Section::where('exam_id', $examId)
+            ->where('status', 1)
+            ->orderBy('title')
+            ->get(['id', 'title']);
+        
+        return response()->json($sections);
+    }
+
+    // CLONE SECTION
+    public function clone(Request $request)
+    {
+        $request->validate([
+            'source_section_ids' => 'required|array',
+            'source_section_ids.*' => 'exists:sections,id',
+            'target_exam_id' => 'required|exists:exams,id',
+        ]);
+
+        $targetExam = Exam::findOrFail($request->target_exam_id);
+
+        if ($targetExam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot clone section into an active exam. Please deactivate the target exam first.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $clonedCount = 0;
+            $lastCreatedSectionId = null;
+            
+            foreach ($request->source_section_ids as $sectionId) {
+                $sourceSection = Section::with(['caseStudies.questions.options'])->find($sectionId);
+                
+                if (!$sourceSection) continue;
+
+                // Clone Section
+                $newSection = Section::create([
+                    'exam_id' => $targetExam->id,
+                    'title' => $sourceSection->title,
+                    'content' => $sourceSection->content,
+                    'order_no' => Section::where('exam_id', $targetExam->id)->max('order_no') + 1,
+                    'status' => 1,
+                ]);
+                
+                $lastCreatedSectionId = $newSection->id;
+
+                // Clone Case Studies
+                foreach ($sourceSection->caseStudies as $caseStudy) {
+                    $newCaseStudy = \App\Models\CaseStudy::create([
+                        'section_id' => $newSection->id,
+                        'title' => $caseStudy->title,
+                        'content' => $caseStudy->content,
+                        'order_no' => $caseStudy->order_no,
+                        'status' => $caseStudy->status,
+                        'cloned_from_id' => $caseStudy->id,
+                        'cloned_from_section_id' => $caseStudy->section_id,
+                        'cloned_at' => now(),
+                    ]);
+
+                    // Clone Questions
+                    foreach ($caseStudy->questions as $question) {
+                        $newQuestion = \App\Models\Question::create([
+                            'case_study_id' => $newCaseStudy->id,
+                            'question_text' => $question->question_text,
+                            'question_type' => $question->question_type,
+                            'ig_weight' => $question->ig_weight,
+                            'dm_weight' => $question->dm_weight,
+                            'status' => $question->status,
+                        ]);
+
+                        // Clone Options
+                        foreach ($question->options as $option) {
+                            \App\Models\QuestionOption::create([
+                                'question_id' => $newQuestion->id,
+                                'option_key' => $option->option_key,
+                                'option_text' => $option->option_text,
+                                'is_correct' => $option->is_correct,
+                            ]);
+                        }
+                    }
+                }
+                $clonedCount++;
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.case-studies.index', ['exam_id' => $targetExam->id])
+                ->with('section_created_success', true)
+                ->with('created_exam_id', $targetExam->id)
+                ->with('created_section_id', $lastCreatedSectionId)
+                ->with('success', "$clonedCount sections cloned successfully!");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error cloning sections: ' . $e->getMessage());
+        }
+    }
 }
+

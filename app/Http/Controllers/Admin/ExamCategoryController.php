@@ -13,7 +13,6 @@ class ExamCategoryController extends Controller
     {
         // Get filter parameters
         $search = $request->get('search');
-        $certificationType = $request->get('certification_type');
         $examCount = $request->get('exam_count');
 
         // Base query
@@ -25,28 +24,17 @@ class ExamCategoryController extends Controller
             $query->where('name', 'like', '%' . $search . '%');
         }
 
-        // Filter by certification type
-        if ($certificationType) {
-            $query->where('certification_type', $certificationType);
-        }
-
         // Filter by exact exam count
         if ($examCount !== null && $examCount !== '') {
             $query->has('exams', '=', $examCount);
         }
 
-        $categories = $query->orderBy('name')->paginate(15);
+        $categories = $query->orderBy('created_at', 'desc')->paginate(15);
 
         // Append query parameters to pagination links
         $categories->appends($request->all());
 
-        // Get all unique certification types for filter dropdown
-        $certificationTypes = ExamCategory::where('status', 1)
-            ->distinct()
-            ->orderBy('certification_type')
-            ->pluck('certification_type');
-        
-        return view('admin.exam-categories.index', compact('categories', 'certificationTypes'));
+        return view('admin.exam-categories.index', compact('categories'));
     }
 
     // Create form
@@ -59,22 +47,12 @@ class ExamCategoryController extends Controller
     // Store new category
     public function store(Request $request)
     {
-        // Handle new certification type
-        $certificationType = $request->certification_type;
-        if ($request->filled('new_certification_type')) {
-            $certificationType = $request->new_certification_type;
-        }
-
-        $request->merge(['certification_type' => $certificationType]);
-
         $request->validate([
             'name' => 'required|string|max:255|unique:exam_categories,name',
-            'certification_type' => 'required|string|max:255',
         ]);
 
         ExamCategory::create([
             'name' => $request->name,
-            'certification_type' => $certificationType,
             'status' => 1,
         ]);
 
@@ -97,17 +75,8 @@ class ExamCategoryController extends Controller
     // Update category
     public function update(Request $request, $id)
     {
-        // Handle new certification type
-        $certificationType = $request->certification_type;
-        if ($request->filled('new_certification_type')) {
-            $certificationType = $request->new_certification_type;
-        }
-
-        $request->merge(['certification_type' => $certificationType]);
-
         $request->validate([
             'name' => 'required|string|max:255|unique:exam_categories,name,' . $id,
-            'certification_type' => 'required|string|max:255',
         ]);
 
         $category = ExamCategory::find($id);
@@ -118,7 +87,6 @@ class ExamCategoryController extends Controller
 
         $category->update([
             'name' => $request->name,
-            'certification_type' => $certificationType,
         ]);
 
         return redirect()->route('admin.exam-categories.index')

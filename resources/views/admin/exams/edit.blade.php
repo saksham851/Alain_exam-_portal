@@ -23,14 +23,38 @@
                 <h5 class="mb-0">Exam Details</h5>
                 @if(isset($exam))
                     <div class="d-flex gap-2">
-                        <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to change the status of this exam?');">
+                    <div class="d-flex gap-2">
+                        <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" id="status-toggle-form">
                             @csrf
                             @method('PUT')
-                            <button type="submit" class="btn btn-sm {{ $exam->is_active ? 'btn-danger' : 'btn-success' }}">
+                            <button type="button" class="btn btn-sm {{ $exam->is_active ? 'btn-danger' : 'btn-success' }}" onclick="confirmStatusChange()">
                                 <i class="ti {{ $exam->is_active ? 'ti-lock' : 'ti-lock-open' }} me-1"></i>
                                 {{ $exam->is_active ? 'Deactivate / Unlock Exam' : 'Activate / Lock Exam' }}
                             </button>
                         </form>
+                    </div>
+
+                    <script>
+                    function confirmStatusChange() {
+                        const isActive = {{ $exam->is_active ? 'true' : 'false' }};
+                        const actionText = isActive ? 'Deactivate / Unlock' : 'Activate / Lock';
+                        const btnColor = isActive ? '#d33' : '#28a745';
+
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: `Do you want to ${actionText} this exam?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: btnColor,
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: `Yes, ${actionText} it!`
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                document.getElementById('status-toggle-form').submit();
+                            }
+                        });
+                    }
+                    </script>
                     </div>
                 @endif
             </div>
@@ -69,7 +93,7 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Exam Code <span class="text-danger">*</span></label>
-                            <input type="text" name="exam_code" class="form-control" value="{{ old('exam_code', optional($exam)->exam_code) }}" required>
+                            <input type="text" name="exam_code" class="form-control" value="{{ old('exam_code', optional($exam)->exam_code ?? ($nextCode ?? '')) }}" required readonly>
                             @error('exam_code') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
 
@@ -79,7 +103,7 @@
                                 <option value="">Select Category</option>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}" {{ old('category_id', optional($exam)->category_id) == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }} ({{ $category->certification_type }})
+                                        {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -91,6 +115,77 @@
                             <input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes', optional($exam)->duration_minutes ?? 180) }}" required min="1">
                             @error('duration_minutes') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Certification Type <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="flex-grow-1">
+                                    <select name="certification_type" id="certificationTypeSelect" class="form-select" required>
+                                        <option value="">Select Certification Type</option>
+                                        <option value="NHMCE" {{ old('certification_type', optional($exam)->certification_type) == 'NHMCE' ? 'selected' : '' }}>NHMCE</option>
+                                    </select>
+                                    <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;">
+                                    @error('certification_type') <small class="text-danger">{{ $message }}</small> @enderror
+                                    @error('new_certification_type') <small class="text-danger">{{ $message }}</small> @enderror
+                                </div>
+                                <button type="button" id="addNewTypeBtn" class="btn btn-primary" style="white-space: nowrap;">
+                                    <i class="ti ti-plus me-1"></i> Add New
+                                </button>
+                            </div>
+                        </div>
+
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const selectElement = document.getElementById('certificationTypeSelect');
+                            const newInputElement = document.getElementById('newCertificationTypeInput');
+                            const addNewBtn = document.getElementById('addNewTypeBtn');
+                            let isAddingNew = false;
+                            
+                            // Check if we should be in "add new" mode initially (e.g. on validation error)
+                            @if(old('new_certification_type') || (isset($exam) && $exam->certification_type && $exam->certification_type != 'NHMCE'))
+                                toggleMode();
+                            @endif
+
+                            function toggleMode() {
+                                isAddingNew = !isAddingNew;
+                                if (isAddingNew) {
+                                    // Show input field for new certification type
+                                    selectElement.style.display = 'none';
+                                    selectElement.required = false;
+                                    selectElement.disabled = true; // Disable so it's not submitted
+
+                                    newInputElement.style.display = 'block';
+                                    newInputElement.required = true;
+                                    newInputElement.disabled = false;
+                                    if(newInputElement.value === '') {
+                                        newInputElement.value = "{{ isset($exam) && $exam->certification_type != 'NHMCE' ? $exam->certification_type : old('new_certification_type') }}";
+                                    }
+                                    newInputElement.focus();
+
+                                    addNewBtn.innerHTML = '<i class="ti ti-x me-1"></i> Cancel';
+                                    addNewBtn.classList.remove('btn-primary');
+                                    addNewBtn.classList.add('btn-secondary');
+                                } else {
+                                    // Hide input field and show dropdown
+                                    selectElement.style.display = 'block';
+                                    selectElement.required = true;
+                                    selectElement.disabled = false;
+
+                                    newInputElement.style.display = 'none';
+                                    newInputElement.required = false;
+                                    newInputElement.disabled = true; // Disable so it's not submitted
+                                    
+                                    addNewBtn.innerHTML = '<i class="ti ti-plus me-1"></i> Add New';
+                                    addNewBtn.classList.remove('btn-secondary');
+                                    addNewBtn.classList.add('btn-primary');
+                                }
+                            }
+
+                            addNewBtn.addEventListener('click', function() {
+                                toggleMode();
+                            });
+                        });
+                        </script>
 
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Description</label>

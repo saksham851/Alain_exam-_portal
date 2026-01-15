@@ -186,9 +186,12 @@
             addCaseStudy() {
                 this.caseStudies.push({ 
                     title: '', 
-                    order_no: this.caseStudies.length + 1, 
+                    order_no: 1, // Will be updated by recalculateOrders
                     content: '' 
                 });
+                
+                this.recalculateOrders();
+
                 this.$nextTick(() => {
                     this.initEditor(this.caseStudies.length - 1);
                 });
@@ -203,12 +206,37 @@
                         .catch(e => console.error(e));
                 }
 
+                // Destroy all subsequent editors because indices will shift
+                for(let i = index + 1; i < this.caseStudies.length; i++) {
+                     if(editors[i]) {
+                        editors[i].destroy().then(() => { delete editors[i]; }).catch(e => console.error(e));
+                     }
+                }
+
                 this.caseStudies.splice(index, 1);
                 
+                this.recalculateOrders();
+
                 this.$nextTick(() => {
+                     // Re-init editors for shifted items
                      this.caseStudies.forEach((_, i) => {
                          this.initEditor(i);
                      });
+                });
+            },
+
+            recalculateOrders() {
+                let maxOrder = 0;
+                
+                // Find max order from existing
+                this.existingCaseStudies.forEach(cs => {
+                    let order = parseInt(cs.order_no) || 0;
+                    if(order > maxOrder) maxOrder = order;
+                });
+
+                // Update new case studies
+                this.caseStudies.forEach((cs, index) => {
+                    cs.order_no = maxOrder + index + 1;
                 });
             },
 
@@ -252,6 +280,9 @@
                             // Remove from view
                             this.existingCaseStudies.splice(index, 1);
                             
+                            // Make sure we recalculate orders for the new items since the "base" (existing) might have changed
+                            this.recalculateOrders();
+
                             window.showAlert.toast('Case study deleted successfully');
                         } else {
                             window.showAlert.error(result.message || 'Error deleting case study');
@@ -355,15 +386,8 @@
                         });
                     });
 
-                    // Calculate max order to auto-set the new form's order
-                    let maxOrder = 0;
-                    this.existingCaseStudies.forEach(cs => {
-                        if(cs.order_no && cs.order_no > maxOrder) maxOrder = cs.order_no;
-                    });
-                    
-                    if(this.caseStudies.length === 1 && this.caseStudies[0].order_no === 1 && maxOrder > 0) {
-                        this.caseStudies[0].order_no = maxOrder + 1;
-                    }
+                    // Recalculate orders for new items
+                    this.recalculateOrders();
 
                 } catch(e) {
                     console.error('Error fetching existing case studies', e);

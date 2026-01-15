@@ -112,9 +112,7 @@ class DashboardController extends Controller
 
         // Filter by certification type
         if ($certificationType) {
-            $examQuery->whereHas('category', function($q) use ($certificationType) {
-                $q->where('certification_type', $certificationType);
-            });
+            $examQuery->where('certification_type', $certificationType);
         }
 
         // Get exam overview data
@@ -143,7 +141,7 @@ class DashboardController extends Controller
                     'name' => $exam->name,
                     'exam_code' => $exam->exam_code,
                     'category' => $exam->category ? $exam->category->name : '-',
-                    'certification_type' => $exam->category ? $exam->category->certification_type : '-',
+                    'certification_type' => $exam->certification_type ?? '-',
                     'is_active' => $exam->is_active,
                     'student_count' => $exam->student_count,
                     'question_count' => $questionCount,
@@ -153,7 +151,8 @@ class DashboardController extends Controller
             });
 
         // Get certification types for filter
-        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+        $certificationTypes = Exam::where('status', 1)
+            ->whereNotNull('certification_type')
             ->distinct()
             ->orderBy('certification_type')
             ->pluck('certification_type');

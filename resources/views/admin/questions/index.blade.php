@@ -60,11 +60,11 @@
 
                     <!-- Option 2: Clone Question -->
                     <div class="col-md-6">
-                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone question feature coming soon!')">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneQuestionModal">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
                                     </div>
                                 </div>
                                 <h5 class="fw-bold mb-2">Clone Question from Bank</h5>
@@ -289,24 +289,38 @@
                                     @endphp
                                     
                                     @if($isActiveExamQuestion)
-                                        <button class="btn btn-icon btn-link-secondary btn-sm" style="opacity: 0.5; background: transparent; border: none;" title="Exam is active - cannot edit" disabled>
-                                            <i class="ti ti-edit"></i>
-                                        </button>
-                                        <div class="d-inline-block">
-                                            <button class="btn btn-icon btn-link-secondary btn-sm" style="opacity: 0.5; background: transparent; border: none;" title="Exam is active - cannot delete" disabled>
-                                                <i class="ti ti-trash"></i>
-                                            </button>
-                                        </div>
+                                        <ul class="list-inline mb-0">
+                                            <li class="list-inline-item">
+                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot edit">
+                                                    <button class="avtar avtar-s btn-link-success btn-pc-default" style="opacity: 0.5; border: none;" disabled>
+                                                        <i class="ti ti-edit f-18"></i>
+                                                    </button>
+                                                </span>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot delete">
+                                                    <button class="avtar avtar-s btn-link-danger btn-pc-default" style="opacity: 0.5; border: none;" disabled>
+                                                        <i class="ti ti-trash f-18"></i>
+                                                    </button>
+                                                </span>
+                                            </li>
+                                        </ul>
                                     @else
-                                        <a href="{{ route('admin.questions.edit', $question->id) }}" class="btn btn-icon btn-link-primary btn-sm" title="Edit Question">
-                                            <i class="ti ti-edit"></i>
-                                        </a>
-                                        <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $question->id }}">
-                                            @csrf @method('DELETE')
-                                            <button type="button" class="btn btn-icon btn-link-danger btn-sm" title="Delete Question" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')">
-                                                <i class="ti ti-trash"></i>
-                                            </button>
-                                        </form>
+                                        <ul class="list-inline mb-0">
+                                            <li class="list-inline-item">
+                                                <a href="{{ route('admin.questions.edit', $question->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Question">
+                                                    <i class="ti ti-edit f-18"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $question->id }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')" data-bs-toggle="tooltip" title="Delete Question">
+                                                        <i class="ti ti-trash f-18"></i>
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
                                     @endif
                                 </td>
                             </tr>
@@ -368,6 +382,410 @@
     </div>
 </div>
 
+<!-- Clone Question Modal -->
+<div class="modal fade" id="cloneQuestionModal" tabindex="-1" aria-labelledby="cloneQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="cloneQuestionModalLabel">
+                    <i class="ti ti-copy me-2 fs-4"></i> Clone Questions from Bank
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('admin.questions.clone') }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Select source questions to clone into a target case study.</p>
+                    
+                    <div class="row g-4">
+                        <!-- Source Configuration -->
+                        <div class="col-md-12">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="ti ti-file-import me-1"></i> Source Details</h6>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="clone_source_exam_id" class="form-label fw-bold">Source Exam</label>
+                                    <select class="form-select form-select-sm" id="clone_source_exam_id" required>
+                                        <option value="">-- Select Exam --</option>
+                                        @foreach($exams as $exam)
+                                            <option value="{{ $exam->id }}" data-is-active="{{ $exam->is_active }}">{{ $exam->name }}{{ $exam->exam_code ? ' (' . $exam->exam_code . ')' : '' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="clone_source_section_id" class="form-label fw-bold">Source Section</label>
+                                    <select class="form-select form-select-sm" id="clone_source_section_id" required disabled>
+                                        <option value="">-- Select Source Exam First --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="clone_source_case_study_id" class="form-label fw-bold">Source Case Study</label>
+                                    <select class="form-select form-select-sm" id="clone_source_case_study_id" required disabled>
+                                        <option value="">-- Select Source Section First --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold mb-0">Select Questions to Clone</label>
+                                    <div class="form-check m-0">
+                                        <input class="form-check-input" type="checkbox" id="select_all_questions">
+                                        <label class="form-check-label fw-bold small text-primary" for="select_all_questions">Select All</label>
+                                    </div>
+                                </div>
+                                
+                                <div id="questions_checkbox_list" class="row g-2 border rounded p-3 bg-white" style="max-height: 250px; overflow-y: auto; display: none;">
+                                    <!-- Checkboxes injected here -->
+                                </div>
+
+                                <div id="q_loading" class="text-center py-3" style="display: none;">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2 text-muted small">Loading questions...</span>
+                                </div>
+
+                                <div id="q_no_data" class="text-center py-3 text-muted small">
+                                    -- Select Source Case Study First --
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                             <hr class="my-2">
+                        </div>
+
+                        <!-- Target Configuration -->
+                        <div class="col-md-12">
+                            <h6 class="fw-bold mb-3 text-success"><i class="ti ti-file-export me-1"></i> Target Details</h6>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="clone_target_exam_id" class="form-label fw-bold">Target Exam</label>
+                                    <select class="form-select form-select-sm" id="clone_target_exam_id" required>
+                                        <option value="">-- Select Target Exam --</option>
+                                        @foreach($exams as $exam)
+                                            <option value="{{ $exam->id }}">{{ $exam->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="clone_target_section_id" class="form-label fw-bold">Target Section</label>
+                                    <select class="form-select form-select-sm" id="clone_target_section_id" required disabled>
+                                        <option value="">-- Select Target Exam First --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="clone_target_case_study_id" class="form-label fw-bold">Target Case Study</label>
+                                    <select class="form-select form-select-sm" id="clone_target_case_study_id" name="target_case_study_id" required disabled>
+                                        <option value="">-- Select Target Section First --</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">The selected questions will be added to this case study.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-outline-secondary me-auto" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                        <i class="ti ti-arrow-left me-1"></i> Back
+                    </button>
+                    
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-copy me-1"></i> Clone Questions
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Helper to fetch sections (using existing endpoint: questions-ajax/case-studies/{examId} which returns SECTIONS)
+    function fetchSections(examId, sectionSelect) {
+        sectionSelect.innerHTML = '<option value="">Loading...</option>';
+        sectionSelect.disabled = true;
+
+        if (examId) {
+            return fetch(`/admin/questions-ajax/case-studies/${examId}`)
+                .then(response => response.json())
+                .then(data => {
+                    sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+                    if (data.length > 0) {
+                        data.forEach(section => {
+                            sectionSelect.innerHTML += `<option value="${section.id}">${section.title}</option>`;
+                        });
+                        sectionSelect.disabled = false;
+                    } else {
+                        sectionSelect.innerHTML = '<option value="">No sections found</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching sections:', error);
+                    sectionSelect.innerHTML = '<option value="">Error loading sections</option>';
+                });
+        } else {
+            sectionSelect.innerHTML = '<option value="">-- Select Exam First --</option>';
+            sectionSelect.disabled = true;
+            return Promise.resolve();
+        }
+    }
+
+    // Helper to fetch case studies (using questions-ajax/sub-case-studies/{sectionId})
+    function fetchCaseStudies(sectionId, caseStudySelect) {
+        caseStudySelect.innerHTML = '<option value="">Loading...</option>';
+        caseStudySelect.disabled = true;
+
+        if (sectionId) {
+            return fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    caseStudySelect.innerHTML = '<option value="">-- Select Case Study --</option>';
+                    if (data.length > 0) {
+                        data.forEach(cs => {
+                            caseStudySelect.innerHTML += `<option value="${cs.id}">${cs.title}</option>`;
+                        });
+                        caseStudySelect.disabled = false;
+                    } else {
+                        caseStudySelect.innerHTML = '<option value="">No case studies found</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching case studies:', error);
+                    caseStudySelect.innerHTML = '<option value="">Error loading case studies</option>';
+                });
+        } else {
+            caseStudySelect.innerHTML = '<option value="">-- Select Section First --</option>';
+            caseStudySelect.disabled = true;
+            return Promise.resolve();
+        }
+    }
+
+    // Expose function globally to use in inline onclick for success modal
+    window.setQuestionCloneTarget = function(examId, sectionId, caseStudyId) {
+        // Small delay to ensure modal is ready
+        setTimeout(() => {
+            const targetExamSelect = document.getElementById('clone_target_exam_id');
+            const targetSectionSelect = document.getElementById('clone_target_section_id');
+            const targetCaseStudySelect = document.getElementById('clone_target_case_study_id');
+
+            if (targetExamSelect && examId) {
+                targetExamSelect.value = examId;
+                
+                // Chain the fetches
+                fetchSections(examId, targetSectionSelect).then(() => {
+                    if (targetSectionSelect && sectionId) {
+                        targetSectionSelect.value = sectionId;
+                        
+                        fetchCaseStudies(sectionId, targetCaseStudySelect).then(() => {
+                            if (targetCaseStudySelect && caseStudyId) {
+                                targetCaseStudySelect.value = caseStudyId;
+                            }
+                        });
+                    }
+                });
+            }
+        }, 200);
+    };
+
+    // Helper to fetch questions (using questions-ajax/questions/{caseStudyId})
+    function fetchQuestions(caseStudyId) {
+        // Clear UI
+        if(questionsContainer) {
+            questionsContainer.innerHTML = '';
+            questionsContainer.style.display = 'none';
+            qLoading.style.display = 'block';
+            qNoData.style.display = 'none';
+        }
+
+        if (caseStudyId) {
+            fetch(`/admin/questions-ajax/questions/${caseStudyId}`)
+                .then(response => response.json())
+                .then(data => {
+                    qLoading.style.display = 'none';
+                    if (data.length > 0) {
+                        if(questionsContainer) {
+                            questionsContainer.style.display = 'flex'; // It's a row
+                            data.forEach(q => {
+                                // Strip HTML tags for display
+                                const div = document.createElement('div');
+                                div.innerHTML = q.question_text;
+                                const text = div.textContent || div.innerText || '';
+                                const shortText = text.substring(0, 100) + (text.length > 100 ? '...' : '');
+
+                                const checkboxId = `q_source_${q.id}`;
+                                const html = `
+                                    <div class="col-md-12">
+                                        <div class="form-check border-bottom pb-2">
+                                            <input class="form-check-input question-source-checkbox" type="checkbox" name="source_question_ids[]" value="${q.id}" id="${checkboxId}">
+                                            <label class="form-check-label d-block" for="${checkboxId}">
+                                                <span class="badge bg-light-primary me-2">${q.question_type}</span>
+                                                <span class="text-dark small">${shortText}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                `;
+                                questionsContainer.insertAdjacentHTML('beforeend', html);
+                            });
+                        }
+                        if(qNoData) qNoData.style.display = 'none';
+                    } else {
+                         if(qNoData) {
+                            qNoData.innerText = 'No questions found in this case study';
+                            qNoData.style.display = 'block';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching questions:', error);
+                    qLoading.style.display = 'none';
+                    if(qNoData) {
+                        qNoData.innerText = 'Error loading questions';
+                        qNoData.style.display = 'block';
+                    }
+                });
+        } else {
+             qLoading.style.display = 'none';
+             if(qNoData) {
+                qNoData.innerText = '-- Select Source Case Study First --';
+                qNoData.style.display = 'block';
+             }
+        }
+    }
+
+    // Source Flow
+    const sExam = document.getElementById('clone_source_exam_id');
+    const sSection = document.getElementById('clone_source_section_id');
+    const sCaseStudy = document.getElementById('clone_source_case_study_id');
+    
+    // UI Elements for questions list
+    const questionsContainer = document.getElementById('questions_checkbox_list');
+    const qLoading = document.getElementById('q_loading');
+    const qNoData = document.getElementById('q_no_data');
+    const selectAllQ = document.getElementById('select_all_questions');
+
+    // Select All Logic
+    if (selectAllQ) {
+        selectAllQ.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.question-source-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+    }
+
+    if (sExam) {
+        sExam.addEventListener('change', function() {
+             const examId = this.value;
+
+            // Update Target Exam Dropdown: Prevent selecting the same exam as source
+            const tExam = document.getElementById('clone_target_exam_id');
+            if (tExam) {
+                Array.from(tExam.options).forEach(option => {
+                    option.hidden = false;
+                    option.disabled = false;
+                    
+                    if (examId && option.value == examId) {
+                        option.hidden = true; // Use 'hidden' attribute to remove from view
+                        option.disabled = true; // Disable as fallback
+                    }
+                });
+                
+                // If the disabled exam was currently selected, reset the selection
+                if (tExam.value == examId) {
+                    tExam.value = "";
+                    const tSection = document.getElementById('clone_target_section_id');
+                    if(tSection) {
+                         tSection.innerHTML = '<option value="">-- Select Target Exam First --</option>';
+                         tSection.disabled = true;
+                    }
+                    const tCaseStudy = document.getElementById('clone_target_case_study_id');
+                    if(tCaseStudy) {
+                        tCaseStudy.innerHTML = '<option value="">-- Select Target Section First --</option>';
+                        tCaseStudy.disabled = true;
+                    }
+                }
+            }
+
+            fetchSections(this.value, sSection);
+            sCaseStudy.innerHTML = '<option value="">-- Select Source Section First --</option>';
+            sCaseStudy.disabled = true;
+            
+            // Reset questions list
+            if(questionsContainer) {
+                questionsContainer.innerHTML = '';
+                questionsContainer.style.display = 'none';
+                qNoData.innerText = '-- Select Source Case Study First --';
+                qNoData.style.display = 'block';
+                if(selectAllQ) selectAllQ.checked = false;
+            }
+        });
+    }
+
+    if (sSection) {
+        sSection.addEventListener('change', function() {
+            fetchCaseStudies(this.value, sCaseStudy);
+            
+             // Reset questions list
+            if(questionsContainer) {
+                questionsContainer.innerHTML = '';
+                questionsContainer.style.display = 'none';
+                
+                if(this.value) {
+                     qNoData.innerText = '-- Select Source Case Study First --';
+                } else {
+                     qNoData.innerText = '-- Select Source Section First --';
+                }
+                
+                qNoData.style.display = 'block';
+                if(selectAllQ) selectAllQ.checked = false;
+            }
+        });
+    }
+
+    if (sCaseStudy) {
+        sCaseStudy.addEventListener('change', function() {
+            fetchQuestions(this.value);
+        });
+    }
+
+    // Target Flow
+    const tExam = document.getElementById('clone_target_exam_id');
+    const tSection = document.getElementById('clone_target_section_id');
+    const tCaseStudy = document.getElementById('clone_target_case_study_id');
+
+    if (tExam) {
+        tExam.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const isActive = selectedOption.getAttribute('data-is-active');
+
+            if (isActive == '1') {
+                alert('You cannot clone into an active exam. Please deactivate the exam first.');
+                this.value = ""; // Reset selection
+                tSection.innerHTML = '<option value="">-- Select Target Exam First --</option>';
+                tSection.disabled = true;
+                tCaseStudy.innerHTML = '<option value="">-- Select Target Section First --</option>';
+                tCaseStudy.disabled = true;
+                return;
+            }
+
+            fetchSections(this.value, tSection);
+            tCaseStudy.innerHTML = '<option value="">-- Select Target Section First --</option>';
+            tCaseStudy.disabled = true;
+        });
+    }
+
+    if (tSection) {
+        tSection.addEventListener('change', function() {
+            fetchCaseStudies(this.value, tCaseStudy);
+        });
+    }
+});
+</script>
+
 @if(session('question_created_success'))
 <!-- Question Created Success Modal -->
 <div class="modal fade" id="questionCreatedSuccessModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -400,11 +818,15 @@
 
                     <!-- Option 2: Clone Question -->
                     <div class="col-md-6">
-                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone question feature coming soon!')">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" 
+                             style="cursor: pointer; transition: all 0.3s;" 
+                             data-bs-toggle="modal" 
+                             data-bs-target="#cloneQuestionModal"
+                             onclick="setQuestionCloneTarget('{{ session('selected_exam_id') }}', '{{ session('selected_section_id') }}', '{{ session('selected_case_study_id') }}')">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
                                     </div>
                                 </div>
                                 <h5 class="fw-bold mb-2">Clone Question from Bank</h5>
@@ -428,7 +850,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Show success alert first
-    showAlert.success('Question created successfully!', 'Success!');
+    showAlert.success('{{ session('success') }}', 'Success!');
     
     // Then show the modal
     var modal = new bootstrap.Modal(document.getElementById('questionCreatedSuccessModal'));
@@ -445,5 +867,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endif
+
+<script>
+// Initialize Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 
 @endsection

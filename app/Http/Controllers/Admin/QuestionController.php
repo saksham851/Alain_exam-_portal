@@ -47,9 +47,9 @@ class QuestionController extends Controller
             }
         }
 
-        // Filter by Certification Type (through Exam Category)
+        // Filter by Certification Type (through Exam)
         if ($request->filled('certification_type')) {
-            $query->whereHas('caseStudy.section.exam.category', function($q) use ($request) {
+            $query->whereHas('caseStudy.section.exam', function($q) use ($request) {
                 $q->where('certification_type', $request->certification_type);
             });
         }
@@ -67,7 +67,7 @@ class QuestionController extends Controller
             ->get();
 
         // Get all unique certification types for filter dropdown
-        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+        $certificationTypes = Exam::where('status', 1)
             ->distinct()
             ->orderBy('certification_type')
             ->pluck('certification_type');
@@ -81,9 +81,7 @@ class QuestionController extends Controller
 
         // Also filter exams by certification type if selected
         if ($request->filled('certification_type')) {
-             $examsQuery->whereHas('category', function($q) use ($request) {
-                $q->where('certification_type', $request->certification_type);
-            });
+             $examsQuery->where('certification_type', $request->certification_type);
         }
         
         $exams = $examsQuery->orderBy('name')->get();
@@ -234,8 +232,8 @@ class QuestionController extends Controller
             DB::commit();
 
             $messageParts = [];
-            if ($createdCount > 0) $messageParts[] = "created {$createdCount} new question(s)";
-            if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing question(s)";
+            if ($createdCount > 0) $messageParts[] = "created {$createdCount} new " . \Illuminate\Support\Str::plural('question', $createdCount);
+            if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing " . \Illuminate\Support\Str::plural('question', $updatedCount);
             
             $message = "Successfully " . implode(' and ', $messageParts) . "!";
 
@@ -407,6 +405,62 @@ class QuestionController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    // CLONE QUESTIONS
+    public function clone(Request $request)
+    {
+        $request->validate([
+            'source_question_ids' => 'required|array',
+            'source_question_ids.*' => 'exists:questions,id',
+            'target_case_study_id' => 'required|exists:case_studies,id',
+        ]);
+
+        $targetCaseStudy = CaseStudy::with('section.exam')->findOrFail($request->target_case_study_id);
+
+        if ($targetCaseStudy->section && $targetCaseStudy->section->exam && $targetCaseStudy->section->exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot clone questions into an active exam. Please deactivate the exam first.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $clonedCount = 0;
+            foreach ($request->source_question_ids as $questionId) {
+                $sourceQuestion = Question::with('options')->findOrFail($questionId);
+
+                $newQuestion = Question::create([
+                    'case_study_id' => $targetCaseStudy->id,
+                    'question_text' => $sourceQuestion->question_text,
+                    'question_type' => $sourceQuestion->question_type,
+                    'ig_weight' => $sourceQuestion->ig_weight,
+                    'dm_weight' => $sourceQuestion->dm_weight,
+                    'status' => $sourceQuestion->status,
+                ]);
+
+                foreach ($sourceQuestion->options as $option) {
+                    QuestionOption::create([
+                        'question_id' => $newQuestion->id,
+                        'option_key' => $option->option_key,
+                        'option_text' => $option->option_text,
+                        'is_correct' => $option->is_correct,
+                    ]);
+                }
+                $clonedCount++;
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.questions.index')
+                ->with('question_created_success', true)
+                ->with('selected_exam_id', $targetCaseStudy->section->exam_id)
+                ->with('selected_section_id', $targetCaseStudy->section_id)
+                ->with('selected_case_study_id', $targetCaseStudy->id)
+                ->with('success', "$clonedCount question(s) cloned successfully!");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error cloning questions: ' . $e->getMessage());
+        }
     }
 
     // IMPORT FROM CSV

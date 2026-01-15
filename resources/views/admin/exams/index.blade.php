@@ -57,11 +57,11 @@
 
                     <!-- Option 2: Clone -->
                     <div class="col-md-6">
-                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" onclick="alert('Clone feature coming soon!')">
+                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneExamModal">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
-                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-info" style="font-size: 2.2rem;"></i>
+                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
                                     </div>
                                 </div>
                                 <h5 class="fw-bold mb-2">Clone Existing Exam</h5>
@@ -71,9 +71,104 @@
                     </div>
                 </div>
             </div>
+</div>
+    </div>
+</div>
+
+<!-- Clone Exam Modal -->
+<div class="modal fade" id="cloneExamModal" tabindex="-1" aria-labelledby="cloneExamModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="cloneExamModalLabel">
+                    <i class="ti ti-copy me-2 fs-4"></i> Clone Existing Exam
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cloneExamForm" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Select an exam to clone and provide details for the new exam.</p>
+                    
+                    <!-- Select Exam to Clone -->
+                    <div class="mb-4">
+                        <label for="source_exam_id" class="form-label fw-bold">
+                            <i class="ti ti-file-text me-1"></i> Select Exam to Clone
+                        </label>
+                        <select class="form-select" id="source_exam_id" name="source_exam_id" required>
+                            <option value="">-- Select an exam --</option>
+                            @foreach($exams as $exam)
+                                <option value="{{ $exam->id }}" 
+                                    data-name="{{ $exam->name }}" 
+                                    data-code="{{ $exam->exam_code }}"
+                                    data-category="{{ $exam->category ? $exam->category->name : 'N/A' }}"
+                                    data-duration="{{ $exam->duration_minutes }}">
+                                    {{ $exam->name }} ({{ $exam->exam_code }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">This will create a complete copy of all sections, case studies, and questions.</small>
+                    </div>
+
+
+                    <hr class="my-4">
+
+                    <!-- New Exam Details -->
+                    <h6 class="fw-bold mb-3"><i class="ti ti-file-plus me-1"></i> New Exam Details</h6>
+                    
+                    <div class="mb-3">
+                        <label for="new_exam_name" class="form-label fw-bold">
+                            Exam Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="new_exam_name" name="new_exam_name" required placeholder="Enter new exam name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="new_exam_code" class="form-label fw-bold">
+                            Exam Code <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="new_exam_code" name="new_exam_code" value="{{ $nextCode ?? '' }}" required readonly>
+                        <small class="text-muted">Auto-generated unique exam code.</small>
+                    </div>
+
+                    <div class="alert alert-info border-0 mb-0">
+                        <i class="ti ti-info-circle me-2"></i>
+                        <strong>Note:</strong> The cloned exam will include all sections, case studies, questions, and options as separate copies. The new exam will start as <strong>inactive</strong>.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-copy me-1"></i> Clone Exam
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<script>
+// Handle clone exam form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const sourceExamSelect = document.getElementById('source_exam_id');
+    const cloneExamForm = document.getElementById('cloneExamForm');
+
+
+    // Update form action when exam is selected
+    if (sourceExamSelect) {
+        sourceExamSelect.addEventListener('change', function() {
+            const examId = this.value;
+            
+            if (examId) {
+                // Update form action
+                cloneExamForm.action = `/admin/exams/${examId}/clone`;
+            } else {
+                cloneExamForm.action = '';
+            }
+        });
+    }
+});
+</script>
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
@@ -213,8 +308,8 @@
                                     @endif
                                 </td>
                                 <td style="width: 13%; white-space: nowrap;">
-                                    @if($exam->category)
-                                        <span class="badge bg-light-success">{{ $exam->category->certification_type }}</span>
+                                    @if($exam->certification_type)
+                                        <span class="badge bg-light-success">{{ $exam->certification_type }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -245,27 +340,41 @@
                                     </span>
                                 </td>
                                 <td class="text-end" style="width: 20%;">
-                                    <a href="{{ route('admin.case-studies.index', ['exam_id' => $exam->id]) }}" class="btn btn-icon btn-link-success btn-sm" title="Manage Case Studies">
-                                        <i class="ti ti-file-text"></i>
-                                    </a>
-                                    @if($exam->is_active == 1)
-                                        <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-sm" title="Edit Exam" style="background: none; border: none; padding: 0; color: #0066cc;">
-                                            <i class="ti ti-edit"></i>
-                                        </a>
-                                        <button class="btn btn-sm" title="Active exam - cannot delete" disabled style="background: none; border: none; padding: 0; color: #999;">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    @else
-                                        <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-sm" title="Edit Exam" style="background: none; border: none; padding: 0; color: #0066cc;">
-                                            <i class="ti ti-edit"></i>
-                                        </a>
-                                        <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $exam->id }}">
-                                            @csrf @method('DELETE')
-                                            <button type="button" class="btn btn-sm" title="Delete Exam" style="background: none; border: none; padding: 0; color: #dc3545;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')">
-                                                <i class="ti ti-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endif
+                                    <ul class="list-inline mb-0">
+                                        <li class="list-inline-item">
+                                            <a href="{{ route('admin.case-studies.index', ['exam_id' => $exam->id]) }}" class="avtar avtar-s btn-link-info btn-pc-default" data-bs-toggle="tooltip" title="Manage Sections">
+                                                <i class="ti ti-file-text f-18"></i>
+                                            </a>
+                                        </li>
+                                        @if($exam->is_active == 1)
+                                            <li class="list-inline-item">
+                                                <a href="{{ route('admin.exams.edit', $exam->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Exam">
+                                                    <i class="ti ti-edit f-18"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Active exam - cannot delete">
+                                                    <button class="avtar avtar-s btn-link-danger btn-pc-default" style="opacity: 0.5; border: none;" disabled>
+                                                        <i class="ti ti-trash f-18"></i>
+                                                    </button>
+                                                </span>
+                                            </li>
+                                        @else
+                                            <li class="list-inline-item">
+                                                <a href="{{ route('admin.exams.edit', $exam->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Exam">
+                                                    <i class="ti ti-edit f-18"></i>
+                                                </a>
+                                            </li>
+                                            <li class="list-inline-item">
+                                                <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $exam->id }}">
+                                                    @csrf @method('DELETE')
+                                                    <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')" data-bs-toggle="tooltip" title="Delete Exam">
+                                                        <i class="ti ti-trash f-18"></i>
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        @endif
+                                    </ul>
                                 </td>
                             </tr>
                             @empty
@@ -305,11 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    if (certificationTypeSelect) {
-        certificationTypeSelect.addEventListener('change', function() {
-            filterForm.submit();
-        });
-    }
+
     
     if (statusSelect) {
         statusSelect.addEventListener('change', function() {
@@ -323,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function() {
                 filterForm.submit();
-            }, 500);\
+            }, 500);
         });
     }
     
@@ -397,5 +502,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endif
+
+<script>
+// Initialize Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
 
 @endsection

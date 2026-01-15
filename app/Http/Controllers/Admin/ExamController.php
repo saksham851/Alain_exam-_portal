@@ -34,11 +34,9 @@ class ExamController extends Controller
             $query->where('category_id', $categoryId);
         }
 
-        // Filter by certification type (through category relationship)
+        // Filter by certification type
         if ($certificationType) {
-            $query->whereHas('category', function($q) use ($certificationType) {
-                $q->where('certification_type', $certificationType);
-            });
+            $query->where('certification_type', $certificationType);
         }
 
         // Filter by exact duration
@@ -46,7 +44,6 @@ class ExamController extends Controller
             $query->where('duration_minutes', $duration);
         }
 
-        // Filter by Active Status
         // Filter by Active Status
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->input('is_active'));
@@ -63,12 +60,21 @@ class ExamController extends Controller
             ->get(['id', 'name']);
 
         // Get all unique certification types for filter dropdown
-        $certificationTypes = \App\Models\ExamCategory::where('status', 1)
+        $certificationTypes = Exam::where('status', 1)
+            ->whereNotNull('certification_type')
             ->distinct()
             ->orderBy('certification_type')
             ->pluck('certification_type');
 
-        return view('admin.exams.index', compact('exams', 'categories', 'certificationTypes'));
+        // Auto-generate next exam code for cloning
+        $latestExam = Exam::orderBy('id', 'desc')->first();
+        $nextCode = 'MH0001';
+        if ($latestExam && preg_match('/MH(\d+)/', $latestExam->exam_code, $matches)) {
+            $num = intval($matches[1]) + 1;
+            $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
+        }
+
+        return view('admin.exams.index', compact('exams', 'categories', 'certificationTypes', 'nextCode'));
     }
 
     // CREATE FORM
@@ -76,16 +82,34 @@ class ExamController extends Controller
     {
         $exam = null;
         $categories = \App\Models\ExamCategory::where('status', 1)->orderBy('name')->get();
-        return view('admin.exams.edit', compact('exam', 'categories'));
+
+        // Auto-generate next exam code
+        $latestExam = Exam::orderBy('id', 'desc')->first();
+        $nextCode = 'MH0001';
+        if ($latestExam && preg_match('/MH(\d+)/', $latestExam->exam_code, $matches)) {
+            $num = intval($matches[1]) + 1;
+            $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
+        }
+
+        return view('admin.exams.edit', compact('exam', 'categories', 'nextCode'));
     }
 
     // SAVE NEW
     public function store(Request $request)
     {
+        // Handle new certification type
+        $certificationType = $request->certification_type;
+        if ($request->filled('new_certification_type')) {
+            $certificationType = $request->new_certification_type;
+        }
+
+        $request->merge(['certification_type' => $certificationType]);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'exam_code' => 'required|string|max:50|unique:exams,exam_code',
             'category_id' => 'required|exists:exam_categories,id',
+            'certification_type' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer',
         ]);
@@ -94,6 +118,7 @@ class ExamController extends Controller
             'name' => $request->name,
             'exam_code' => $request->exam_code,
             'category_id' => $request->category_id,
+            'certification_type' => $certificationType,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'status' => 1,
@@ -129,10 +154,19 @@ class ExamController extends Controller
             return redirect()->back()->with('error', 'This exam is locked. Check "Force Edit" to edit this active exam.');
         }
 
+        // Handle new certification type
+        $certificationType = $request->certification_type;
+        if ($request->filled('new_certification_type')) {
+            $certificationType = $request->new_certification_type;
+        }
+
+        $request->merge(['certification_type' => $certificationType]);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'exam_code' => 'required|string|max:50|unique:exams,exam_code,' . $id,
             'category_id' => 'required|exists:exam_categories,id',
+            'certification_type' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer',
         ]);
@@ -141,6 +175,7 @@ class ExamController extends Controller
             'name' => $request->name,
             'exam_code' => $request->exam_code,
             'category_id' => $request->category_id,
+            'certification_type' => $certificationType,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
         ]);
@@ -239,5 +274,78 @@ class ExamController extends Controller
 
         $message = $exam->is_active ? 'Exam Activated Successfully!' : 'Exam Deactivated Successfully!';
         return redirect()->back()->with('success', $message);
+    }
+
+    // CLONE EXAM (DEEP COPY)
+    public function clone(Request $request, $id)
+    {
+        $request->validate([
+            'new_exam_name' => 'required|string|max:255',
+            'new_exam_code' => 'required|string|max:50|unique:exams,exam_code',
+        ]);
+
+        $sourceExam = Exam::with(['sections.caseStudies.questions.options'])->findOrFail($id);
+
+        // Create new exam (deep copy)
+        $newExam = Exam::create([
+            'category_id' => $sourceExam->category_id,
+            'exam_code' => $request->new_exam_code,
+            'name' => $request->new_exam_name,
+            'certification_type' => $sourceExam->certification_type,
+            'description' => $sourceExam->description,
+            'duration_minutes' => $sourceExam->duration_minutes,
+            'status' => 1,
+            'is_active' => 0, // Cloned exams start as inactive
+        ]);
+
+        // Clone all sections
+        foreach ($sourceExam->sections as $section) {
+            $newSection = \App\Models\Section::create([
+                'exam_id' => $newExam->id,
+                'title' => $section->title,
+                'content' => $section->content,
+                'order_no' => $section->order_no,
+                'status' => $section->status,
+            ]);
+
+            // Clone all case studies in this section
+            foreach ($section->caseStudies as $caseStudy) {
+                $newCaseStudy = \App\Models\CaseStudy::create([
+                    'section_id' => $newSection->id,
+                    'title' => $caseStudy->title,
+                    'content' => $caseStudy->content,
+                    'order_no' => $caseStudy->order_no,
+                    'status' => $caseStudy->status,
+                    'cloned_from_id' => $caseStudy->id,
+                    'cloned_from_section_id' => $caseStudy->section_id,
+                    'cloned_at' => now(),
+                ]);
+
+                // Clone all questions in this case study
+                foreach ($caseStudy->questions as $question) {
+                    $newQuestion = \App\Models\Question::create([
+                        'case_study_id' => $newCaseStudy->id,
+                        'question_text' => $question->question_text,
+                        'question_type' => $question->question_type,
+                        'ig_weight' => $question->ig_weight,
+                        'dm_weight' => $question->dm_weight,
+                        'status' => $question->status,
+                    ]);
+
+                    // Clone all options for this question
+                    foreach ($question->options as $option) {
+                        \App\Models\QuestionOption::create([
+                            'question_id' => $newQuestion->id,
+                            'option_key' => $option->option_key,
+                            'option_text' => $option->option_text,
+                            'is_correct' => $option->is_correct,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return redirect()->route('admin.exams.index')
+            ->with('success', "Exam cloned successfully! New exam: {$newExam->name}");
     }
 }

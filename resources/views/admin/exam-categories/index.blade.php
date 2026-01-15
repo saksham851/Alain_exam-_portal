@@ -33,27 +33,15 @@
             <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route('admin.exam-categories.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
+
                         <!-- Search -->
-                        <div class="col-md-4">
+                        <div class="col-md-7">
                             <label class="form-label fw-bold text-muted small mb-1">SEARCH EXAM CATEGORY</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
                                 <input type="text" name="search" class="form-control border-start-0 ps-0" 
                                        placeholder="Category name..." value="{{ request('search') }}">
                             </div>
-                        </div>
-
-                        <!-- Certification Type -->
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
-                            <select name="certification_type" class="form-select form-select-sm">
-                                <option value="">All Types</option>
-                                @foreach($certificationTypes as $type)
-                                    <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
-                                        {{ $type }}
-                                    </option>
-                                @endforeach
-                            </select>
                         </div>
 
                         <!-- Exam Count -->
@@ -87,11 +75,7 @@
                             <i class="ti ti-search me-1"></i>{{ request('search') }}
                         </span>
                     @endif
-                    @if(request('certification_type'))
-                        <span class="badge rounded-pill bg-success">
-                            <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
-                        </span>
-                    @endif
+
                     @if(request('exam_count') !== null && request('exam_count') !== '')
                         <span class="badge rounded-pill bg-info">
                             <i class="ti ti-clipboard-list me-1"></i>{{ request('exam_count') }} Exams
@@ -107,7 +91,7 @@
                         <thead>
                             <tr>
                                 <th>Exam Category Name</th>
-                                <th>Certification Type</th>
+
                                 <th>Exams Count</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -118,22 +102,26 @@
                                 <td>
                                     <h6 class="mb-0">{{ $category->name }}</h6>
                                 </td>
-                                <td>
-                                    <span class="badge bg-light-success">{{ $category->certification_type }}</span>
-                                </td>
+
                                 <td>
                                     <span class="badge bg-light-info">{{ $category->exams_count ?? 0 }} exams</span>
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('admin.exam-categories.edit', $category->id) }}" class="btn btn-icon btn-link-primary btn-sm" title="Edit Category">
-                                        <i class="ti ti-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.exam-categories.destroy', $category->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $category->id }}">
-                                        @csrf @method('DELETE')
-                                        <button type="button" class="btn btn-icon btn-link-danger btn-sm" title="Delete Category" onclick="showDeleteModal(document.getElementById('deleteForm{{ $category->id }}'), 'Are you sure you want to delete this category?')">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <ul class="list-inline mb-0">
+                                        <li class="list-inline-item">
+                                            <a href="{{ route('admin.exam-categories.edit', $category->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Category">
+                                                <i class="ti ti-edit f-18"></i>
+                                            </a>
+                                        </li>
+                                        <li class="list-inline-item">
+                                            <form action="{{ route('admin.exam-categories.destroy', $category->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $category->id }}">
+                                                @csrf @method('DELETE')
+                                                <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $category->id }}'), 'Are you sure you want to delete this category?')" data-bs-toggle="tooltip" title="Delete Category">
+                                                    <i class="ti ti-trash f-18"></i>
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
                                 </td>
                             </tr>
                             @empty
@@ -165,11 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let searchTimeout;
     
     // Auto-submit on dropdown change (instant)
-    if (certificationTypeSelect) {
-        certificationTypeSelect.addEventListener('change', function() {
-            filterForm.submit();
-        });
-    }
+
     
     // Auto-submit on search input (debounced - 500ms delay)
     if (searchInput) {
@@ -192,4 +176,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+// Initialize Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
 @endsection

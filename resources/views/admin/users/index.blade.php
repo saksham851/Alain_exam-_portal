@@ -198,19 +198,27 @@
                                     </button>
                                 </td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-icon btn-link-primary btn-sm" 
-                                            title="Manage Attempts" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#manageAttemptsModal"
-                                            onclick="openManageAttemptsModal({{ $user->id }}, '{{ $user->first_name }} {{ $user->last_name }}', '{{ $user->email }}')">
-                                        <i class="ti ti-edit"></i>
-                                    </button>
-                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Are you sure you want to delete this student?');">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-icon btn-link-danger btn-sm" title="Delete Student">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <ul class="list-inline mb-0">
+                                        <li class="list-inline-item">
+                                            <button type="button" class="avtar avtar-s btn-link-success btn-pc-default" 
+                                                    data-bs-toggle="tooltip" 
+                                                    title="Manage Attempts"
+                                                    onclick="openManageAttemptsModal({{ $user->id }}, '{{ $user->first_name }} {{ $user->last_name }}', '{{ $user->email }}')">
+                                                <i class="ti ti-edit f-18"></i>
+                                            </button>
+                                        </li>
+                                        <li class="list-inline-item">
+                                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $user->id }}">
+                                                @csrf @method('DELETE')
+                                                <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" 
+                                                        data-bs-toggle="tooltip" 
+                                                        title="Delete Student"
+                                                        onclick="showDeleteModal(document.getElementById('deleteForm{{ $user->id }}'), 'Are you sure you want to delete this student?')">
+                                                    <i class="ti ti-trash f-18"></i>
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
                                 </td>
                             </tr>
                             @endforeach
@@ -554,4 +562,15 @@ function saveAttempts() {
     });
 }
 </script>
+
+<script>
+// Initialize Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
 @endsection

@@ -33,7 +33,7 @@ class CaseStudyBankController extends Controller
         }
 
         if ($request->filled('certification_type')) {
-            $query->whereHas('section.exam.category', function($q) use ($request) {
+            $query->whereHas('section.exam', function($q) use ($request) {
                 $q->where('certification_type', $request->certification_type);
             });
         }
@@ -55,11 +55,11 @@ class CaseStudyBankController extends Controller
         $exams = Exam::where('status', 1)->orderBy('name')->get();
         
         // Get certification types
-        $certificationTypes = ExamCategory::where('status', 1)
+        $certificationTypes = Exam::where('status', 1)
             ->distinct()
+            ->orderBy('certification_type')
             ->pluck('certification_type')
             ->filter()
-            ->sort()
             ->values();
 
         return view('admin.case-studies-bank.index', compact(
@@ -175,9 +175,9 @@ public function store(Request $request)
         DB::commit();
         
         $messageParts = [];
-        if ($createdCount > 0) $messageParts[] = "created {$createdCount} new case study(ies)";
-        if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing case study(ies)";
-        if ($deletedCount > 0) $messageParts[] = "deleted {$deletedCount} existing case study(ies)";
+        if ($createdCount > 0) $messageParts[] = "created {$createdCount} new " . \Illuminate\Support\Str::plural('case study', $createdCount);
+        if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing " . \Illuminate\Support\Str::plural('case study', $updatedCount);
+        if ($deletedCount > 0) $messageParts[] = "deleted {$deletedCount} existing " . \Illuminate\Support\Str::plural('case study', $deletedCount);
         
         $message = "Successfully " . implode(' and ', $messageParts) . "!";
         
@@ -207,7 +207,10 @@ public function store(Request $request)
         DB::beginTransaction();
 
         try {
-            $targetSection = Section::findOrFail($request->target_section_id);
+            $targetSection = Section::with('exam')->findOrFail($request->target_section_id);
+            if ($targetSection->exam && $targetSection->exam->is_active == 1) {
+                return redirect()->back()->with('error', 'Cannot clone case studies into an active exam. Please deactivate the exam first.');
+            }
             $copiedCount = 0;
 
             foreach ($request->case_study_ids as $caseStudyId) {
@@ -245,8 +248,11 @@ public function store(Request $request)
             DB::commit();
 
             return redirect()
-                ->back()
-                ->with('success', "Successfully copied {$copiedCount} case study(ies) with all their questions to the selected section!");
+                ->route('admin.case-studies-bank.index')
+                ->with('case_study_created_success', true)
+                ->with('selected_exam_id', $targetSection->exam_id)
+                ->with('selected_section_id', $targetSection->id)
+                ->with('success', "Successfully copied {$copiedCount} " . \Illuminate\Support\Str::plural('case study', $copiedCount) . " with all their questions to the selected section!");
 
         } catch (\Exception $e) {
             DB::rollBack();

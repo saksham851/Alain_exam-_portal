@@ -11,6 +11,7 @@ class Exam extends Model
         'exam_code',
         'name',
         'description',
+        'certification_type',
         'duration_minutes',
         'status',
         'is_active',

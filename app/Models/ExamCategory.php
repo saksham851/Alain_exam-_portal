@@ -8,7 +8,6 @@ class ExamCategory extends Model
 {
     protected $fillable = [
         'name',
-        'certification_type',
         'status',
     ];
 
