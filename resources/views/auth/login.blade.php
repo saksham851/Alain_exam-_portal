@@ -13,12 +13,13 @@
             </div>
         @endif
     
-    <form method="POST" action="{{ route('login') }}">
+    <form method="POST" action="{{ route('login') }}" id="loginForm">
         @csrf
         <div class="form-group mb-3">
           <label class="form-label">Email Address</label>
-          <input type="email" name="email" class="form-control" placeholder="Email Address" value="{{ old('email') }}" required autofocus>
+          <input type="email" name="email" class="form-control" id="email" placeholder="Email Address" value="{{ old('email') }}" required autofocus>
           @error('email') <small class="text-danger">{{ $message }}</small> @enderror
+          <small class="text-danger" id="emailError" style="display:none;"></small>
         </div>
         <div class="form-group mb-3">
           <label class="form-label">Password</label>
@@ -29,6 +30,7 @@
             </span>
           </div>
           @error('password') <small class="text-danger">{{ $message }}</small> @enderror
+          <small class="text-danger" id="passwordError" style="display:none;"></small>
         </div>
         
         <div class="d-flex mt-1 justify-content-between">
@@ -49,6 +51,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Password Toggle Logic
         const togglePassword = document.getElementById('togglePassword');
         const password = document.getElementById('password');
         const icon = document.getElementById('eyeIcon');
@@ -67,6 +70,62 @@
                     icon.classList.remove('ti-eye');
                     icon.classList.add('ti-eye-off');
                 }
+            });
+        }
+
+        // Form Validation Logic
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
+
+        if(loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                let isValid = true;
+
+                // Reset errors
+                emailError.style.display = 'none';
+                emailError.innerText = '';
+                passwordError.style.display = 'none';
+                passwordError.innerText = '';
+
+                // Email Validation
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailInput.value || !emailRegex.test(emailInput.value)) {
+                    emailError.innerText = 'Please enter a valid email address.';
+                    emailError.style.display = 'block';
+                    isValid = false;
+                }
+
+                // Password Validation (1 Uppercase, 1 Special/Unique Char, Min 8 chars)
+                // (?=.*[A-Z]) -> At least one Uppercase
+                // (?=.*[!@#$&*]) -> At least one special character (adjust list as needed)
+                // or just (?=.*[\W_]) for any non-word char
+                const passwordRegex = /^(?=.*[A-Z])(?=.*[\W_]).{6,}$/; 
+                // Note: Min length 6 is standard, user didn't specify length but usually 6 or 8. Using 6 to be safe but strict on chars.
+                
+                if (!passwordInput.value) {
+                     passwordError.innerText = 'Password is required.';
+                     passwordError.style.display = 'block';
+                     isValid = false;
+                } else if (!passwordRegex.test(passwordInput.value)) {
+                    passwordError.innerText = 'Password must contain at least 1 uppercase letter and 1 special character.';
+                    passwordError.style.display = 'block';
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                }
+            });
+
+            // Clear errors on input
+            emailInput.addEventListener('input', () => {
+                emailError.style.display = 'none';
+            });
+            passwordInput.addEventListener('input', () => {
+                passwordError.style.display = 'none';
             });
         }
     });
