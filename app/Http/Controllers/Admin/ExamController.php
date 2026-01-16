@@ -162,10 +162,10 @@ class ExamController extends Controller
             'is_active' => 0, // New exams start as inactive
         ]);
 
-        return redirect()->route('admin.sections.index', [
-            'open_modal' => 'create',
-            'exam_id' => $exam->id
-        ])->with('success', 'Exam Created Successfully!');
+        return redirect()->route('admin.sections.index')
+            ->with('open_add_section_modal', true)
+            ->with('new_exam_id', $exam->id)
+            ->with('success', 'Exam Created Successfully!');
     }
 
     // SHOW EXAM
