@@ -23,7 +23,7 @@ class SectionController extends Controller
 
         // Base query
         $query = Section::where('status', 1)
-            ->with(['exam.category', 'caseStudies.questions']);
+            ->with(['exam.category', 'caseStudies.questions', 'clonedFrom']);
 
         // Search by section name
         if ($search) {

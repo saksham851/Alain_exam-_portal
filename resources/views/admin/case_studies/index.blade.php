@@ -35,7 +35,11 @@
                         <!-- Search -->
                         <div class="col-md-3">
                             <label class="form-label fw-bold text-muted small mb-1">SEARCH SECTIONS</label>
-                            <input type="text" name="search" id="searchInput" class="form-control form-control-sm" placeholder="Search section title..." value="{{ request('search') }}">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
+                                <input type="text" name="search" id="searchInput" class="form-control border-start-0 ps-0" 
+                                       placeholder="Search section title..." value="{{ request('search') }}">
+                            </div>
                         </div>
 
                         <!-- Exam Category Filter -->
@@ -107,8 +111,8 @@
                                 <th>Exam</th>
                                 <th>Exam Category</th>
                                 <th>Certification Type</th>
-                                <th class="text-center">Start Time</th>
-                                <th class="text-center">Content</th>
+                                <th class="text-center">Total Case Studies</th>
+                                <th class="text-center">Total Questions</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -117,6 +121,15 @@
                             <tr>
                                 <td>
                                     <strong>{{ $section->title }}</strong>
+                                    @if($section->cloned_from_id)
+                                        <span class="badge bg-warning text-dark ms-2" style="font-size: 0.75rem;">
+                                            <i class="ti ti-copy me-1"></i> Cloned
+                                        </span>
+                                        <div class="small text-muted mt-1 d-flex align-items-center">
+                                            <i class="ti ti-file-description me-1"></i> 
+                                            {{ $section->clonedFrom->title ?? 'Unknown Section' }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="text-dark">{{ $section->exam->name ?? 'N/A' }}</span>
@@ -128,10 +141,15 @@
                                     <span class="badge bg-light-info">{{ $section->exam->certification_type ?? 'N/A' }}</span>
                                 </td>
                                 <td class="text-center">
-                                    {{ $section->created_at->format('d M Y') }}
+                                    <span class="badge bg-light-success">{{ $section->caseStudies->count() }} Case Studies</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-light-success">{{ $section->caseStudies->count() }} Case Studies</span>
+                                    @php
+                                        $questionCount = $section->caseStudies->sum(function($cs) {
+                                            return $cs->questions->count();
+                                        });
+                                    @endphp
+                                    <span class="badge bg-light-warning text-warning">{{ $questionCount }} Questions</span>
                                 </td>
                                 <td class="text-end">
                                     @php
@@ -577,11 +595,23 @@ document.addEventListener('DOMContentLoaded', function() {
 // Auto-submit filters on change (already handled by onchange events in elements)
 // Debounced search - auto-submit after 500ms of no typing
 let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(function() {
-        document.getElementById('filterForm').submit();
-    }, 500);
-});
+const searchInput = document.getElementById('searchInput');
+
+if (searchInput) {
+    // Auto-focus if there is a value (restores focus after reload)
+    if (searchInput.value) {
+        searchInput.focus();
+        const val = searchInput.value;
+        searchInput.value = '';
+        searchInput.value = val;
+    }
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            document.getElementById('filterForm').submit();
+        }, 500);
+    });
+}
 </script>
 @endsection
