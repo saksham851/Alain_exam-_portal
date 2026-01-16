@@ -109,7 +109,7 @@
                         </div>
 
                         <!-- Exam Filter -->
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
                             <select name="exam" id="exam" class="form-select form-select-sm" onchange="handleExamChange()">
                                 <option value="">All Exams</option>
@@ -145,12 +145,21 @@
                         </div>
 
                         <!-- Question Type Filter -->
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label class="form-label fw-bold text-muted small mb-1">QUESTION TYPE</label>
                             <select name="question_type" id="question_type" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
                                 <option value="">All Types</option>
                                 <option value="single" {{ request('question_type') == 'single' ? 'selected' : '' }}>Single Choice</option>
                                 <option value="multiple" {{ request('question_type') == 'multiple' ? 'selected' : '' }}>Multiple Choice</option>
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <select name="status" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+                                <option value="active" {{ request('status') !== 'inactive' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
 
@@ -252,7 +261,12 @@
                             @forelse($questions as $question)
                             <tr>
                                 <td>
-                                    <div class="fw-bold mb-1">{{ Str::limit(strip_tags($question->question_text), 80) }}</div>
+                                    <div class="fw-bold mb-1">
+                                        {{ Str::limit(strip_tags($question->question_text), 80) }}
+                                        @if($question->cloned_from_id)
+                                            <span class="badge bg-warning text-dark ms-2"><i class="ti ti-copy"></i> Cloned</span>
+                                        @endif
+                                    </div>
                                     <small class="text-muted">
                                         <i class="ti ti-file-text"></i> {{ $question->caseStudy->section->title ?? 'N/A' }}
                                     </small>
@@ -288,40 +302,57 @@
                                         $isActiveExamQuestion = $question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1;
                                     @endphp
                                     
-                                    @if($isActiveExamQuestion)
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item">
-                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot edit">
-                                                    <button class="avtar avtar-s btn-link-success btn-pc-default" style="opacity: 0.5; border: none;" disabled>
-                                                        <i class="ti ti-edit f-18"></i>
-                                                    </button>
-                                                </span>
-                                            </li>
-                                            <li class="list-inline-item">
-                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot delete">
-                                                    <button class="avtar avtar-s btn-link-danger btn-pc-default" style="opacity: 0.5; border: none;" disabled>
-                                                        <i class="ti ti-trash f-18"></i>
-                                                    </button>
-                                                </span>
-                                            </li>
-                                        </ul>
-                                    @else
-                                        <ul class="list-inline mb-0">
-                                            <li class="list-inline-item">
-                                                <a href="{{ route('admin.questions.edit', $question->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Question">
-                                                    <i class="ti ti-edit f-18"></i>
+                                    <div class="dropdown">
+                                        <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
+                                                data-bs-toggle="dropdown" 
+                                                data-bs-boundary="viewport" 
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                                aria-expanded="false">
+                                            <i class="ti ti-dots-vertical f-18"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('admin.questions.show', $question->id) }}">
+                                                    <i class="ti ti-eye me-2"></i>View Question
                                                 </a>
                                             </li>
-                                            <li class="list-inline-item">
-                                                <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $question->id }}">
-                                                    @csrf @method('DELETE')
-                                                    <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')" data-bs-toggle="tooltip" title="Delete Question">
-                                                        <i class="ti ti-trash f-18"></i>
-                                                    </button>
-                                                </form>
-                                            </li>
+                                            @if($question->status == 0)
+                                                <li>
+                                                    <form action="{{ route('admin.questions.activate', $question->id) }}" method="GET" class="d-inline-block w-100" id="activateForm{{ $question->id }}">
+                                                        <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to restore this question?', 'Restore Question', function() { document.getElementById('activateForm{{ $question->id }}').submit(); })">
+                                                            <i class="ti ti-check me-2"></i>Activate Question
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            @else
+                                                <li>
+                                                    @if($isActiveExamQuestion)
+                                                        <button class="dropdown-item text-muted" style="cursor: not-allowed; opacity: 0.6;" disabled title="Exam is active - cannot edit">
+                                                            <i class="ti ti-edit me-2"></i>Edit Question
+                                                        </button>
+                                                    @else
+                                                        <a class="dropdown-item" href="{{ route('admin.questions.edit', $question->id) }}">
+                                                            <i class="ti ti-edit me-2"></i>Edit Question
+                                                        </a>
+                                                    @endif
+                                                </li>
+                                                <li>
+                                                    @if($isActiveExamQuestion)
+                                                        <button class="dropdown-item text-muted" style="cursor: not-allowed; opacity: 0.6;" disabled title="Exam is active - cannot delete">
+                                                            <i class="ti ti-trash me-2"></i>Delete Question
+                                                        </button>
+                                                    @else
+                                                        <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block w-100" id="deleteForm{{ $question->id }}">
+                                                            @csrf @method('DELETE')
+                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')">
+                                                                <i class="ti ti-trash me-2"></i>Delete Question
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </li>
+                                            @endif
                                         </ul>
-                                    @endif
+                                    </div>
                                 </td>
                             </tr>
                             @empty

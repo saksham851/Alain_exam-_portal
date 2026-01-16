@@ -154,6 +154,16 @@ class UserController extends Controller
             ->with('success', 'Student updated successfully!');
     }
 
+
+    public function show($id)
+    {
+        $user = User::where('role', 'student')
+            ->with(['studentExams.exam.category', 'studentExams.attempts'])
+            ->findOrFail($id);
+
+        return view('admin.users.show', compact('user'));
+    }
+
     public function destroy($id)
     {
         $user = User::where('role', 'student')->findOrFail($id);

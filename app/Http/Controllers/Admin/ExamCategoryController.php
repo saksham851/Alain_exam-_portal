@@ -56,7 +56,15 @@ class ExamCategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:exam_categories,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:exam_categories,name',
+                'regex:/^[a-zA-Z0-9\s]+$/',
+            ],
+        ], [
+            'name.regex' => 'The category name must only contain letters, numbers, and spaces.',
         ]);
 
         ExamCategory::create([
@@ -84,7 +92,15 @@ class ExamCategoryController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:exam_categories,name,' . $id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:exam_categories,name,' . $id,
+                'regex:/^[a-zA-Z0-9\s]+$/',
+            ],
+        ], [
+            'name.regex' => 'The category name must only contain letters, numbers, and spaces.',
         ]);
 
         $category = ExamCategory::find($id);

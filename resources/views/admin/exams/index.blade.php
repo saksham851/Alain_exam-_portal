@@ -197,6 +197,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
 
+                        <!-- Status -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="active" {{ request('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Deleted</option>
+                            </select>
+                        </div>
+
                         <!-- Certification Type -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
@@ -209,26 +218,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 @endforeach
                             </select>
                         </div>
-
-                        <!-- Duration -->
-                        <div class="col-md-1">
-                            <label class="form-label fw-bold text-muted small mb-1">DURATION(MINS)</label>
-                            <input type="number" name="duration" class="form-control form-control-sm" 
-                                   placeholder="Min" min="0" value="{{ request('duration') }}">
-                        </div>
-
-                        <!-- Status -->
-                        <div class="col-md-1">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM STATUS</label>
+                        
+                        <!-- Publish Status -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">PUBLISH STATUS</label>
                             <select name="is_active" class="form-select form-select-sm">
                                 <option value="">All</option>
-                                <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Active</option>
-                                <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
+                                <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Published</option>
+                                <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Unpublished</option>
                             </select>
                         </div>
 
                         <!-- Buttons -->
-                        <div class="col-md-3">
+                        <div class="col-md-1">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a href="{{ route('admin.exams.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
@@ -244,8 +246,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 $hasActiveFilters = request('search') || 
                                   request('category_id') || 
                                   request('certification_type') || 
-                                  (request()->has('duration') && request('duration') !== null) ||
-                                  request()->filled('is_active');
+                                  request()->filled('is_active') ||
+                                  request('status') === 'inactive';
             @endphp
             
             @if($hasActiveFilters)
@@ -259,9 +261,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             <i class="ti ti-search me-1"></i>{{ request('search') }}
                         </span>
                     @endif
+                    @if(request('status') === 'inactive')
+                        <span class="badge rounded-pill bg-danger">
+                            <i class="ti ti-trash me-1"></i>Deleted
+                        </span>
+                    @endif
                     @if(request()->filled('is_active'))
                         <span class="badge rounded-pill {{ request('is_active') == 1 ? 'bg-success' : 'bg-danger' }}">
-                            <i class="ti ti-toggle-left me-1"></i>{{ request('is_active') == 1 ? 'Active' : 'Inactive' }}
+                            <i class="ti ti-toggle-left me-1"></i>{{ request('is_active') == 1 ? 'Published' : 'Unpublished' }}
                         </span>
                     @endif
                     @if(request('category_id'))
@@ -272,11 +279,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     @if(request('certification_type'))
                         <span class="badge rounded-pill bg-success">
                             <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
-                        </span>
-                    @endif
-                    @if(request('duration') !== null && request('duration') !== '')
-                        <span class="badge rounded-pill bg-primary">
-                            <i class="ti ti-clock me-1"></i>{{ request('duration') }} mins
                         </span>
                     @endif
                 </div>
@@ -292,8 +294,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <th style="white-space: nowrap;">Certification Type</th>
                                 <th>Exam Name</th>
                                 <th>Exam Code</th>
-                                <th>Exam Status</th>
-                                <th>Exam Duration</th>
+                                <th style="white-space: nowrap;">Publish Status</th>
+                                <th>Duration</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -315,7 +317,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                     @endif
                                 </td>
                                 <td style="width: 25%;">
-                                    <h5 class="mb-1 fw-bold">{{ $exam->name }}</h5>
+                                    <h5 class="mb-1 fw-bold">
+                                        {{ $exam->name }}
+                                        @if($exam->cloned_from_id)
+                                            <span class="badge bg-warning text-dark ms-2"><i class="ti ti-copy"></i> Cloned</span>
+                                        @endif
+                                    </h5>
                                     @if($exam->description)
                                         <small class="text-muted d-block">{{ Str::limit($exam->description, 40) }}</small>
                                     @endif
@@ -329,9 +336,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </td>
                                 <td style="width: 9%;">
                                     @if($exam->is_active == 1)
-                                        <span class="badge bg-success">Active</span>
+                                        <span class="badge bg-success">Published</span>
                                     @else
-                                        <span class="badge bg-danger">Inactive</span>
+                                        <span class="badge bg-danger">Unpublished</span>
                                     @endif
                                 </td>
                                 <td style="width: 11%;">
@@ -340,41 +347,65 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </span>
                                 </td>
                                 <td class="text-end" style="width: 20%;">
-                                    <ul class="list-inline mb-0">
-                                        <li class="list-inline-item">
-                                            <a href="{{ route('admin.case-studies.index', ['exam_id' => $exam->id]) }}" class="avtar avtar-s btn-link-info btn-pc-default" data-bs-toggle="tooltip" title="Manage Sections">
-                                                <i class="ti ti-file-text f-18"></i>
-                                            </a>
-                                        </li>
-                                        @if($exam->is_active == 1)
-                                            <li class="list-inline-item">
-                                                <a href="{{ route('admin.exams.edit', $exam->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Exam">
-                                                    <i class="ti ti-edit f-18"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item">
-                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Active exam - cannot delete">
-                                                    <button class="avtar avtar-s btn-link-danger btn-pc-default" style="opacity: 0.5; border: none;" disabled>
-                                                        <i class="ti ti-trash f-18"></i>
-                                                    </button>
-                                                </span>
-                                            </li>
-                                        @else
-                                            <li class="list-inline-item">
-                                                <a href="{{ route('admin.exams.edit', $exam->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Exam">
-                                                    <i class="ti ti-edit f-18"></i>
-                                                </a>
-                                            </li>
-                                            <li class="list-inline-item">
-                                                <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $exam->id }}">
-                                                    @csrf @method('DELETE')
-                                                    <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')" data-bs-toggle="tooltip" title="Delete Exam">
-                                                        <i class="ti ti-trash f-18"></i>
-                                                    </button>
-                                                </form>
-                                            </li>
-                                        @endif
-                                    </ul>
+                                    <div class="dropdown">
+                                        <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
+                                                data-bs-toggle="dropdown" 
+                                                data-bs-boundary="viewport" 
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                                aria-expanded="false">
+                                            <i class="ti ti-dots-vertical f-18"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            @if($exam->status == 1)
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('admin.exams.show', $exam->id) }}">
+                                                        <i class="ti ti-eye me-2"></i>View Exam
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('admin.exams.edit', $exam->id) }}">
+                                                        <i class="ti ti-edit me-2"></i>Edit Exam
+                                                    </a>
+                                                </li>
+                                                @if($exam->is_active == 0)
+                                                    <li>
+                                                        <form action="{{ route('admin.exams.publish', $exam->id) }}" method="POST" class="d-block" id="publishForm{{ $exam->id }}">
+                                                            @csrf
+                                                            <button type="button" class="dropdown-item" onclick="showPublishModal(document.getElementById('publishForm{{ $exam->id }}'))">
+                                                                <i class="ti ti-upload me-2"></i>Publish Exam
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                @endif
+                                                <li>
+                                                    @if($exam->is_active == 1)
+                                                        <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Published exam - cannot delete">
+                                                            <button class="dropdown-item disabled" type="button" style="pointer-events: none;">
+                                                                <i class="ti ti-trash me-2"></i>Delete Exam
+                                                            </button>
+                                                        </span>
+                                                    @else
+                                                        {{-- Standard Delete triggers soft delete via controller --}}
+                                                        <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-block" id="deleteForm{{ $exam->id }}">
+                                                            @csrf @method('DELETE')
+                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')">
+                                                                <i class="ti ti-trash me-2"></i>Delete Exam
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </li>
+                                            @else
+                                                <li>
+                                                    <form action="{{ route('admin.exams.activate', $exam->id) }}" method="POST" class="d-block" id="activateForm{{ $exam->id }}">
+                                                        @csrf @method('PATCH')
+                                                        <button type="button" class="dropdown-item text-success" onclick="showActivateModal(document.getElementById('activateForm{{ $exam->id }}'))">
+                                                            <i class="ti ti-check me-2"></i>Activate Exam
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -397,13 +428,47 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
+    function showActivateModal(form) {
+        if(typeof showAlert !== 'undefined' && showAlert.confirm) {
+             showAlert.confirm(
+                'Are you sure you want to activate this exam?',
+                'Activate Exam',
+                function() {
+                    form.submit();
+                }
+            );
+        } else {
+            if(confirm('Are you sure you want to activate this exam?')) {
+                form.submit();
+            }
+        }
+    }
+
+    function showPublishModal(form) {
+        if(typeof showAlert !== 'undefined' && showAlert.confirm) {
+             showAlert.confirm(
+                'Are you sure you want to publish this exam? ensure that the exam has at least one section, one case study, and one question.',
+                'Publish Exam',
+                function() {
+                    form.submit();
+                }
+            );
+        } else {
+            if(confirm('Are you sure you want to publish this exam?')) {
+                form.submit();
+            }
+        }
+    }
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const filterForm = document.getElementById('filterForm');
     const searchInput = filterForm.querySelector('input[name="search"]');
     const categorySelect = filterForm.querySelector('select[name="category_id"]');
     const certificationTypeSelect = filterForm.querySelector('select[name="certification_type"]');
-    const durationInput = filterForm.querySelector('input[name="duration"]');
     const statusSelect = filterForm.querySelector('select[name="is_active"]');
+    const activeStatusSelect = filterForm.querySelector('select[name="status"]'); // New Status Filter
     
     let searchTimeout;
     
@@ -413,8 +478,18 @@ document.addEventListener('DOMContentLoaded', function() {
             filterForm.submit();
         });
     }
-    
 
+    if (activeStatusSelect) {
+         activeStatusSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+    
+    if (certificationTypeSelect) {
+        certificationTypeSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
     
     if (statusSelect) {
         statusSelect.addEventListener('change', function() {
@@ -422,23 +497,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Auto-submit on search input (debounced - 500ms delay)
+    
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    }
+
+    // Auto-submit on search input (debounced - 1000ms delay)
     if (searchInput) {
+        // Auto-focus if there is a value
+        if (searchInput.value) {
+            searchInput.focus();
+            const val = searchInput.value;
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function() {
                 filterForm.submit();
-            }, 500);
-        });
-    }
-    
-    // Auto-submit on duration input (debounced - 500ms delay)
-    if (durationInput) {
-        durationInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
-                filterForm.submit();
-            }, 500);
+            }, 1000);
         });
     }
 });

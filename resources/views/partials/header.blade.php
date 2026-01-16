@@ -37,6 +37,15 @@
                 </div>
               </div>
             </div>
+            <hr class="border-secondary border-opacity-50 my-2">
+            <div class="d-grid px-3">
+                <button class="btn btn-primary" onclick="event.preventDefault(); document.getElementById('header-logout-form').submit();">
+                    <i class="ti ti-power me-2"></i>Logout
+                </button>
+                 <form id="header-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
+            </div>
           </div>
         </li>
         {{-- @endauth --}}

@@ -1,169 +1,118 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ExamController;
-use App\Http\Controllers\Admin\SectionController;
-use App\Http\Controllers\Admin\CaseStudyController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RolePermissionController;
+use App\Http\Controllers\Admin\DataManagementController;
+use App\Http\Controllers\Admin\UserAnswerController; // If used
+use App\Http\Controllers\Admin\ExamCategoryController;
+use App\Http\Controllers\Admin\ExamController; // Ensure this is imported
 use App\Http\Controllers\Admin\QuestionController;
-use App\Http\Controllers\Admin\ComprehensiveExportController;
+use App\Http\Controllers\Admin\CaseStudyController;
+use App\Http\Controllers\Admin\SectionController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
 */
 
-Route::get('/', function () {
-    return redirect()->route('login');
+// Auth Routes (Guest only)
+Route::middleware('guest')->group(function () {
+    Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.post');
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Authentication Routes (Breeze)
-|--------------------------------------------------------------------------
-*/
-
-require __DIR__.'/auth.php';
-
-/*
-|--------------------------------------------------------------------------
-| Authenticated Routes
-|--------------------------------------------------------------------------
-*/
-
+// Authenticated Routes
 Route::middleware(['auth'])->group(function () {
-    
-    // Profile routes (Breeze)
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Dashboard routing based on role
-    Route::get('/dashboard', function () {
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('student.dashboard');
-    })->name('dashboard');
-});
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
 
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-*/
+    // Admin Routes
+    Route::name('admin.')->prefix('admin')->group(function () {
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    
-    // --- Dashboard ---
-    Route::get('dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
-    
-    // --- Users ---
-    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
-    
-    // --- Manage Student Attempts ---
-    Route::get('users/{studentId}/assigned-exams', [\App\Http\Controllers\Admin\UserController::class, 'getAssignedExams']);
-    Route::get('users/{studentId}/exam/{examId}/attempts', [\App\Http\Controllers\Admin\UserController::class, 'getStudentExamAttempts']);
-    Route::post('users/manage-attempts', [\App\Http\Controllers\Admin\UserController::class, 'manageAttempts']);
-    
-    // --- Exams (Controller) ---
-    Route::prefix('exams')->name('exams.')->group(function () {
-        Route::get('/', [ExamController::class,'index'])->name('index');
-        Route::get('create', [ExamController::class,'create'])->name('create');
-        Route::post('/', [ExamController::class,'store'])->name('store');
-        Route::post('{id}/clone', [ExamController::class,'clone'])->name('clone');
-        Route::get('{id}/edit', [ExamController::class,'edit'])->name('edit');
-        Route::put('{id}', [ExamController::class,'update'])->name('update');
-        Route::delete('{id}', [ExamController::class,'destroy'])->name('destroy');
-        Route::get('export/csv', [ExamController::class,'export'])->name('export');
-        Route::post('import/csv', [ExamController::class,'import'])->name('import');
-        Route::put('{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('toggle-status');
+        // Users Management
+        Route::resource('users', UserController::class);
+        Route::get('users/{id}/activate', [UserController::class, 'activate'])->name('users.activate');
+        
+        // User Attempts Management
+        Route::get('users/{id}/assigned-exams', [UserController::class, 'getAssignedExams'])->name('users.assigned-exams');
+        Route::get('users/{studentId}/exam/{examId}/attempts', [UserController::class, 'getStudentExamAttempts'])->name('users.exam-attempts');
+        Route::post('users/manage-attempts', [UserController::class, 'manageAttempts'])->name('users.manage-attempts');
+
+        // Role & Permission Management
+        Route::resource('roles-permissions', RolePermissionController::class);
+
+        // Data Management (Import)
+        Route::get('data-management', [DataManagementController::class, 'index'])->name('data.index');
+        Route::post('data-management/import', [DataManagementController::class, 'import'])->name('data.import');
+
+
+        // Exam Categories
+        Route::resource('exam-categories', ExamCategoryController::class);
+        Route::get('exam-categories/{id}/activate', [ExamCategoryController::class, 'activate'])->name('exam-categories.activate');
+
+
+        // Exams Management
+        Route::resource('exams', ExamController::class);
+        Route::get('exams/{id}/activate', [ExamController::class, 'activate'])->name('exams.activate');
+        Route::post('exams/{id}/publish', [ExamController::class, 'publish'])->name('exams.publish'); // New Publish Route
+        Route::put('exams/{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('exams.toggle-status');
+        Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
+
+        // Questions Management
+        Route::resource('questions', QuestionController::class);
+        Route::get('questions/{id}/activate', [QuestionController::class, 'activate'])->name('questions.activate');
+        Route::post('questions/import', [QuestionController::class, 'import'])->name('questions.import');
+        Route::post('questions/clone', [QuestionController::class, 'clone'])->name('questions.clone');
+        Route::get('questions/export', [QuestionController::class, 'export'])->name('questions.export');
+
+        // Case Studies Bank
+        Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function() {
+            Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/activate', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'activate'])->name('activate');
+            Route::post('/copy', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'copy'])->name('copy');
+        });
+
+
+         // AJAX Routes for dynamic dropdowns
+         Route::get('questions-ajax/case-studies/{examId}', [SectionController::class, 'getSections']);
+         Route::get('questions-ajax/sub-case-studies/{sectionId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getCaseStudiesBySection']);
+         Route::get('questions-ajax/questions/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByCaseStudy']);
+
+         // Sections
+         Route::resource('sections', SectionController::class);
+         Route::get('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');
+         Route::post('sections/{section}/clone', [SectionController::class, 'clone'])->name('sections.clone');
+         Route::post('sections/clone-external', [SectionController::class, 'clone'])->name('sections.clone-external');
+
+         // Results & Attempts
+        Route::get('attempts', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('attempts.index');
+        Route::get('attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
+        Route::get('attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');
+
     });
 
-    // --- Exam Categories ---
-    Route::patch('exam-categories/{id}/activate', [\App\Http\Controllers\Admin\ExamCategoryController::class, 'activate'])->name('exam-categories.activate');
-    Route::resource('exam-categories', \App\Http\Controllers\Admin\ExamCategoryController::class);
-
-    // --- Questions (Controller) ---
-    Route::resource('questions', QuestionController::class);
-    Route::post('questions/clone', [QuestionController::class, 'clone'])->name('questions.clone');
-    Route::get('questions-ajax/case-studies/{examId}', [QuestionController::class, 'getCaseStudies'])->name('questions.getCaseStudies');
-    Route::get('questions-ajax/sub-case-studies/{caseStudyId}', [QuestionController::class, 'getSubCaseStudies'])->name('questions.getSubCaseStudies');
-    Route::get('questions-ajax/questions/{caseStudyId}', [QuestionController::class, 'getQuestions'])->name('questions.getQuestions');
-    Route::get('questions/export/csv', [QuestionController::class, 'export'])->name('questions.export');
-    Route::post('questions/import/csv', [QuestionController::class, 'import'])->name('questions.import');
-
-    // --- Sections (formerly Case Studies) ---
-    // We keep the route name 'case-studies' for now to avoid breaking views, 
-    // but the controller is SectionController (handling parent blocks).
-    // Ideally we should rename route to 'sections' but views heavily rely on route('admin.case-studies.*').
-    // So we map: Route 'case-studies' -> SectionController.
-    Route::resource('case-studies', SectionController::class);
-    Route::post('case-studies/clone', [SectionController::class, 'clone'])->name('case-studies.clone');
-    Route::get('case-studies/ajax/sections/{examId}', [SectionController::class, 'getSections'])->name('case-studies.getSections');
-    Route::get('case-studies/export/csv', [SectionController::class, 'export'])->name('case-studies.export');
-    Route::post('case-studies/import/csv', [SectionController::class, 'import'])->name('case-studies.import');
-
-    // --- Case Studies Bank ---
-    Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'create'])->name('create');
-        Route::post('/store', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
-        Route::post('/copy', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'copy'])->name('copy');
-        Route::get('/sections/{examId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getSectionsByExam'])->name('sections');
-        Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'update'])->name('update');
-        Route::delete('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy'])->name('destroy');
-    });
-
-    // --- Case Studies (formerly Sub Case Studies) ---
-    // Similarly, we keep route name 'sub-case-studies' to minimize view breakage.
-    // Route 'sub-case-studies' -> CaseStudyController.
-    Route::resource('sub-case-studies', CaseStudyController::class);
-
-    // --- Attempts ---
-    Route::prefix('attempts')->name('attempts.')->group(function() {
-        Route::get('/', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('index');
-        Route::get('{id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('show');
-        Route::get('user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('by-user');
-    });
-
-    // --- Comprehensive Export/Import (Complete Hierarchy) ---
-    Route::prefix('data')->name('data.')->group(function() {
-        Route::get('/', function() { return view('admin.data.index'); })->name('index');
-        Route::get('export-complete', [ComprehensiveExportController::class, 'exportComplete'])->name('export-complete');
-        Route::post('import-complete', [ComprehensiveExportController::class, 'importComplete'])->name('import-complete');
-        Route::get('download-sample', [ComprehensiveExportController::class, 'downloadSample'])->name('download-sample');
-    });
-
+    // Session Keep Alive
+    Route::post('/keep-alive', function () {
+        return response()->json(['status' => 'ok']);
+    })->name('keep-alive');
 });
-
-
-/*
-|--------------------------------------------------------------------------
-| Student Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware(['auth', 'student'])->prefix('student')->name('student.')->group(function () {
-    Route::get('dashboard', [\App\Http\Controllers\Student\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('history', [\App\Http\Controllers\Student\DashboardController::class, 'history'])->name('history');
-});
-
-Route::middleware(['auth', 'student'])->prefix('exams')->name('exams.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('index');
-    Route::get('/{id}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('show');
-    Route::post('/{id}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('start');
-    Route::get('/{id}/take', [\App\Http\Controllers\Student\ExamController::class, 'take'])->name('take');
-    Route::post('/{id}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('submit');
-    Route::get('/result/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('result');
-    Route::get('/download/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'download'])->name('download');
-    Route::get('/{id}/answer-key', [\App\Http\Controllers\Student\ExamController::class, 'downloadAnswerKey'])->name('answer-key');
-});
-
-
-
-
-Route::get('/gohighlevel/initiate', [App\Http\Controllers\GhlController\GoHighLevelController::class, 'initiate']);
-Route::get('/getAccessToken', [App\Http\Controllers\GhlController\GoHighLevelController::class, 'callback']);

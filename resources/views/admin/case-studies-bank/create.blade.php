@@ -133,13 +133,20 @@
                         </div>
                     </template>
                 </div>
-                <div class="card-footer text-end bg-light">
-                    <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-secondary me-2">
-                        <i class="ti ti-x me-1"></i> Cancel
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="ti ti-device-floppy me-1"></i> Save All Case Studies
-                    </button>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-sm btn-primary" @click="addCaseStudy()">
+                            <i class="ti ti-plus me-1"></i> Add Another Case Study
+                        </button>
+                        <div>
+                            <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-secondary me-2">
+                                <i class="ti ti-x me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="ti ti-device-floppy me-1"></i> Save All Case Studies
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>

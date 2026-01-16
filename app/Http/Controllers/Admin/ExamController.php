@@ -16,9 +16,11 @@ class ExamController extends Controller
         $categoryId = $request->get('category_id');
         $certificationType = $request->get('certification_type');
         $duration = $request->get('duration');
+        // Default to 'active' if status is not explicitly 'inactive'
+        $status = $request->get('status') === 'inactive' ? 0 : 1;
 
-        // Base query
-        $query = Exam::where('status', 1)
+        // Base query - Filter by status (Active/Inactive)
+        $query = Exam::where('status', $status)
             ->with('category'); // Eager load category
 
         // Search by exam name or code
@@ -44,7 +46,7 @@ class ExamController extends Controller
             $query->where('duration_minutes', $duration);
         }
 
-        // Filter by Active Status
+        // Filter by Active Status (Locked/Unlocked)
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->input('is_active'));
         }
@@ -77,6 +79,37 @@ class ExamController extends Controller
         return view('admin.exams.index', compact('exams', 'categories', 'certificationTypes', 'nextCode'));
     }
 
+    // ACTIVATE EXAM (RESTORE)
+    public function activate($id)
+    {
+        $exam = Exam::with('sections.caseStudies.questions')->find($id);
+
+        if (!$exam) {
+            return redirect()->back()->with('error', 'Exam Not Found');
+        }
+
+        // Restore the Exam
+        $exam->update(['status' => 1]);
+
+        // Cascade restore: Activate all related Sections
+        foreach ($exam->sections as $section) {
+            $section->update(['status' => 1]);
+
+            // Activate related Case Studies
+            foreach ($section->caseStudies as $caseStudy) {
+                $caseStudy->update(['status' => 1]);
+
+                // Activate related Questions
+                foreach ($caseStudy->questions as $question) {
+                    $question->update(['status' => 1]);
+                }
+            }
+        }
+
+        return redirect()->route('admin.exams.index')
+            ->with('success', 'Exam Activated Successfully! All related content has been restored.');
+    }
+
     // CREATE FORM
     public function create()
     {
@@ -106,12 +139,16 @@ class ExamController extends Controller
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
             'exam_code' => 'required|string|max:50|unique:exams,exam_code',
             'category_id' => 'required|exists:exam_categories,id',
-            'certification_type' => 'required|string|max:255',
+            'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
             'description' => 'nullable|string',
-            'duration_minutes' => 'required|integer',
+            'duration_minutes' => 'required|integer|min:1',
+        ], [
+            'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
+            'certification_type.regex' => 'The certification type must only contain letters, numbers, and spaces.',
+            'duration_minutes.min' => 'The exam duration must be at least 1 minute.',
         ]);
 
         $exam = Exam::create([
@@ -125,10 +162,25 @@ class ExamController extends Controller
             'is_active' => 0, // New exams start as inactive
         ]);
 
-        return redirect()->route('admin.case-studies.index', [
+        return redirect()->route('admin.sections.index', [
             'open_modal' => 'create',
             'exam_id' => $exam->id
         ])->with('success', 'Exam Created Successfully!');
+    }
+
+    // SHOW EXAM
+    public function show($id)
+    {
+        $exam = Exam::with(['category', 'sections' => function($q) {
+            $q->where('status', 1)->orderBy('order_no');
+        }, 'sections.caseStudies' => function($q) {
+            $q->where('status', 1)->orderBy('order_no');
+        }, 'sections.caseStudies.questions' => function($q) {
+            $q->where('status', 1);
+        }, 'sections.caseStudies.questions.options'])
+        ->findOrFail($id);
+
+        return view('admin.exams.show', compact('exam'));
     }
 
     // EDIT FORM
@@ -163,12 +215,16 @@ class ExamController extends Controller
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
             'exam_code' => 'required|string|max:50|unique:exams,exam_code,' . $id,
             'category_id' => 'required|exists:exam_categories,id',
-            'certification_type' => 'required|string|max:255',
+            'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
             'description' => 'nullable|string',
-            'duration_minutes' => 'required|integer',
+            'duration_minutes' => 'required|integer|min:1',
+        ], [
+            'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
+            'certification_type.regex' => 'The certification type must only contain letters, numbers, and spaces.',
+            'duration_minutes.min' => 'The exam duration must be at least 1 minute.',
         ]);
 
         $exam->update([
@@ -187,7 +243,7 @@ class ExamController extends Controller
     // DELETE = UPDATE STATUS
     public function destroy($id)
     {
-        $exam = Exam::find($id);
+        $exam = Exam::with('sections.caseStudies.questions')->find($id);
         
         if (!$exam) {
             return redirect()->back()->with('error', 'Exam Not Found');
@@ -198,10 +254,26 @@ class ExamController extends Controller
             return redirect()->back()->with('error', 'This exam is locked and cannot be deleted.');
         }
 
-        $exam->update(['status' => 0]); // soft delete logic
+        // Soft delete the Exam
+        $exam->update(['status' => 0]); 
+
+        // Cascade soft delete: Deactivate all related Sections
+        foreach ($exam->sections as $section) {
+            $section->update(['status' => 0]);
+
+            // Deactivate related Case Studies
+            foreach ($section->caseStudies as $caseStudy) {
+                $caseStudy->update(['status' => 0]);
+
+                // Deactivate related Questions
+                foreach ($caseStudy->questions as $question) {
+                    $question->update(['status' => 0]);
+                }
+            }
+        }
 
         return redirect()->route('admin.exams.index')
-            ->with('success', 'Exam Deleted Successfully!');
+            ->with('success', 'Exam Deleted Successfully! All related content has been soft deleted.');
     }
 
     // EXPORT TO CSV
@@ -265,16 +337,7 @@ class ExamController extends Controller
         return redirect()->route('admin.exams.index')
             ->with('success', "Successfully imported $imported exams!");
     }
-    public function toggleStatus($id)
-    {
-        $exam = Exam::findOrFail($id);
-        // Toggle the is_active status (assuming is_active is boolean or 0/1)
-        $exam->is_active = !$exam->is_active;
-        $exam->save();
 
-        $message = $exam->is_active ? 'Exam Activated Successfully!' : 'Exam Deactivated Successfully!';
-        return redirect()->back()->with('success', $message);
-    }
 
     // CLONE EXAM (DEEP COPY)
     public function clone(Request $request, $id)
@@ -284,7 +347,42 @@ class ExamController extends Controller
             'new_exam_code' => 'required|string|max:50|unique:exams,exam_code',
         ]);
 
-        $sourceExam = Exam::with(['sections.caseStudies.questions.options'])->findOrFail($id);
+        $sourceExam = Exam::with([
+            'sections' => function($query) {
+                $query->where('status', 1);
+            },
+            'sections.caseStudies' => function($query) {
+                $query->where('status', 1);
+            },
+            'sections.caseStudies.questions' => function($query) {
+                $query->where('status', 1);
+            },
+            'sections.caseStudies.questions.options'
+        ])->findOrFail($id);
+
+        // Filter to get only active sections
+        $activeSections = $sourceExam->sections->where('status', 1);
+
+        // VALIDATION: Check if exam has complete content (only active items)
+        if ($activeSections->count() === 0) {
+            return redirect()->back()->with('warning', 'Cannot clone this exam: It has no active sections. Please add at least one section with case studies and questions.');
+        }
+
+        foreach ($activeSections as $section) {
+            $activeCaseStudies = $section->caseStudies->where('status', 1);
+            
+            if ($activeCaseStudies->count() === 0) {
+                return redirect()->back()->with('warning', "Cannot clone this exam: Section '{$section->title}' has no active case studies. Each section must have at least one case study with questions.");
+            }
+
+            foreach ($activeCaseStudies as $caseStudy) {
+                $activeQuestions = $caseStudy->questions->where('status', 1);
+                
+                if ($activeQuestions->count() === 0) {
+                    return redirect()->back()->with('warning', "Cannot clone this exam: Case Study '{$caseStudy->title}' has no active questions. Each case study must have at least one question.");
+                }
+            }
+        }
 
         // Create new exam (deep copy)
         $newExam = Exam::create([
@@ -296,40 +394,47 @@ class ExamController extends Controller
             'duration_minutes' => $sourceExam->duration_minutes,
             'status' => 1,
             'is_active' => 0, // Cloned exams start as inactive
+            'cloned_from_id' => $sourceExam->id,
         ]);
 
-        // Clone all sections
-        foreach ($sourceExam->sections as $section) {
+        // Clone all active sections
+        foreach ($activeSections as $section) {
             $newSection = \App\Models\Section::create([
                 'exam_id' => $newExam->id,
                 'title' => $section->title,
                 'content' => $section->content,
                 'order_no' => $section->order_no,
-                'status' => $section->status,
+                'status' => 1, // Always set to active
+                'cloned_from_id' => $section->id,
             ]);
 
-            // Clone all case studies in this section
-            foreach ($section->caseStudies as $caseStudy) {
+            $activeCaseStudies = $section->caseStudies->where('status', 1);
+
+            // Clone all active case studies in this section
+            foreach ($activeCaseStudies as $caseStudy) {
                 $newCaseStudy = \App\Models\CaseStudy::create([
                     'section_id' => $newSection->id,
                     'title' => $caseStudy->title,
                     'content' => $caseStudy->content,
                     'order_no' => $caseStudy->order_no,
-                    'status' => $caseStudy->status,
+                    'status' => 1, // Always set to active
                     'cloned_from_id' => $caseStudy->id,
                     'cloned_from_section_id' => $caseStudy->section_id,
                     'cloned_at' => now(),
                 ]);
 
-                // Clone all questions in this case study
-                foreach ($caseStudy->questions as $question) {
+                $activeQuestions = $caseStudy->questions->where('status', 1);
+
+                // Clone all active questions in this case study
+                foreach ($activeQuestions as $question) {
                     $newQuestion = \App\Models\Question::create([
                         'case_study_id' => $newCaseStudy->id,
                         'question_text' => $question->question_text,
                         'question_type' => $question->question_type,
                         'ig_weight' => $question->ig_weight,
                         'dm_weight' => $question->dm_weight,
-                        'status' => $question->status,
+                        'status' => 1, // Always set to active
+                        'cloned_from_id' => $question->id,
                     ]);
 
                     // Clone all options for this question
@@ -347,5 +452,81 @@ class ExamController extends Controller
 
         return redirect()->route('admin.exams.index')
             ->with('success', "Exam cloned successfully! New exam: {$newExam->name}");
+    }
+    // PUBLISH EXAM WITH VALIDATION
+    public function publish($id)
+    {
+        $exam = Exam::with(['sections.caseStudies.questions'])->find($id);
+
+        if (!$exam) {
+            return back()->with('error', 'Exam not found');
+        }
+
+        // 1. Check if exam has at least one section
+        if ($exam->sections->isEmpty()) {
+            return back()->with('error', 'Cannot publish: The exam must have at least one section.');
+        }
+
+        // 2. Check each section for at least one case study
+        foreach ($exam->sections as $section) {
+            if ($section->caseStudies->isEmpty()) {
+                return back()->with('error', "Cannot publish: '{$section->title}' must have at least one case study.");
+            }
+
+            // 3. Check each Case Study for at least one question
+            foreach ($section->caseStudies as $caseStudy) {
+                if ($caseStudy->questions->isEmpty()) {
+                    $csTitle = $caseStudy->title ?? "Case Study";
+                    return back()->with('error', "Cannot publish: '{$csTitle}' in '{$section->title}' must have at least one question.");
+                }
+            }
+        }
+
+        // Validation Passed: Update status
+        $exam->update(['is_active' => 1]);
+
+        return back()->with('success', 'Exam published successfully!');
+    }
+
+    // TOGGLE EXAM STATUS (Active/Inactive)
+    // TOGGLE EXAM STATUS (Active/Inactive)
+    public function toggleStatus($id)
+    {
+        $exam = Exam::with(['sections.caseStudies.questions'])->find($id);
+
+        if (!$exam) {
+            return back()->with('error', 'Exam not found');
+        }
+
+        $newStatus = $exam->is_active ? 0 : 1;
+
+        // If trying to PUBLISH (activate), run validation check
+        if ($newStatus == 1) {
+            // 1. Check if exam has at least one section
+            if ($exam->sections->isEmpty()) {
+                return back()->with('error', 'Cannot publish: The exam must have at least one section.');
+            }
+
+            // 2. Check each section for at least one case study
+            foreach ($exam->sections as $section) {
+                if ($section->caseStudies->isEmpty()) {
+                    return back()->with('error', "Cannot publish: '{$section->title}' must have at least one case study.");
+                }
+
+                // 3. Check each Case Study for at least one question
+                foreach ($section->caseStudies as $caseStudy) {
+                    if ($caseStudy->questions->isEmpty()) {
+                        $csTitle = $caseStudy->title ?? "Case Study";
+                        return back()->with('error', "Cannot publish: '{$csTitle}' in '{$section->title}' must have at least one question.");
+                    }
+                }
+            }
+        }
+
+        // Update Status if no validation errors (or if unpublishing)
+        $exam->update(['is_active' => $newStatus]);
+
+        $statusText = $newStatus ? 'published' : 'unpublished';
+        return back()->with('success', "Exam {$statusText} successfully!");
     }
 }

@@ -91,7 +91,12 @@
 
                     <template x-for="(exQ, eqIndex) in existingQuestions" :key="exQ.id">
                         <div class="card border mb-3" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : 'background-color: #fcfcfc;'">
-                            <div class="card-body">
+                            <div class="card-body position-relative">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
+                                        @click="removeExistingQuestion(eqIndex, exQ.id)"
+                                        title="Delete this question">
+                                    <i class="ti ti-trash"></i>
+                                </button>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h6 class="mb-0 fw-bold text-dark">
                                         <i class="ti ti-edit-circle me-1"></i> Existing Question #<span x-text="eqIndex + 1"></span>
@@ -212,14 +217,6 @@
             </template>
 
             <!-- Questions Loop -->
-            <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
-                <h5 class="mb-0 text-muted">Questions</h5>
-                <!-- Show Add Button only in Create Mode -->
-                <button type="button" class="btn btn-sm btn-primary" @click="addQuestion()" x-show="!isEdit">
-                    <i class="ti ti-plus me-1"></i> Add Another Question
-                </button>
-            </div>
-
             <template x-for="(questionItem, qIndex) in questions" :key="questionItem.id">
                 <div class="card mb-3 border" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -228,7 +225,7 @@
                         </h6>
                         <button type="button" class="btn btn-sm btn-danger" 
                                 @click="removeQuestion(qIndex)" 
-                                x-show="!isEdit && questions.length > 1">
+                                x-show="!isEdit">
                             <i class="ti ti-x"></i>
                         </button>
                     </div>
@@ -363,11 +360,22 @@
                 </div>
             </template>
 
-            <div class="mt-3 text-end">
-                <a href="{{ route('admin.questions.index') }}" class="btn btn-secondary me-2">Cancel</a>
-                <button type="submit" class="btn btn-primary" :disabled="isActiveExam">
-                    <i class="ti ti-check me-1"></i> Save {{ isset($question) ? 'Question' : 'Questions' }}
-                </button>
+            <div class="mt-4 p-3 bg-light rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <!-- Add Another Question Button (Left) - Only in Create Mode -->
+                    <button type="button" class="btn btn-sm btn-primary" @click="addQuestion()" x-show="!isEdit">
+                        <i class="ti ti-plus me-1"></i> Add Another Question
+                    </button>
+                    <div x-show="isEdit"></div> <!-- Empty div to maintain layout in edit mode -->
+                    
+                    <!-- Action Buttons (Right) -->
+                    <div>
+                        <a href="{{ route('admin.questions.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary" :disabled="isActiveExam">
+                            <i class="ti ti-check me-1"></i> Save {{ isset($question) ? 'Question' : 'Questions' }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
 
@@ -528,7 +536,6 @@ function questionForm() {
         },
 
         removeQuestion(index) {
-            if(this.questions.length <= 1) return;
             const q = this.questions[index];
             const qId = q.id; 
             this.questions.splice(index, 1);
@@ -581,6 +588,56 @@ function questionForm() {
             this.existingQuestions[eqIndex].singleCorrect = 0;
             this.existingQuestions[eqIndex].options.forEach(opt => {
                 opt.is_correct = false;
+            });
+        },
+
+        async removeExistingQuestion(index, id) {
+            window.showAlert.confirm('Are you sure you want to delete this question? This action cannot be undone.', 'Delete Question?', async () => {
+                try {
+                    const response = await fetch(`/admin/questions/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    let result;
+                    try {
+                        result = await response.json();
+                    } catch (e) {
+                        const text = await response.text();
+                        console.error('Server returned non-JSON:', text);
+                        throw new Error('Server returned invalid response. Check console.');
+                    }
+
+                    if (result.success) {
+                        // Destroy editor
+                        if(this.existingEditors[id]) {
+                            this.existingEditors[id].destroy()
+                                .then(() => { delete this.existingEditors[id]; })
+                                .catch(e => {
+                                    console.error(e);
+                                    delete this.existingEditors[id];
+                                });
+                        }
+                        
+                        // Remove from view
+                        this.existingQuestions.splice(index, 1);
+                        
+                        window.showAlert.toast('Question deleted successfully');
+                    } else {
+                        window.showAlert.error(result.message || 'Error deleting question');
+                    }
+                } catch (error) {
+                    console.error('Deletion Error:', error);
+                    window.showAlert.error('Deletion failed: ' + error.message);
+                }
             });
         },
 

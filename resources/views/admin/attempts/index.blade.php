@@ -83,14 +83,12 @@
                     </select>
                   </div>
 
-                  <!-- Reset Button -->
+                  <!-- Refresh Button -->
                   <div class="col-md-3">
                     <div class="d-flex gap-1 justify-content-end">
-                      @if($selectedPeriod || $studentSearch || $examSearch)
-                        <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear All Filters">
-                          <i class="ti ti-x me-1"></i> Clear Filters
-                        </a>
-                      @endif
+                      <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters">
+                        <i class="ti ti-rotate"></i>
+                      </a>
                     </div>
                   </div>
                 </div>

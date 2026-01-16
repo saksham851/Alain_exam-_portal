@@ -32,8 +32,12 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Category Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', optional($category)->name) }}" required>
-                            @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+                            <input type="text" name="name" class="form-control" value="{{ old('name', optional($category)->name) }}" required pattern="^[a-zA-Z0-9\s]+$" title="Only letters, numbers, and spaces are allowed.">
+                            @error('name') 
+                                <small class="text-danger">{{ $message }}</small> 
+                            @else
+                                <small class="text-muted">Only letters, numbers, and spaces are allowed.</small>
+                            @enderror
                         </div>
                     </div>
 

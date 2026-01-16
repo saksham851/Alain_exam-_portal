@@ -16,7 +16,10 @@ class QuestionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Question::where('status', 1)
+        // Filter by status
+        $status = $request->get('status') === 'inactive' ? 0 : 1;
+
+        $query = Question::where('status', $status)
             ->with(['caseStudy.section.exam.category', 'options']);
 
         // Filter by Exam Category (Primary Filter)
@@ -334,6 +337,12 @@ class QuestionController extends Controller
         return back()->with('success', 'Question deleted successfully!');
     }
 
+    public function show($id)
+    {
+        $question = Question::with(['caseStudy.section.exam.category', 'options'])->findOrFail($id);
+        return view('admin.questions.show', compact('question'));
+    }
+
     // AJAX endpoints
     // Renamed caseStudies -> sections
     public function getCaseStudies($examId)
@@ -435,6 +444,7 @@ class QuestionController extends Controller
                     'ig_weight' => $sourceQuestion->ig_weight,
                     'dm_weight' => $sourceQuestion->dm_weight,
                     'status' => $sourceQuestion->status,
+                    'cloned_from_id' => $sourceQuestion->id,
                 ]);
 
                 foreach ($sourceQuestion->options as $option) {
@@ -494,5 +504,32 @@ class QuestionController extends Controller
 
         return redirect()->route('admin.questions.index')
             ->with('success', "Successfully imported $imported questions!");
+    }
+
+    // ACTIVATE QUESTION
+    public function activate($id)
+    {
+        $question = Question::with('caseStudy.section.exam')->findOrFail($id);
+        
+        if ($question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot activate question in an active exam.');
+        }
+
+        $question->update(['status' => 1]);
+        return redirect()->back()->with('success', 'Question activated successfully!');
+    }
+
+    /**
+     * Get questions by case study ID (AJAX)
+     */
+    public function getQuestionsByCaseStudy($caseStudyId)
+    {
+        $questions = Question::where('case_study_id', $caseStudyId)
+            ->where('status', 1)
+            ->with('options')
+            ->orderBy('id')
+            ->get();
+        
+        return response()->json($questions);
     }
 }

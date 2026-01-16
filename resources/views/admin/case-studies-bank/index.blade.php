@@ -395,8 +395,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route('admin.case-studies-bank.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
-                        <!-- Exam Category Filter -->
+                        <!-- Search (moved to front) -->
                         <div class="col-md-3">
+                            <label class="form-label fw-bold text-muted small mb-1">SEARCH CASE STUDIES</label>
+                            <input type="text" name="search" id="searchInput" class="form-control form-control-sm" placeholder="Search case study title..." value="{{ request('search') }}">
+                        </div>
+
+                        <!-- Exam Category Filter -->
+                        <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
                             <select name="exam_category" id="examCategoryFilter" class="form-select form-select-sm">
                                 <option value="">All Categories</option>
@@ -422,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
 
                         <!-- Exam Filter -->
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
                             <select name="exam" id="examFilter" class="form-select form-select-sm">
                                 <option value="">All Exams</option>
@@ -434,12 +440,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
 
-                        <!-- Search -->
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold text-muted small mb-1">SEARCH CASE STUDIES</label>
-                            <input type="text" name="search" id="searchInput" class="form-control form-control-sm" placeholder="Search case study title..." value="{{ request('search') }}">
+                        <!-- Status Filter (moved to same row) -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <select name="status" class="form-select form-select-sm" id="statusFilter" onchange="document.getElementById('filterForm').submit()">
+                                <option value="active" {{ request('status') !== 'inactive' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            </select>
                         </div>
-
+                        
                         <!-- Clear Button -->
                         <div class="col-md-1">
                             <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
@@ -458,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <th>Case Study Title</th>
                                 <th>Current Section</th>
                                 <th>Current Exam</th>
-                                <th>Source (If Cloned)</th>
+                                <th>Source</th>
                                 <th>Exam Category</th>
                                 <th>Certification Type</th>
                                 <th class="text-center">Questions</th>
@@ -503,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="badge bg-light-primary">{{ $caseStudy->section->exam->category->name ?? 'N/A' }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-light-info">{{ $caseStudy->section->exam->category->certification_type ?? 'N/A' }}</span>
+                                    <span class="badge bg-light-info">{{ $caseStudy->section->exam->certification_type ?? 'N/A' }}</span>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-light-success">{{ $caseStudy->questions->count() }} Questions</span>
@@ -513,39 +522,58 @@ document.addEventListener('DOMContentLoaded', function() {
                                         // specific check for case study being in an active exam
                                         $isActiveExam = $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1;
                                     @endphp
-                                    <ul class="list-inline mb-0">
-                                        <li class="list-inline-item">
-                                            @if($isActiveExam)
-                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot edit">
-                                                    <button class="avtar avtar-s btn-link-success btn-pc-default" disabled style="opacity: 0.5; border: none;">
-                                                        <i class="ti ti-edit f-18"></i>
-                                                    </button>
-                                                </span>
-                                            @else
-                                                <a href="{{ route('admin.case-studies-bank.edit', $caseStudy->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Case Study">
-                                                    <i class="ti ti-edit f-18"></i>
+                                    <div class="dropdown">
+                                        <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
+                                                data-bs-toggle="dropdown" 
+                                                data-bs-boundary="viewport" 
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                                aria-expanded="false">
+                                            <i class="ti ti-dots-vertical f-18"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('admin.case-studies-bank.show', $caseStudy->id) }}">
+                                                    <i class="ti ti-eye me-2"></i>View Case Study
                                                 </a>
-                                            @endif
-                                        </li>
-                                        <li class="list-inline-item">
-                                            @if($isActiveExam)
-                                                <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" title="Exam is active - cannot delete">
-                                                    <button class="avtar avtar-s btn-link-danger btn-pc-default" disabled style="opacity: 0.5; border: none;">
-                                                        <i class="ti ti-trash f-18"></i>
-                                                    </button>
-                                                </span>
+                                            </li>
+                                            @if($caseStudy->status == 0)
+                                                <li>
+                                                    <form action="{{ route('admin.case-studies-bank.activate', $caseStudy->id) }}" method="GET" class="d-inline-block w-100" id="activateCsForm{{ $caseStudy->id }}">
+                                                        <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to restore this case study?', 'Restore Case Study', function() { document.getElementById('activateCsForm{{ $caseStudy->id }}').submit(); })">
+                                                            <i class="ti ti-check me-2"></i>Activate Case Study
+                                                        </button>
+                                                    </form>
+                                                </li>
                                             @else
-
-                                                <form action="{{ route('admin.case-studies-bank.destroy', $caseStudy->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $caseStudy->id }}">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="confirmDelete('{{ $caseStudy->id }}')" data-bs-toggle="tooltip" title="Delete Case Study">
-                                                        <i class="ti ti-trash f-18"></i>
-                                                    </button>
-                                                </form>
+                                                <li>
+                                                    @if($isActiveExam)
+                                                        <button class="dropdown-item text-muted" style="cursor: not-allowed; opacity: 0.6;" disabled title="Exam is active - cannot edit">
+                                                            <i class="ti ti-edit me-2"></i>Edit Case Study
+                                                        </button>
+                                                    @else
+                                                        <a class="dropdown-item" href="{{ route('admin.case-studies-bank.edit', $caseStudy->id) }}">
+                                                            <i class="ti ti-edit me-2"></i>Edit Case Study
+                                                        </a>
+                                                    @endif
+                                                </li>
+                                                <li>
+                                                    @if($isActiveExam)
+                                                        <button class="dropdown-item text-muted" style="cursor: not-allowed; opacity: 0.6;" disabled title="Exam is active - cannot delete">
+                                                            <i class="ti ti-trash me-2"></i>Delete Case Study
+                                                        </button>
+                                                    @else
+                                                        <form action="{{ route('admin.case-studies-bank.destroy', $caseStudy->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $caseStudy->id }}">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('delete-form-{{ $caseStudy->id }}'), 'Are you sure you want to delete this case study?')">
+                                                                <i class="ti ti-trash me-2"></i>Delete Case Study
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </li>
                                             @endif
-                                        </li>
-                                    </ul>
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                             @empty

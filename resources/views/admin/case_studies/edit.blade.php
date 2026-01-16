@@ -28,7 +28,7 @@
         </div>
         @endif
 
-        <form id="caseStudyForm" action="{{ isset($caseStudy) ? route('admin.case-studies.update', $caseStudy->id) : route('admin.case-studies.store') }}" method="POST">
+        <form id="caseStudyForm" action="{{ isset($caseStudy) ? route('admin.sections.update', $caseStudy->id) : route('admin.sections.store') }}" method="POST">
             @csrf
             @if(isset($caseStudy)) @method('PUT') @endif
 
@@ -63,7 +63,7 @@
             </div>
 
             <div class="mt-3 text-end">
-                <a href="{{ route('admin.case-studies.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                <a href="{{ route('admin.sections.index') }}" class="btn btn-secondary me-2">Cancel</a>
                 <button type="submit" class="btn btn-primary" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'disabled' : '' }}>Save Section</button>
             </div>
         </form>

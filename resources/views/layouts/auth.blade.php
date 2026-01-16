@@ -7,7 +7,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
   <!-- [Favicon] icon -->
-  <link rel="icon" href="{{ asset('assets/images/favicon.svg') }}" type="image/x-icon">
+  <!-- [Favicon] icon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/logo_image.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/logo_image.png') }}">
+  <link rel="shortcut icon" href="{{ asset('assets/images/logo_image.png') }}">
   
   <!-- [Google Font] Family -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" id="main-font-link">

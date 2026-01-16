@@ -12,6 +12,7 @@ class Section extends Model
         'content',
         'order_no',
         'status',
+        'cloned_from_id',
     ];
 
     protected $casts = [
@@ -26,5 +27,10 @@ class Section extends Model
     public function caseStudies()
     {
         return $this->hasMany(CaseStudy::class, 'section_id');
+    }
+
+    public function clonedFrom()
+    {
+        return $this->belongsTo(Section::class, 'cloned_from_id');
     }
 }

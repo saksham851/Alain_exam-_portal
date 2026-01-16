@@ -162,18 +162,21 @@ function menu_click() {
   for (var i = 0; i < pc_link_click.length; i++) {
     pc_link_click[i].addEventListener('click', function (event) {
       event.stopPropagation();
-      var targetElement = event.target;
-      if (targetElement.tagName == 'SPAN') {
-        targetElement = targetElement.parentNode;
-      }
-      if (targetElement.parentNode.classList.contains('pc-trigger')) {
-        targetElement.parentNode.classList.remove('pc-trigger');
-        slideUp(targetElement.parentNode.children[1], 200);
+      event.preventDefault();
+
+      // Get the clicked list item
+      var listItem = this;
+
+      if (listItem.classList.contains('pc-trigger')) {
+        // Close the menu
+        listItem.classList.remove('pc-trigger');
+        slideUp(listItem.children[1], 200);
         window.setTimeout(() => {
-          targetElement.parentNode.children[1].removeAttribute('style');
-          targetElement.parentNode.children[1].style.display = 'none';
+          listItem.children[1].removeAttribute('style');
+          listItem.children[1].style.display = 'none';
         }, 200);
       } else {
+        // Close all other open menus
         var tc = document.querySelectorAll('li.pc-trigger');
         for (var t = 0; t < tc.length; t++) {
           var c = tc[t];
@@ -184,11 +187,9 @@ function menu_click() {
             c.children[1].style.display = 'none';
           }, 200);
         }
-        targetElement.parentNode.classList.add('pc-trigger');
-        var tmp = targetElement.children[1];
-        if (tmp) {
-          slideDown(targetElement.parentNode.children[1], 200);
-        }
+        // Open this menu
+        listItem.classList.add('pc-trigger');
+        slideDown(listItem.children[1], 200);
       }
     });
   }
@@ -197,9 +198,10 @@ function menu_click() {
   for (var i = 0; i < pc_sub_link_click.length; i++) {
     pc_sub_link_click[i].addEventListener('click', function (event) {
       var targetElement = event.target;
-      if (targetElement.tagName == 'SPAN') {
+      while (targetElement && targetElement.tagName !== 'A' && targetElement !== this) {
         targetElement = targetElement.parentNode;
       }
+      if (!targetElement || targetElement === this) return;
       event.stopPropagation();
       if (targetElement.parentNode.classList.contains('pc-trigger')) {
         targetElement.parentNode.classList.remove('pc-trigger');

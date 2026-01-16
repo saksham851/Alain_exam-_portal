@@ -1,20 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- [ breadcrumb ] start -->
-<div class="page-header">
-  <div class="page-block">
-    <div class="row align-items-center">
-      <div class="col-md-12">
-        <div class="page-header-title">
-          <h5 class="m-b-10">Admin Dashboard</h5>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-<!-- [ breadcrumb ] end -->
 
 <div class="row mb-4">
     <!-- Stats Cards -->
@@ -374,7 +360,7 @@
                   <th>CERTIFICATION TYPE</th>
                   <th>EXAM NAME</th>
                   <th>EXAM CODE</th>
-                  <th>EXAM STATUS</th>
+                  <th>PUBLISH STATUS</th>
                   <th>STUDENTS</th>
                   <th>QUESTIONS</th>
                   <th>CASE STUDIES</th>
@@ -402,9 +388,9 @@
                   </td>
                   <td>
                     @if($exam->is_active == 1)
-                      <span class="badge bg-success">Active</span>
+                      <span class="badge bg-success">Published</span>
                     @else
-                      <span class="badge bg-danger">Inactive</span>
+                      <span class="badge bg-danger">Unpublished</span>
                     @endif
                   </td>
                   <td>

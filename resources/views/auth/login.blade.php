@@ -13,7 +13,7 @@
             </div>
         @endif
     
-    <form method="POST" action="{{ route('login') }}" id="loginForm">
+    <form method="POST" action="{{ route('login.post') }}" id="loginForm">
         @csrf
         <div class="form-group mb-3">
           <label class="form-label">Email Address</label>
@@ -80,31 +80,45 @@
         const emailError = document.getElementById('emailError');
         const passwordError = document.getElementById('passwordError');
 
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[\W_]).{6,}$/;
+
+        const validateEmail = () => {
+            if (emailInput.value && !emailRegex.test(emailInput.value)) {
+                emailError.innerText = 'Please enter a valid email address.';
+                emailError.style.display = 'block';
+                return false;
+            }
+            return true;
+        };
+
         if(loginForm) {
+            // Real-time validation on blur
+            emailInput.addEventListener('blur', validateEmail);
+
+            // Clear errors on input
+            emailInput.addEventListener('input', () => {
+                emailError.style.display = 'none';
+            });
+            passwordInput.addEventListener('input', () => {
+                passwordError.style.display = 'none';
+            });
+
             loginForm.addEventListener('submit', function(e) {
                 let isValid = true;
 
                 // Reset errors
                 emailError.style.display = 'none';
-                emailError.innerText = '';
                 passwordError.style.display = 'none';
-                passwordError.innerText = '';
 
                 // Email Validation
-                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                if (!emailInput.value || !emailRegex.test(emailInput.value)) {
-                    emailError.innerText = 'Please enter a valid email address.';
-                    emailError.style.display = 'block';
+                if (!emailInput.value) {
+                     // Browser handles required, but safety check
+                } else if (!validateEmail()) {
                     isValid = false;
                 }
 
-                // Password Validation (1 Uppercase, 1 Special/Unique Char, Min 8 chars)
-                // (?=.*[A-Z]) -> At least one Uppercase
-                // (?=.*[!@#$&*]) -> At least one special character (adjust list as needed)
-                // or just (?=.*[\W_]) for any non-word char
-                const passwordRegex = /^(?=.*[A-Z])(?=.*[\W_]).{6,}$/; 
-                // Note: Min length 6 is standard, user didn't specify length but usually 6 or 8. Using 6 to be safe but strict on chars.
-                
+                // Password Validation
                 if (!passwordInput.value) {
                      passwordError.innerText = 'Password is required.';
                      passwordError.style.display = 'block';
@@ -118,14 +132,6 @@
                 if (!isValid) {
                     e.preventDefault();
                 }
-            });
-
-            // Clear errors on input
-            emailInput.addEventListener('input', () => {
-                emailError.style.display = 'none';
-            });
-            passwordInput.addEventListener('input', () => {
-                passwordError.style.display = 'none';
             });
         }
     });

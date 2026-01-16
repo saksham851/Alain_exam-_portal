@@ -19,7 +19,8 @@ class CaseStudyBankController extends Controller
      */
     public function index(Request $request)
     {
-        $query = CaseStudy::where('status', 1)->with([
+        $status = $request->get('status') === 'inactive' ? 0 : 1;
+        $query = CaseStudy::where('status', $status)->with([
             'section.exam.category',
             'clonedFrom',
             'clonedFromSection.exam'
@@ -317,10 +318,18 @@ public function store(Request $request)
         return redirect()->route('admin.case-studies-bank.index')->with('success', 'Case Study updated successfully.');
     }
 
+    public function show($id)
+    {
+        $caseStudy = CaseStudy::with(['section.exam.category', 'questions.options'])
+            ->findOrFail($id);
+
+        return view('admin.case-studies-bank.show', compact('caseStudy'));
+    }
+
     public function destroy($id)
     {
          try {
-             $caseStudy = CaseStudy::with('section.exam')->findOrFail($id);
+             $caseStudy = CaseStudy::with('section.exam', 'questions')->findOrFail($id);
 
              if ($caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
                  if (request()->wantsJson()) {
@@ -329,15 +338,20 @@ public function store(Request $request)
                  return redirect()->back()->with('error', 'Cannot delete case study from an active exam.');
              }
              
-             // Explicitly set status and save
+             // Soft delete Case Study
              $caseStudy->status = 0;
              $saved = $caseStudy->save();
              
              if ($saved) {
+                 // Cascade soft delete: Deactivate related Questions
+                 foreach ($caseStudy->questions as $question) {
+                     $question->update(['status' => 0]);
+                 }
+
                  if (request()->wantsJson()) {
                       return response()->json(['success' => true, 'message' => 'Case Study deleted successfully.']);
                  }
-                 return redirect()->back()->with('success', 'Case Study deleted successfully.');
+                 return redirect()->back()->with('success', 'Case Study deleted successfully! Related questions have been soft deleted.');
              } else {
                  if (request()->wantsJson()) {
                       return response()->json(['success' => false, 'message' => 'Failed to update case study status.']);
@@ -350,5 +364,39 @@ public function store(Request $request)
              }
              return redirect()->back()->with('error', 'Error deleting case study: ' . $e->getMessage());
          }
+    }
+
+    // ACTIVATE CASE STUDY
+    // ACTIVATE CASE STUDY
+    public function activate($id)
+    {
+        $caseStudy = CaseStudy::with('section.exam', 'questions')->findOrFail($id);
+
+        if ($caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+             return redirect()->back()->with('error', 'Cannot activate case study in an active exam.');
+        }
+
+        // Restore Case Study
+        $caseStudy->update(['status' => 1]);
+
+        // Cascade restore: Activate related Questions
+        foreach ($caseStudy->questions as $question) {
+            $question->update(['status' => 1]);
+        }
+
+        return redirect()->back()->with('success', 'Case Study activated successfully! Related questions have been restored.');
+    }
+
+    /**
+     * Get case studies by section ID (AJAX)
+     */
+    public function getCaseStudiesBySection($sectionId)
+    {
+        $caseStudies = CaseStudy::where('section_id', $sectionId)
+            ->where('status', 1)
+            ->orderBy('order_no')
+            ->get(['id', 'title', 'content', 'order_no']);
+        
+        return response()->json($caseStudies);
     }
 }

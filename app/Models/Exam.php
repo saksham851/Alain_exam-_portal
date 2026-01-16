@@ -15,6 +15,7 @@ class Exam extends Model
         'duration_minutes',
         'status',
         'is_active',
+        'cloned_from_id',
     ];
 
     protected $casts = [
@@ -41,9 +42,13 @@ class Exam extends Model
         return $this->hasMany(StudentExam::class);
     }
     
-    // Accessor for duration (returns duration_minutes)
     public function getDurationAttribute()
     {
         return $this->duration_minutes;
+    }
+
+    public function clonedFrom()
+    {
+        return $this->belongsTo(Exam::class, 'cloned_from_id');
     }
 }

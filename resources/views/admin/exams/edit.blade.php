@@ -29,7 +29,7 @@
                             @method('PUT')
                             <button type="button" class="btn btn-sm {{ $exam->is_active ? 'btn-danger' : 'btn-success' }}" onclick="confirmStatusChange()">
                                 <i class="ti {{ $exam->is_active ? 'ti-lock' : 'ti-lock-open' }} me-1"></i>
-                                {{ $exam->is_active ? 'Deactivate / Unlock Exam' : 'Activate / Lock Exam' }}
+                                {{ $exam->is_active ? 'Unpublish Exam' : 'Publish Exam' }}
                             </button>
                         </form>
                     </div>
@@ -37,7 +37,7 @@
                     <script>
                     function confirmStatusChange() {
                         const isActive = {{ $exam->is_active ? 'true' : 'false' }};
-                        const actionText = isActive ? 'Deactivate / Unlock' : 'Activate / Lock';
+                        const actionText = isActive ? 'Unpublish' : 'Publish';
                         const btnColor = isActive ? '#d33' : '#28a745';
 
                         Swal.fire({
@@ -69,8 +69,8 @@
                     <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
                         <i class="ti ti-lock" style="font-size: 20px; margin-top: 3px;"></i>
                         <div>
-                            <strong>This Exam is Active/Locked</strong>
-                            <p class="mb-0 mt-2">This exam is currently active and locked for editing. To make changes, please check the "Force Edit" checkbox below to confirm you want to edit this active exam.</p>
+                            <strong>This Exam is Published/Locked</strong>
+                            <p class="mb-0 mt-2">This exam is currently published and locked for editing. To make changes, please check the "Force Edit" checkbox below to confirm you want to edit this published exam.</p>
                         </div>
                     </div>
 
@@ -78,7 +78,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="force_edit" id="forceEdit" value="1">
                             <label class="form-check-label" for="forceEdit">
-                                I understand this exam is active. <strong>Force Edit this exam</strong>
+                                I understand this exam is published. <strong>Force Edit this exam</strong>
                             </label>
                         </div>
                     </div>
@@ -87,8 +87,12 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Exam Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', optional($exam)->name) }}" required>
-                            @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+                            <input type="text" name="name" class="form-control" value="{{ old('name', optional($exam)->name) }}" required pattern="^[a-zA-Z0-9\s]+$" title="Only letters, numbers, and spaces are allowed.">
+                            @error('name') 
+                                <small class="text-danger">{{ $message }}</small> 
+                            @else
+                                <small class="text-muted">Only letters, numbers, and spaces are allowed.</small>
+                            @enderror
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -112,26 +116,30 @@
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Duration (Minutes) <span class="text-danger">*</span></label>
-                            <input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes', optional($exam)->duration_minutes ?? 180) }}" required min="1">
-                            @error('duration_minutes') <small class="text-danger">{{ $message }}</small> @enderror
+                            <input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes', optional($exam)->duration_minutes ?? 180) }}" required min="1" title="Duration must be at least 1 minute.">
+                            @error('duration_minutes') 
+                                <small class="text-danger">{{ $message }}</small> 
+                            @enderror
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Certification Type <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-2 align-items-center">
-                                <div class="flex-grow-1">
-                                    <select name="certification_type" id="certificationTypeSelect" class="form-select" required>
-                                        <option value="">Select Certification Type</option>
-                                        <option value="NHMCE" {{ old('certification_type', optional($exam)->certification_type) == 'NHMCE' ? 'selected' : '' }}>NHMCE</option>
-                                    </select>
-                                    <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;">
-                                    @error('certification_type') <small class="text-danger">{{ $message }}</small> @enderror
-                                    @error('new_certification_type') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
+                            <div class="input-group">
+                                <select name="certification_type" id="certificationTypeSelect" class="form-select" required>
+                                    <option value="">Select Certification Type</option>
+                                    <option value="NHMCE" {{ old('certification_type', optional($exam)->certification_type) == 'NHMCE' ? 'selected' : '' }}>NHMCE</option>
+                                </select>
+                                <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;" pattern="^[a-zA-Z0-9\s]+$" title="Only letters, numbers, and spaces are allowed.">
                                 <button type="button" id="addNewTypeBtn" class="btn btn-primary" style="white-space: nowrap;">
                                     <i class="ti ti-plus me-1"></i> Add New
                                 </button>
                             </div>
+                            @error('certification_type') <small class="text-danger d-block mt-1">{{ $message }}</small> @enderror
+                            @error('new_certification_type') 
+                                <small class="text-danger d-block mt-1">{{ $message }}</small> 
+                            @else
+                                <small class="text-muted d-none mt-1" id="certTypeHelper">Only letters, numbers, and spaces are allowed.</small>
+                            @enderror
                         </div>
 
                         <script>
@@ -165,6 +173,7 @@
                                     addNewBtn.innerHTML = '<i class="ti ti-x me-1"></i> Cancel';
                                     addNewBtn.classList.remove('btn-primary');
                                     addNewBtn.classList.add('btn-secondary');
+                                    document.getElementById('certTypeHelper').classList.remove('d-none');
                                 } else {
                                     // Hide input field and show dropdown
                                     selectElement.style.display = 'block';
@@ -178,6 +187,7 @@
                                     addNewBtn.innerHTML = '<i class="ti ti-plus me-1"></i> Add New';
                                     addNewBtn.classList.remove('btn-secondary');
                                     addNewBtn.classList.add('btn-primary');
+                                    document.getElementById('certTypeHelper').classList.add('d-none');
                                 }
                             }
 

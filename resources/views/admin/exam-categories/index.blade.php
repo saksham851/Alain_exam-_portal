@@ -122,32 +122,41 @@
                                     <span class="badge bg-light-info">{{ $category->exams_count ?? 0 }} exams</span>
                                 </td>
                                 <td class="text-end">
-                                    <ul class="list-inline mb-0">
-                                        @if($category->status == 1)
-                                        <li class="list-inline-item">
-                                            <a href="{{ route('admin.exam-categories.edit', $category->id) }}" class="avtar avtar-s btn-link-success btn-pc-default" data-bs-toggle="tooltip" title="Edit Category">
-                                                <i class="ti ti-edit f-18"></i>
-                                            </a>
-                                        </li>
-                                        <li class="list-inline-item">
-                                            <form action="{{ route('admin.exam-categories.destroy', $category->id) }}" method="POST" class="d-inline-block" id="deleteForm{{ $category->id }}">
-                                                @csrf @method('DELETE')
-                                                <button type="button" class="avtar avtar-s btn-link-danger btn-pc-default" style="border:none; background:none;" onclick="showDeleteModal(document.getElementById('deleteForm{{ $category->id }}'), 'Are you sure you want to delete this category?')" data-bs-toggle="tooltip" title="Delete Category">
-                                                    <i class="ti ti-trash f-18"></i>
-                                                </button>
-                                            </form>
-                                        </li>
-                                        @else
-                                        <li class="list-inline-item">
-                                            <form action="{{ route('admin.exam-categories.activate', $category->id) }}" method="POST" class="d-inline-block" id="activateForm{{ $category->id }}">
-                                                @csrf @method('PATCH')
-                                                <button type="button" class="avtar avtar-s btn-link-success btn-pc-default" style="border:none; background:none;" onclick="showActivateModal(document.getElementById('activateForm{{ $category->id }}'))" data-bs-toggle="tooltip" title="Activate Category">
-                                                    <i class="ti ti-check f-18"></i>
-                                                </button>
-                                            </form>
-                                        </li>
-                                        @endif
-                                    </ul>
+                                    <div class="dropdown">
+                                        <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
+                                                data-bs-toggle="dropdown" 
+                                                data-bs-boundary="viewport" 
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                                aria-expanded="false">
+                                            <i class="ti ti-dots-vertical f-18"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            @if($category->status == 1)
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('admin.exam-categories.edit', $category->id) }}">
+                                                        <i class="ti ti-edit me-2"></i>Edit Category
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <form action="{{ route('admin.exam-categories.destroy', $category->id) }}" method="POST" class="d-block" id="deleteForm{{ $category->id }}">
+                                                        @csrf @method('DELETE')
+                                                        <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('deleteForm{{ $category->id }}'), 'Are you sure you want to delete this category?')">
+                                                            <i class="ti ti-trash me-2"></i>Delete Category
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            @else
+                                                <li>
+                                                    <form action="{{ route('admin.exam-categories.activate', $category->id) }}" method="POST" class="d-block" id="activateForm{{ $category->id }}">
+                                                        @csrf @method('PATCH')
+                                                        <button type="button" class="dropdown-item text-success" onclick="showActivateModal(document.getElementById('activateForm{{ $category->id }}'))">
+                                                            <i class="ti ti-check me-2"></i>Activate Category
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -199,13 +208,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-submit on dropdown change (instant)
 
     
-    // Auto-submit on search input (debounced - 500ms delay)
+    // Auto-submit on search input (debounced - 1000ms delay)
     if (searchInput) {
+        // Auto-focus if there is a value (restore state after reload)
+        if (searchInput.value) {
+           searchInput.focus();
+           // Move cursor to end
+           const val = searchInput.value;
+           searchInput.value = '';
+           searchInput.value = val;
+        }
+
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function() {
                 filterForm.submit();
-            }, 500);
+            }, 1000);
         });
     }
     

@@ -7,6 +7,11 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/logo_image.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/logo_image.png') }}">
+        <link rel="shortcut icon" href="{{ asset('assets/images/logo_image.png') }}">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,6 +46,24 @@
             .swal2-icon.swal2-success .swal2-success-ring { animation: none !important; }
             .swal2-icon.swal2-error.swal2-icon-show .swal2-x-mark { animation: none !important; }
             .swal2-icon { animation: none !important; transform: scale(1) !important; }
+        </style>
+        
+        <!-- Custom Styles to Hide Page Headers -->
+        <style>
+            /* Hide page headers globally to save space */
+            .page-header {
+                display: none !important;
+            }
+            
+            /* Remove top padding/margin from main content area */
+            .pc-container {
+                padding-top: 0 !important;
+            }
+            
+            section.pc-container {
+                margin-top: 0 !important;
+                padding-top: 20px !important;
+            }
         </style>
         
     </head>
@@ -161,19 +184,19 @@
 
             // Check for Laravel session messages and show alerts
             @if(session('success'))
-                showAlert.success('{{ session('success') }}');
+                showAlert.success(@json(session('success')));
             @endif
 
             @if(session('error'))
-                showAlert.error('{{ session('error') }}');
+                showAlert.error(@json(session('error')));
             @endif
 
             @if(session('warning'))
-                showAlert.warning('{{ session('warning') }}');
+                showAlert.warning(@json(session('warning')));
             @endif
 
             @if(session('info'))
-                showAlert.info('{{ session('info') }}');
+                showAlert.info(@json(session('info')));
             @endif
 
             // Delete confirmation modal
@@ -194,6 +217,34 @@
 
             // Feather icons
             feather.replace();
+
+            // Custom handler for Exams submenu toggle
+            document.addEventListener('DOMContentLoaded', function() {
+                // Wait a bit for feather icons to render
+                setTimeout(function() {
+                    const examMenuItem = document.querySelector('.pc-navbar > li.pc-hasmenu');
+                    if (examMenuItem) {
+                        const examLink = examMenuItem.querySelector('a.pc-link');
+                        const submenu = examMenuItem.querySelector('.pc-submenu');
+                        
+                        if (examLink && submenu) {
+                            examLink.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                // Toggle the menu
+                                if (examMenuItem.classList.contains('pc-trigger')) {
+                                    examMenuItem.classList.remove('pc-trigger');
+                                    submenu.style.display = 'none';
+                                } else {
+                                    examMenuItem.classList.add('pc-trigger');
+                                    submenu.style.display = 'block';
+                                }
+                            });
+                        }
+                    }
+                }, 100);
+            });
         </script>
 
         @stack('scripts')

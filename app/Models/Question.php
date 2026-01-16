@@ -13,6 +13,7 @@ class Question extends Model
         'ig_weight',
         'dm_weight',
         'status',
+        'cloned_from_id',
     ];
 
     protected $casts = [
@@ -32,5 +33,10 @@ class Question extends Model
     public function attemptAnswers()
     {
         return $this->hasMany(AttemptAnswer::class);
+    }
+
+    public function clonedFrom()
+    {
+        return $this->belongsTo(Question::class, 'cloned_from_id');
     }
 }
