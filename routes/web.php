@@ -28,7 +28,7 @@ use App\Http\Controllers\Admin\SectionController;
 // Auth Routes (Guest only)
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.post');
+    Route::post('/', [AuthenticatedSessionController::class, 'store'])->name('login.post');
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
 });
@@ -45,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Users Management
         Route::resource('users', UserController::class);
-        Route::get('users/{id}/activate', [UserController::class, 'activate'])->name('users.activate');
+        Route::patch('users/{id}/activate', [UserController::class, 'activate'])->name('users.activate');
         
         // User Attempts Management
         Route::get('users/{id}/assigned-exams', [UserController::class, 'getAssignedExams'])->name('users.assigned-exams');
@@ -62,19 +62,19 @@ Route::middleware(['auth'])->group(function () {
 
         // Exam Categories
         Route::resource('exam-categories', ExamCategoryController::class);
-        Route::get('exam-categories/{id}/activate', [ExamCategoryController::class, 'activate'])->name('exam-categories.activate');
+        Route::patch('exam-categories/{id}/activate', [ExamCategoryController::class, 'activate'])->name('exam-categories.activate');
 
 
         // Exams Management
         Route::resource('exams', ExamController::class);
-        Route::get('exams/{id}/activate', [ExamController::class, 'activate'])->name('exams.activate');
+        Route::patch('exams/{id}/activate', [ExamController::class, 'activate'])->name('exams.activate');
         Route::post('exams/{id}/publish', [ExamController::class, 'publish'])->name('exams.publish'); // New Publish Route
         Route::put('exams/{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('exams.toggle-status');
         Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
 
         // Questions Management
         Route::resource('questions', QuestionController::class);
-        Route::get('questions/{id}/activate', [QuestionController::class, 'activate'])->name('questions.activate');
+        Route::match(['get', 'patch'], 'questions/{id}/activate', [QuestionController::class, 'activate'])->name('questions.activate');
         Route::post('questions/import', [QuestionController::class, 'import'])->name('questions.import');
         Route::post('questions/clone', [QuestionController::class, 'clone'])->name('questions.clone');
         Route::get('questions/export', [QuestionController::class, 'export'])->name('questions.export');
@@ -88,7 +88,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'edit'])->name('edit');
             Route::put('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'update'])->name('update');
             Route::delete('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy'])->name('destroy');
-            Route::get('/{id}/activate', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'activate'])->name('activate');
+            Route::patch('/{id}/activate', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'activate'])->name('activate');
             Route::post('/copy', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'copy'])->name('copy');
         });
 
@@ -100,7 +100,7 @@ Route::middleware(['auth'])->group(function () {
 
          // Sections
          Route::resource('sections', SectionController::class);
-         Route::get('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');
+         Route::patch('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');
          Route::post('sections/{section}/clone', [SectionController::class, 'clone'])->name('sections.clone');
          Route::post('sections/clone-external', [SectionController::class, 'clone'])->name('sections.clone-external');
 

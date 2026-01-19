@@ -22,8 +22,14 @@ class SectionController extends Controller
         $isActive = $request->get('is_active');
 
         // Base query
-        $query = Section::where('status', 1)
-            ->with(['exam.category', 'caseStudies.questions', 'clonedFrom']);
+        $status = $request->get('status', 'active');
+        $query = Section::with(['exam.category', 'caseStudies.questions', 'clonedFrom']);
+
+        if ($status === 'inactive') {
+            $query->where('status', 0);
+        } else {
+            $query->where('status', 1);
+        }
 
         // Search by section name
         if ($search) {

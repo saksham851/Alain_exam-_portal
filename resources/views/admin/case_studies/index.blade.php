@@ -84,10 +84,9 @@
                         <!-- Status Filter -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
-                            <select name="is_active" class="form-select form-select-sm" id="statusFilter" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Status</option>
-                                <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Active Exam</option>
-                                <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Inactive Exam</option>
+                            <select name="status" class="form-select form-select-sm" id="statusFilter" onchange="document.getElementById('filterForm').submit()">
+                                <option value="active" {{ request('status') !== 'inactive' ? 'selected' : '' }}>Active</option>
+                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
                         
@@ -185,8 +184,10 @@
 
                                             @if($section->status == 0)
                                                 <li>
-                                                    <form action="{{ route('admin.sections.activate', $section->id) }}" method="GET" class="d-inline-block w-100" id="activateSectionForm{{ $section->id }}">
-                                                        <button type="button" class="dropdown-item text-success" onclick="if(confirm('Are you sure you want to activate this section?')) document.getElementById('activateSectionForm{{ $section->id }}').submit();">
+                                                    <form action="{{ route('admin.sections.activate', $section->id) }}" method="POST" class="d-inline-block w-100" id="activateSectionForm{{ $section->id }}">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to activate this section?', 'Activate Section', function() { document.getElementById('activateSectionForm{{ $section->id }}').submit(); })">
                                                             <i class="ti ti-check me-2"></i>Activate Section
                                                         </button>
                                                     </form>
@@ -201,7 +202,7 @@
                                                         <form action="{{ route('admin.sections.destroy', $section->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $section->id }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="button" class="dropdown-item text-danger" onclick="if(confirm('Are you sure you want to delete this section?')) document.getElementById('delete-form-{{ $section->id }}').submit();">
+                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('delete-form-{{ $section->id }}'), 'Are you sure you want to delete this section?')">
                                                                 <i class="ti ti-trash me-2"></i>Delete Section
                                                             </button>
                                                         </form>

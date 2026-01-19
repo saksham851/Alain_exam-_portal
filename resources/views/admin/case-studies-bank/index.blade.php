@@ -538,7 +538,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </li>
                                             @if($caseStudy->status == 0)
                                                 <li>
-                                                    <form action="{{ route('admin.case-studies-bank.activate', $caseStudy->id) }}" method="GET" class="d-inline-block w-100" id="activateCsForm{{ $caseStudy->id }}">
+                                                    <form action="{{ route('admin.case-studies-bank.activate', $caseStudy->id) }}" method="POST" class="d-inline-block w-100" id="activateCsForm{{ $caseStudy->id }}">
+                                                        @csrf
+                                                        @method('PATCH')
                                                         <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to restore this case study?', 'Restore Case Study', function() { document.getElementById('activateCsForm{{ $caseStudy->id }}').submit(); })">
                                                             <i class="ti ti-check me-2"></i>Activate Case Study
                                                         </button>
@@ -565,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         <form action="{{ route('admin.case-studies-bank.destroy', $caseStudy->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $caseStudy->id }}">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('delete-form-{{ $caseStudy->id }}'), 'Are you sure you want to delete this case study?')">
+                                                            <button type="button" class="dropdown-item text-danger" onclick="showAlert.confirm('Are you sure you want to delete this case study?', 'Delete Case Study', function() { document.getElementById('delete-form-{{ $caseStudy->id }}').submit(); })">
                                                                 <i class="ti ti-trash me-2"></i>Delete Case Study
                                                             </button>
                                                         </form>

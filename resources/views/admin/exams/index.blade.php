@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
                             <select name="status" class="form-select form-select-sm">
                                 <option value="active" {{ request('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Deleted</option>
+                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             </select>
                         </div>
 

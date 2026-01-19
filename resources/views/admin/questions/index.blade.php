@@ -318,7 +318,9 @@
                                             </li>
                                             @if($question->status == 0)
                                                 <li>
-                                                    <form action="{{ route('admin.questions.activate', $question->id) }}" method="GET" class="d-inline-block w-100" id="activateForm{{ $question->id }}">
+                                                    <form action="{{ route('admin.questions.activate', $question->id) }}" method="POST" class="d-inline-block w-100" id="activateForm{{ $question->id }}">
+                                                        @csrf
+                                                        @method('PATCH')
                                                         <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to restore this question?', 'Restore Question', function() { document.getElementById('activateForm{{ $question->id }}').submit(); })">
                                                             <i class="ti ti-check me-2"></i>Activate Question
                                                         </button>
