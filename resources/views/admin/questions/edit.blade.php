@@ -446,6 +446,7 @@ function questionForm() {
     return {
         isEdit: {{ $isEdit ? 'true' : 'false' }},
         isActiveExam: {{ $isActiveExam ? 'true' : 'false' }},
+        currentQuestionId: {{ isset($question) ? $question->id : 'null' }},
         // Add random unique ID to each question for stable DOM tracking
         questions: @json($initialQuestions).map(q => ({ ...q, id: 'q_' + Math.random().toString(36).substr(2, 9) })),
         existingQuestions: [], // Array to hold existing questions
@@ -749,7 +750,12 @@ function questionForm() {
             
             try {
                 const response = await fetch(`/admin/questions-ajax/questions/${subCaseId}`);
-                const data = await response.json();
+                let data = await response.json();
+
+                // If in Edit mode, filter out the current question from the existing list
+                if (this.isEdit && this.currentQuestionId) {
+                    data = data.filter(q => q.id != this.currentQuestionId);
+                }
 
                 // Process data to match Vue/Alpine structure (e.g. options handling)
                 this.existingQuestions = data.map(q => {

@@ -57,17 +57,31 @@
 
                     <!-- Option 2: Clone -->
                     <div class="col-md-6">
-                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneExamModal">
-                            <div class="card-body text-center p-4">
-                                <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
+                        @if($allExams->isNotEmpty())
+                            <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneExamModal">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                            <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
+                                        </div>
                                     </div>
+                                    <h5 class="fw-bold mb-2">Clone Existing Exam</h5>
+                                    <p class="text-muted small mb-0">Copy structure and content from an existing exam.</p>
                                 </div>
-                                <h5 class="fw-bold mb-2">Clone Existing Exam</h5>
-                                <p class="text-muted small mb-0">Copy structure and content from an existing exam.</p>
                             </div>
-                        </div>
+                        @else
+                            <div class="card h-100 border-2 bg-light text-muted" style="cursor: not-allowed; opacity: 0.6;" title="No exams available to clone">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-secondary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                            <i class="ti ti-copy text-secondary" style="font-size: 2.2rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h5 class="fw-bold mb-2">Clone Existing Exam</h5>
+                                    <p class="small mb-0">No existing exams available to clone.</p>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -97,7 +111,7 @@
                         </label>
                         <select class="form-select" id="source_exam_id" name="source_exam_id" required>
                             <option value="">-- Select an exam --</option>
-                            @foreach($exams as $exam)
+                            @foreach($allExams as $exam)
                                 <option value="{{ $exam->id }}" 
                                     data-name="{{ $exam->name }}" 
                                     data-code="{{ $exam->exam_code }}"

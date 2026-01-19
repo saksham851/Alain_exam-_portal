@@ -76,7 +76,13 @@ class ExamController extends Controller
             $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
         }
 
-        return view('admin.exams.index', compact('exams', 'categories', 'certificationTypes', 'nextCode'));
+        // Get all active exams for clone dropdown (available for cloning)
+        $allExams = Exam::where('status', 1)
+            ->with('category')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.exams.index', compact('exams', 'categories', 'certificationTypes', 'nextCode', 'allExams'));
     }
 
     // ACTIVATE EXAM (RESTORE)
