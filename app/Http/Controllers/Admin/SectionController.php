@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Models\Section;
 use App\Models\CaseStudy;
@@ -120,10 +121,26 @@ class SectionController extends Controller
         return redirect()->back()->with('error', 'Cannot add section to an active exam. Please deactivate the exam first.');
     }
 
+    // Sanitize input: remove extra spaces from title
+    if ($request->has('title')) {
+        $request->merge([
+            'title' => trim(preg_replace('/\s+/', ' ', $request->title))
+        ]);
+    }
+
     $request->validate([
-        'title' => 'required|string|max:255',
+        'title' => [
+            'required',
+            'string',
+            'max:255',
+            Rule::unique('sections')->where(function ($query) use ($request) {
+                return $query->where('exam_id', $request->exam_id);
+            }),
+        ],
         'exam_id' => 'required|exists:exams,id',
         'content' => 'nullable|string',
+    ], [
+        'title.unique' => 'A section with this name already exists in the selected exam.',
     ]);
 
     // Create main section
@@ -158,10 +175,26 @@ class SectionController extends Controller
         return redirect()->back()->with('error', 'Cannot modify section in an active exam. Please deactivate the exam first.');
     }
 
+    // Sanitize input: remove extra spaces from title
+    if ($request->has('title')) {
+        $request->merge([
+            'title' => trim(preg_replace('/\s+/', ' ', $request->title))
+        ]);
+    }
+
     $request->validate([
-        'title' => 'required|string|max:255',
+        'title' => [
+            'required',
+            'string',
+            'max:255',
+            Rule::unique('sections')->where(function ($query) use ($request) {
+                return $query->where('exam_id', $request->exam_id);
+            })->ignore($id),
+        ],
         'exam_id' => 'required|exists:exams,id',
         'content' => 'nullable|string',
+    ], [
+        'title.unique' => 'A section with this name already exists in the selected exam.',
     ]);
 
     $section = Section::find($id);

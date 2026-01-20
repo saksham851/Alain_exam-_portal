@@ -52,7 +52,10 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Section Name</label>
-                            <input type="text" name="title" class="form-control" value="{{ old('title', $caseStudy->title ?? '') }}" required>
+                            <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $caseStudy->title ?? '') }}" required>
+                            @error('title')
+                                <div class="invalid-feedback text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Description</label>

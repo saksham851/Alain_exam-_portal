@@ -55,6 +55,12 @@ class ExamCategoryController extends Controller
     // Store new category
     public function store(Request $request)
     {
+        // Sanitize input: remove extra spaces
+        if ($request->has('name')) {
+            $request->merge([
+                'name' => trim(preg_replace('/\s+/', ' ', $request->name))
+            ]);
+        }
         $request->validate([
             'name' => [
                 'required',
@@ -91,6 +97,12 @@ class ExamCategoryController extends Controller
     // Update category
     public function update(Request $request, $id)
     {
+        // Sanitize input: remove extra spaces
+        if ($request->has('name')) {
+            $request->merge([
+                'name' => trim(preg_replace('/\s+/', ' ', $request->name))
+            ]);
+        }
         $request->validate([
             'name' => [
                 'required',

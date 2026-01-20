@@ -195,13 +195,13 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.attempts.by-user', $user->id) }}">
-                                                    <i class="ti ti-trophy me-2"></i>View Result
+                                                <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
+                                                    <i class="ti ti-eye me-2"></i>View Profile
                                                 </a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
-                                                    <i class="ti ti-eye me-2"></i>View Profile
+                                                <a class="dropdown-item" href="{{ route('admin.attempts.by-user', $user->id) }}">
+                                                    <i class="ti ti-trophy me-2"></i>View Result
                                                 </a>
                                             </li>
                                         </ul>

@@ -141,6 +141,21 @@ class ExamController extends Controller
         if ($request->filled('new_certification_type')) {
             $certificationType = $request->new_certification_type;
         }
+        
+        // Sanitize certification type
+        $certificationType = trim(preg_replace('/\s+/', ' ', $certificationType));
+
+        // Sanitize input: remove extra spaces from name and exam_code
+        if ($request->has('name')) {
+            $request->merge([
+                'name' => trim(preg_replace('/\s+/', ' ', $request->name))
+            ]);
+        }
+        if ($request->has('exam_code')) {
+            $request->merge([
+                'exam_code' => trim(preg_replace('/\s+/', ' ', $request->exam_code))
+            ]);
+        }
 
         $request->merge(['certification_type' => $certificationType]);
 
@@ -216,6 +231,21 @@ class ExamController extends Controller
         $certificationType = $request->certification_type;
         if ($request->filled('new_certification_type')) {
             $certificationType = $request->new_certification_type;
+        }
+        
+        // Sanitize certification type
+        $certificationType = trim(preg_replace('/\s+/', ' ', $certificationType));
+
+        // Sanitize input: remove extra spaces from name and exam_code
+        if ($request->has('name')) {
+            $request->merge([
+                'name' => trim(preg_replace('/\s+/', ' ', $request->name))
+            ]);
+        }
+        if ($request->has('exam_code')) {
+            $request->merge([
+                'exam_code' => trim(preg_replace('/\s+/', ' ', $request->exam_code))
+            ]);
         }
 
         $request->merge(['certification_type' => $certificationType]);

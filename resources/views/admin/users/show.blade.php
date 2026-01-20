@@ -80,6 +80,7 @@
                                 <th>Category</th>
                                 <th class="text-center">Attempts</th>
                                 <th class="text-center">Status</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -91,7 +92,13 @@
                                             <i class="ti ti-book"></i>
                                         </div>
                                         <div>
-                                            <h6 class="mb-0">{{ $studentExam->exam->name ?? 'Unknown Exam' }}</h6>
+                                            @if($studentExam->exam)
+                                                <a href="{{ route('admin.exams.show', $studentExam->exam->id) }}" class="text-decoration-none fw-semibold text-dark">
+                                                    {{ $studentExam->exam->name }}
+                                                </a>
+                                            @else
+                                                <h6 class="mb-0">Unknown Exam</h6>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -116,10 +123,39 @@
                                         <span class="badge bg-secondary">Exhausted</span>
                                     @endif
                                 </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
+                                                data-bs-toggle="dropdown" 
+                                                data-bs-boundary="viewport" 
+                                                data-bs-popper-config='{"strategy":"fixed"}'
+                                                aria-expanded="false">
+                                            <i class="ti ti-dots-vertical f-18"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="{{ route('admin.exams.show', $studentExam->exam_id) }}">
+                                                    <i class="ti ti-eye me-2"></i>View Exam
+                                                </a>
+                                            </li>
+                                            <li>
+                                                @if($studentExam->attempts_used > 0)
+                                                    <a class="dropdown-item" href="{{ route('admin.users.exam-attempts', ['studentId' => $user->id, 'examId' => $studentExam->exam_id]) }}">
+                                                        <i class="ti ti-trophy me-2"></i>View Result
+                                                    </a>
+                                                @else
+                                                    <span class="dropdown-item text-muted disabled">
+                                                        <i class="ti ti-ban me-2"></i>No Results
+                                                    </span>
+                                                @endif
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
                                     <div class="mb-2"><i class="ti ti-folder-off f-24"></i></div>
                                     <p class="mb-0">No exams assigned to this student.</p>
                                 </td>
