@@ -5,63 +5,75 @@
 <div class="row mb-4">
     <!-- Stats Cards -->
     <div class="col-md-6 col-xl-2">
-      <div class="card h-100">
-        <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Total Students</h6>
-          <h4 class="mb-2">{{ number_format($stats['total_students']) }} <span class="badge bg-light-primary border border-primary"><i class="ti ti-users"></i></span></h4>
-          <p class="mb-0 text-muted text-sm">Registered users</p>
+      <a href="{{ route('admin.users.index') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body pt-3 px-3 pb-2">
+            <h6 class="mb-2 f-w-400 text-muted">Total Students</h6>
+            <h4 class="mb-2">{{ number_format($stats['total_students']) }} <span class="badge bg-light-primary border border-primary"><i class="ti ti-users"></i></span></h4>
+            <p class="mb-0 text-muted text-sm">Registered users</p>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <div class="col-md-6 col-xl-2">
-      <div class="card h-100">
-        <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Total Exams</h6>
-          <h4 class="mb-2">{{ $stats['active_exams'] }} <span class="badge bg-light-success border border-success"><i class="ti ti-book"></i></span></h4>
-          <p class="mb-0 text-muted text-sm">Available exams</p>
+      <a href="{{ route('admin.exams.index') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body pt-3 px-3 pb-2">
+            <h6 class="mb-2 f-w-400 text-muted">Total Exams</h6>
+            <h4 class="mb-2">{{ $stats['active_exams'] }} <span class="badge bg-light-success border border-success"><i class="ti ti-book"></i></span></h4>
+            <p class="mb-0 text-muted text-sm">Available exams</p>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <div class="col-md-6 col-xl-2">
-      <div class="card h-100">
-        <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Total Exam Categories</h6>
-          <h4 class="mb-2">{{ $stats['exam_categories'] }} <span class="badge bg-light-info border border-info"><i class="ti ti-file-text"></i></span></h4>
-          <p class="mb-0 text-muted text-sm">Total categories</p>
+      <a href="{{ route('admin.exam-categories.index') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body pt-3 px-3 pb-2">
+            <h6 class="mb-2 f-w-400 text-muted">Total Exam Categories</h6>
+            <h4 class="mb-2">{{ $stats['exam_categories'] }} <span class="badge bg-light-info border border-info"><i class="ti ti-file-text"></i></span></h4>
+            <p class="mb-0 text-muted text-sm">Total categories</p>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <div class="col-md-6 col-xl-2">
-      <div class="card h-100">
-        <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Total Case Studies</h6>
-          <h4 class="mb-2">{{ $stats['case_studies'] }} <span class="badge bg-light-secondary border border-secondary"><i class="ti ti-file-text"></i></span></h4>
-          <p class="mb-0 text-muted text-sm">Total case studies</p>
+      <a href="{{ route('admin.case-studies-bank.index') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body pt-3 px-3 pb-2">
+            <h6 class="mb-2 f-w-400 text-muted">Total Case Studies</h6>
+            <h4 class="mb-2">{{ $stats['case_studies'] }} <span class="badge bg-light-secondary border border-secondary"><i class="ti ti-file-text"></i></span></h4>
+            <p class="mb-0 text-muted text-sm">Total case studies</p>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <div class="col-md-6 col-xl-2">
-      <div class="card h-100">
-        <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Questions Bank</h6>
-          <h4 class="mb-2">{{ number_format($stats['total_questions']) }} <span class="badge bg-light-warning border border-warning"><i class="ti ti-question-mark"></i></span></h4>
-          <p class="mb-0 text-muted text-sm">Total questions</p>
+      <a href="{{ route('admin.questions.index') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body pt-3 px-3 pb-2">
+            <h6 class="mb-2 f-w-400 text-muted">Questions Bank</h6>
+            <h4 class="mb-2">{{ number_format($stats['total_questions']) }} <span class="badge bg-light-warning border border-warning"><i class="ti ti-question-mark"></i></span></h4>
+            <p class="mb-0 text-muted text-sm">Total questions</p>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
 
     <div class="col-md-6 col-xl-2">
-      <div class="card h-100">
-        <div class="card-body pt-3 px-3 pb-2">
-          <h6 class="mb-2 f-w-400 text-muted">Recent Attempts</h6>
-          <h4 class="mb-2">{{ $stats['recent_attempts_count'] }} <span class="badge bg-light-danger border border-danger"><i class="ti ti-trending-up"></i></span></h4>
-          <p class="mb-0 text-muted text-sm">Last 24 hours</p>
+      <a href="{{ route('admin.attempts.index') }}" class="text-decoration-none">
+        <div class="card h-100">
+          <div class="card-body pt-3 px-3 pb-2">
+            <h6 class="mb-2 f-w-400 text-muted">Recent Attempts</h6>
+            <h4 class="mb-2">{{ $stats['recent_attempts_count'] }} <span class="badge bg-light-danger border border-danger"><i class="ti ti-trending-up"></i></span></h4>
+            <p class="mb-0 text-muted text-sm">Last 24 hours</p>
+          </div>
         </div>
-      </div>
+      </a>
     </div>
 </div>
 
