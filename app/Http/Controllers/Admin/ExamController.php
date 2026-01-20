@@ -137,26 +137,37 @@ class ExamController extends Controller
     public function store(Request $request)
     {
         // Handle new certification type
-        $certificationType = $request->certification_type;
         if ($request->filled('new_certification_type')) {
             $certificationType = $request->new_certification_type;
+        } else {
+             $certificationType = $request->certification_type;
         }
         
         // Sanitize certification type
         $certificationType = trim(preg_replace('/\s+/', ' ', $certificationType));
 
-        // Sanitize input: remove extra spaces from name and exam_code
+        // Sanitize exam name
         if ($request->has('name')) {
             $request->merge([
                 'name' => trim(preg_replace('/\s+/', ' ', $request->name))
             ]);
         }
-        if ($request->has('exam_code')) {
-            $request->merge([
-                'exam_code' => trim(preg_replace('/\s+/', ' ', $request->exam_code))
-            ]);
+
+        // FORCE GENERATE EXAM CODE ON BACKEND TO PREVENT TAMPERING
+        $latestExam = Exam::orderBy('id', 'desc')->first();
+        $nextCode = 'MH0001';
+        if ($latestExam && preg_match('/MH(\d+)/', $latestExam->exam_code, $matches)) {
+            $num = intval($matches[1]) + 1;
+            $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
         }
 
+        // Ensure uniqueness (simple collision check)
+        while(Exam::where('exam_code', $nextCode)->exists()) {
+             $nextCode = 'MH' . str_pad((intval(substr($nextCode, 2)) + 1), 4, '0', STR_PAD_LEFT);
+        }
+
+        // Overwrite user input for exam_code
+        $request->merge(['exam_code' => $nextCode]); 
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
@@ -174,7 +185,7 @@ class ExamController extends Controller
 
         $exam = Exam::create([
             'name' => $request->name,
-            'exam_code' => $request->exam_code,
+            'exam_code' => $request->exam_code, // This is now the verified backend-generated code
             'category_id' => $request->category_id,
             'certification_type' => $certificationType,
             'description' => $request->description,
