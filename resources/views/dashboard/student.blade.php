@@ -1,88 +1,144 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="row">
-    {{-- User Profile Card --}}
-    <div class="col-md-12 mb-4">
-        <div class="card bg-primary text-white">
-            <div class="card-body d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                    <div class="avtar avtar-lg bg-white text-primary rounded-circle me-3">
-                        <i class="ti ti-user f-24"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-white mb-0">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h4>
-                        <p class="text-white-50 mb-0">{{ auth()->user()->email }}</p>
-                        <span class="badge bg-light-success text-success mt-1">{{ auth()->user()->status == 1 ? 'Active' : 'Inactive' }}</span>
-                    </div>
-                </div>
+<div class="row mb-4">
+    <!-- Welcome Section matches Admin header style implicitly but adds personalization -->
+    <div class="col-12 mb-4">
+         <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-0 fw-bold">Welcome back, {{ auth()->user()->first_name }}! 👋</h3>
+                <p class="text-muted mb-0">{{ now()->format('l, d M Y') }}</p>
+            </div>
+         </div>
+    </div>
+
+    <!-- Stats Cards - Matching Admin Dashboard Style -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body pt-3 px-3 pb-2">
+                <h6 class="mb-2 f-w-400 text-muted">Enrolled Exams</h6>
+                <h4 class="mb-2">{{ $stats['enrolled'] }} <span class="badge bg-light-primary border border-primary"><i class="ti ti-book"></i></span></h4>
+                <p class="mb-0 text-muted text-sm">Total active enrollments</p>
             </div>
         </div>
     </div>
 
-    {{-- Purchased Exams --}}
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5>Purchased Exams</h5>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+             <div class="card-body pt-3 px-3 pb-2">
+                <h6 class="mb-2 f-w-400 text-muted">Passed Exams</h6>
+                <h4 class="mb-2">{{ $stats['passed_exams'] }} <span class="badge bg-light-success border border-success"><i class="ti ti-trophy"></i></span></h4>
+                <p class="mb-0 text-muted text-sm">Successfully completed</p>
             </div>
-            <div class="card-body">
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body pt-3 px-3 pb-2">
+                <h6 class="mb-2 f-w-400 text-muted">Average Score</h6>
+                <h4 class="mb-2">{{ $stats['average_score'] }}% <span class="badge bg-light-warning border border-warning"><i class="ti ti-chart-bar"></i></span></h4>
+                <p class="mb-0 text-muted text-sm">Across all attempts</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body pt-3 px-3 pb-2">
+                <h6 class="mb-2 f-w-400 text-muted">Success Rate</h6>
+                <h4 class="mb-2">{{ $stats['success_rate'] }}% <span class="badge bg-light-info border border-info"><i class="ti ti-activity"></i></span></h4>
+                <p class="mb-0 text-muted text-sm">Pass vs Fail ratio</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Active Exams Section - Can use Cards but styled consistently -->
+    <div class="col-lg-8">
+        <div class="card h-100" style="min-height: 350px;">
+            <div class="card-header">
+                <h5>My Exams</h5>
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Exam Title</th>
-                                <th>Duration</th>
-                                <th>Status</th>
-                                <th>Attempts</th>
-                                <th>Action</th>
-                                <th>Answer</th>
+                                <th>EXAM NAME</th>
+                                <th>STATUS</th>
+                                <th>ATTEMPTS</th>
+                                <th>PROGRESS</th>
+                                <th class="text-end">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($purchasedExams as $exam)
+                            @forelse($purchasedExams as $exam)
                             <tr>
                                 <td>
-                                    <h6 class="mb-0">{{ $exam->title }}</h6>
-                                </td>
-                                <td>
-                                    <i class="ti ti-clock me-1"></i>{{ $exam->duration }} mins
-                                </td>
-                                <td>
-                                    @if($exam->status === 'active')
-                                        <span class="badge bg-light-success text-success">Active</span>
-                                    @else
-                                        <span class="badge bg-light-danger text-danger">Expired</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <div>
-                                        <span class="fw-bold text-primary">{{ $exam->attempts_left }}</span> left
+                                    <div class="d-flex align-items-center">
+                                        <div class="avtar avtar-s bg-light-primary text-primary rounded-circle me-3">
+                                            <i class="ti ti-book"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">
+                                                {{ $exam->title }}
+                                                <span class="badge bg-light-secondary text-secondary ms-1">{{ $exam->exam_code }}</span>
+                                            </h6>
+                                            <small class="text-muted">{{ $exam->duration }} mins | {{ $exam->max_attempts }} Attempts Allowed</small>
+                                        </div>
                                     </div>
-                                    <small class="text-muted">{{ $exam->attempts_taken }}/{{ $exam->max_attempts }} used</small>
                                 </td>
                                 <td>
-                                    @if($exam->can_attempt)
-                                        <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-primary btn-sm rounded-pill">
-                                            <i class="ti ti-play "></i>Start
-                                        </a>
-                                    @elseif($exam->status === 'expired')
-                                        <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>
-                                            <i class="ti ti-clock-x me-1"></i>Expired
-                                        </button>
+                                    @if($exam->status == 'active')
+                                        <span class="badge bg-light-success border border-success">Active</span>
                                     @else
-                                        <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>
-                                            <i class="ti ti-lock me-1"></i>No Attempts
-                                        </button>
+                                        <span class="badge bg-light-danger border border-danger">Expired</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('exams.answer-key', $exam->id) }}" class="btn btn-sm btn-outline-success rounded-pill" title="Download Answer Key">
-                                        <i class="ti ti-download"></i>
-                                    </a>
+                                    <span class="fw-bold">{{ $exam->attempts_taken }}</span> / {{ $exam->max_attempts }}
+                                </td>
+                                <td style="width: 20%;">
+                                    <div class="progress" style="height: 6px;">
+                                        @php
+                                            $percent = ($exam->attempts_taken / $exam->max_attempts) * 100;
+                                            $color = $percent >= 100 ? 'bg-danger' : ($percent >= 66 ? 'bg-warning' : 'bg-primary');
+                                        @endphp
+                                        <div class="progress-bar {{ $color }}" role="progressbar" style="width: {{ $percent }}%"></div>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        @if($exam->can_attempt)
+                                            <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-sm btn-primary">
+                                                Start <i class="ti ti-player-play ms-1"></i>
+                                            </a>
+                                        @else
+                                            <button class="btn btn-sm btn-light-secondary" disabled>
+                                                Locked
+                                            </button>
+                                        @endif
+                                        
+                                        @if($exam->attempts_taken > 0)
+                                        <a href="{{ route('exams.answer-key', $exam->id) }}" class="btn btn-sm btn-light-success ms-1" data-bs-toggle="tooltip" title="Download Answer Key">
+                                            <i class="ti ti-download"></i>
+                                        </a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="text-center">
+                                        <img src="{{ asset('assets/images/no-data.svg') }}" alt="No Data" class="img-fluid mb-3" style="max-height: 100px; opacity: 0.5;">
+                                        <p class="text-muted mb-0">No exams assigned to you yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -90,64 +146,58 @@
         </div>
     </div>
 
-    {{-- Past Attempts --}}
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>Recent History</h5>
+    <!-- Recent History Sidebar - Matching Admin's Recent Activity Card -->
+    <div class="col-lg-4">
+        <div class="card h-100" style="min-height: 350px;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent History</h5>
+                <a href="{{ route('student.history') }}" class="btn btn-sm btn-light-primary">
+                    <i class="ti ti-eye me-1"></i> View All
+                </a>
             </div>
             <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    @foreach($attempts as $attempt)
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ $attempt->exam_title }}</h6>
-                                <small class="text-muted">{{ \Carbon\Carbon::parse($attempt->date)->diffForHumans() }}</small>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge {{ $attempt->status == 'Pass' ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }}">{{ $attempt->status }}</span>
-                                <div class="f-12 fw-bold mt-1">{{ $attempt->score }} pts</div>
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless mb-0">
+                        <thead>
+                            <tr>
+                                <th>EXAM</th>
+                                <th>SCORE</th>
+                                <th class="text-end">STATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($attempts as $attempt)
+                            <tr>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-semibold text-truncate" style="max-width: 150px;">{{ $attempt->exam_title }}</span>
+                                        <small class="text-muted">{{ \Carbon\Carbon::parse($attempt->date)->diffForHumans() }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold">{{ $attempt->score }}%</span>
+                                </td>
+                                <td class="text-end">
+                                    @if($attempt->status == 'Pass')
+                                        <span class="badge bg-light-success border border-success">Pass</span>
+                                    @else
+                                        <span class="badge bg-light-danger border border-danger">Fail</span>
+                                    @endif
+                                    <div class="mt-1">
+                                        <a href="{{ route('exams.result', $attempt->id) }}" class="f-12 link-primary">Result</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    No recent history.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-                <div class="p-3 text-center">
-                    <a href="{{ route('student.history') }}" class="link-primary">View All History</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Change Password Modal --}}
-<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Change Password</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label">Current Password</label>
-                        <input type="password" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">New Password</label>
-                        <input type="password" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-control">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="alert('Password changed successfully (Mock)')">Save changes</button>
             </div>
         </div>
     </div>

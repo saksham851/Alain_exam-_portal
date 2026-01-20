@@ -33,6 +33,10 @@ class AuthenticatedSessionController extends Controller
         $user->last_login_at = now();
         $user->save();
 
+        if ($user->role === 'student') {
+            return redirect()->intended(route('student.dashboard', absolute: false));
+        }
+
         return redirect()->intended(route('admin.dashboard', absolute: false));
     }
 

@@ -127,13 +127,18 @@ class AttemptController extends Controller
         return view('admin.attempts.show', compact('attemptData', 'answers'));
     }
 
-    public function byUser($userId)
+    public function byUser(Request $request, $userId)
     {
         // Get all attempts for a specific student
         $student = User::where('role', 'student')->findOrFail($userId);
         
-        $attempts = ExamAttempt::whereHas('studentExam', function($query) use ($userId) {
+        $examId = $request->get('exam_id');
+
+        $attempts = ExamAttempt::whereHas('studentExam', function($query) use ($userId, $examId) {
                 $query->where('student_id', $userId);
+                if ($examId) {
+                    $query->where('exam_id', $examId);
+                }
             })
             ->with(['studentExam.exam'])
             ->orderBy('created_at', 'desc')

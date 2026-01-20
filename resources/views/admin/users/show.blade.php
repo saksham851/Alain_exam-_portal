@@ -140,7 +140,7 @@
                                             </li>
                                             <li>
                                                 @if($studentExam->attempts_used > 0)
-                                                    <a class="dropdown-item" href="{{ route('admin.users.exam-attempts', ['studentId' => $user->id, 'examId' => $studentExam->exam_id]) }}">
+                                                    <a class="dropdown-item" href="{{ route('admin.attempts.by-user', ['userId' => $user->id, 'exam_id' => $studentExam->exam_id]) }}">
                                                         <i class="ti ti-trophy me-2"></i>View Result
                                                     </a>
                                                 @else

@@ -24,6 +24,7 @@ class DashboardController extends Controller
                 return (object)[
                     'id' => $studentExam->exam->id,
                     'title' => $studentExam->exam->name,
+                    'exam_code' => $studentExam->exam->exam_code,
                     'duration' => $studentExam->exam->duration_minutes,
                     'status' => $isExpired ? 'expired' : 'active',
                     'expiry_date' => $studentExam->expiry_date,
@@ -57,7 +58,33 @@ class DashboardController extends Controller
                 ];
             });
         
-        return view('dashboard.student', compact('purchasedExams', 'attempts'));
+        // Calculate Dashboard Stats
+        $totalEnrolled = $purchasedExams->count();
+        
+        // Get all unique exams passed
+        $passedExamIds = ExamAttempt::whereIn('student_exam_id', $studentExamIds)
+            ->where('is_passed', true)
+            ->pluck('student_exam_id')
+            ->unique()
+            ->count();
+            
+        // Average Score across all attempts
+        $averageScore = ExamAttempt::whereIn('student_exam_id', $studentExamIds)
+            ->avg('total_score') ?? 0;
+            
+        // Success Rate (Passed Attempts / Total Attempts)
+        $totalAttempts = ExamAttempt::whereIn('student_exam_id', $studentExamIds)->count();
+        $totalPassedAttempts = ExamAttempt::whereIn('student_exam_id', $studentExamIds)->where('is_passed', true)->count();
+        $successRate = $totalAttempts > 0 ? ($totalPassedAttempts / $totalAttempts) * 100 : 0;
+
+        $stats = [
+            'enrolled' => $totalEnrolled,
+            'passed_exams' => $passedExamIds,
+            'average_score' => round($averageScore, 1),
+            'success_rate' => round($successRate, 1)
+        ];
+        
+        return view('dashboard.student', compact('purchasedExams', 'attempts', 'stats'));
     }
 
     public function history()

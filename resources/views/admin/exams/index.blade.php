@@ -393,11 +393,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 @endif
                                                 <li>
                                                     @if($exam->is_active == 1)
-                                                        <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Published exam - cannot delete">
-                                                            <button class="dropdown-item disabled" type="button" style="pointer-events: none;">
-                                                                <i class="ti ti-trash me-2"></i>Delete Exam
-                                                            </button>
-                                                        </span>
+                                                        <li>
+                                                            <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" class="d-block" id="unpublishForm{{ $exam->id }}">
+                                                                @csrf @method('PUT')
+                                                                <button type="button" class="dropdown-item text-danger" onclick="showUnpublishModal(document.getElementById('unpublishForm{{ $exam->id }}'))">
+                                                                    <i class="ti ti-eye-off me-2"></i>Unpublish Exam
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Published exam - cannot delete">
+                                                                <button class="dropdown-item disabled" type="button" style="pointer-events: none;">
+                                                                    <i class="ti ti-trash me-2"></i>Delete Exam
+                                                                </button>
+                                                            </span>
+                                                        </li>
                                                     @else
                                                         {{-- Standard Delete triggers soft delete via controller --}}
                                                         <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-block" id="deleteForm{{ $exam->id }}">
@@ -442,6 +452,20 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
+    function showUnpublishModal(form) {
+        if(typeof showAlert !== 'undefined') {
+             showAlert.confirm(
+                'Are you sure you want to unpublish this exam? It will no longer be visible to students.',
+                'Unpublish Exam',
+                function() {
+                    form.submit();
+                }
+            );
+        } else if(confirm('Are you sure you want to unpublish this exam?')) {
+            form.submit();
+        }
+    }
+
     function showActivateModal(form) {
         if(typeof showAlert !== 'undefined' && showAlert.confirm) {
              showAlert.confirm(

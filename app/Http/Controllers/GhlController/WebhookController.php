@@ -100,11 +100,14 @@ class WebhookController extends Controller
                     }
 
                     // Assign Exam if provided
+                    $examAssignmentStatus = 'Not provided';
+                    $examAssignmentMessage = null;
+
                     if (!empty($examTitle)) {
                         $exam = Exam::where('name', $examTitle)->first();
                         
-                        // Check if exam exists and is active (status 1)
-                        if ($exam && $exam->status == 1) {
+                        // Check if exam exists and is active (status 1) AND published (is_active 1)
+                        if ($exam && $exam->status == 1 && $exam->is_active == 1) {
                             $existingStudentExam = StudentExam::where('student_id', $user->id)
                                 ->where('exam_id', $exam->id)
                                 ->first();
@@ -112,6 +115,9 @@ class WebhookController extends Controller
                             if ($existingStudentExam) {
                                 // Just increase the attempts by 3
                                 $existingStudentExam->increment('attempts_allowed', 3);
+                                $examAssignmentStatus = 'Updated';
+                                $examAssignmentMessage = "Existing assignment found. Increased attempts by 3 for '{$exam->name}'.";
+                                
                                 Log::info('Exam attempts increased for existing assignment:', [
                                     'user_id' => $user->id,
                                     'exam_name' => $exam->name,
@@ -127,6 +133,9 @@ class WebhookController extends Controller
                                     'source' => 'Webhook',
                                     'status' => 1
                                 ]);
+                                
+                                $examAssignmentStatus = 'Assigned';
+                                $examAssignmentMessage = "Successfully assigned new exam '{$exam->name}'.";
 
                                 Log::info('Exam assigned successfully:', [
                                     'user_id' => $user->id,
@@ -134,7 +143,16 @@ class WebhookController extends Controller
                                 ]);
                             }
                         } else {
-                            Log::warning('Exam assignment passed: Exam not found or inactive', [
+                            $examAssignmentStatus = 'Failed';
+                            if (!$exam) {
+                                $examAssignmentMessage = "Exam '{$examTitle}' not found.";
+                            } elseif ($exam->status != 1) {
+                                $examAssignmentMessage = "Exam '{$examTitle}' is deleted.";
+                            } elseif ($exam->is_active != 1) {
+                                $examAssignmentMessage = "Exam '{$examTitle}' is unpublished (Draft mode).";
+                            }
+                            
+                            Log::warning('Exam assignment passed: ' . $examAssignmentMessage, [
                                 'exam_title' => $examTitle
                             ]);
                         }
@@ -167,15 +185,21 @@ class WebhookController extends Controller
                             'id' => $user->id,
                             'email' => $user->email,
                             'is_new_user' => $isNewUser,
-                            'password' => $generatedPassword // Only if new
+                            'password' => $generatedPassword, // Only if new
+                            'exam_assignment' => [
+                                'status' => $examAssignmentStatus,
+                                'message' => $examAssignmentMessage
+                            ]
                         ]
                     ], 200);
                 }
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Webhook processed successfully',
-                    'received_data' => $data
+                    'message' => 'Webhook processed successfully (Event not handled or fallthrough)',
+                    'received_data' => $data,
+                     // Add debug info to understand why it fell through
+                    'debug_event_received' => $event
                 ], 200);
             }
             

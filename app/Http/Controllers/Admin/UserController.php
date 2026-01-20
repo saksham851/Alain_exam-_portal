@@ -250,6 +250,15 @@ class UserController extends Controller
             $examId = $request->exam_id;
             $adjustment = $request->attempts_adjustment;
 
+            // STRICT VALIDATION: Only allow assignment of PUBLISHED exams
+            $examCheck = \App\Models\Exam::find($examId);
+            if (!$examCheck || $examCheck->status != 1 || $examCheck->is_active != 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot assign this exam. It is either unpublished (Draft) or deleted. Please publish the exam first.'
+                ], 400);
+            }
+
             // Find or create student exam record
             $studentExam = \App\Models\StudentExam::firstOrCreate(
                 [

@@ -163,12 +163,17 @@
                                     @if($lastAttempt && $lastAttempt->ended_at)
                                         <div class="d-flex flex-column">
                                             @if($lastAttempt->studentExam && $lastAttempt->studentExam->exam)
-                                                <span class="fw-semibold text-dark mb-1" style="font-size: 0.85rem;">
-                                                    {{ Str::limit($lastAttempt->studentExam->exam->name, 25) }}
+                                                <span class="fw-bold text-dark mb-1">
+                                                    {{ $lastAttempt->studentExam->exam->name ?? 'Exam Name' }}
+                                                </span>
+                                                <span class="text-muted small mb-1" style="font-size: 0.75rem;">
+                                                    {{ $lastAttempt->studentExam->exam->category->name ?? 'Cat' }} & 
+                                                    {{ $lastAttempt->studentExam->exam->exam_code }} & 
+                                                    {{ $lastAttempt->studentExam->exam->certification_type ?? 'Type' }}
                                                 </span>
                                             @endif
-                                            <span class="text-muted small">{{ $lastAttempt->ended_at->format('M d, Y') }}</span>
-                                            <span class="text-muted" style="font-size: 0.75rem;">{{ $lastAttempt->ended_at->format('h:i A') }}</span>
+                                            <span class="text-dark small">{{ $lastAttempt->ended_at->format('M d, Y') }}</span>
+                                            <span class="text-muted" style="font-size: 0.75rem;">{{ $lastAttempt->ended_at->format('H:i') }}</span>
                                         </div>
                                     @else
                                         <span class="text-muted">No submissions</span>
