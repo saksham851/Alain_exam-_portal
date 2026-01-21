@@ -62,6 +62,14 @@ class QuestionController extends Controller
             $query->where('question_type', $request->question_type);
         }
 
+        // Only show questions that belong to active case studies and active sections
+        $query->whereHas('caseStudy', function($q) {
+            $q->where('status', 1)
+              ->whereHas('section', function($sq) {
+                  $sq->where('status', 1);
+              });
+        });
+
         $questions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         
         // Get all exam categories for filter dropdown

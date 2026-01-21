@@ -49,6 +49,11 @@ class CaseStudyBankController extends Controller
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
+        // Only show case studies that belong to active sections
+        $query->whereHas('section', function($q) {
+            $q->where('status', 1);
+        });
+
         $caseStudies = $query->orderBy('created_at', 'desc')->paginate(20);
 
         // Get filter data

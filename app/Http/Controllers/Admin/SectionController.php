@@ -134,7 +134,8 @@ class SectionController extends Controller
             'string',
             'max:255',
             Rule::unique('sections')->where(function ($query) use ($request) {
-                return $query->where('exam_id', $request->exam_id);
+                return $query->where('exam_id', $request->exam_id)
+                             ->where('status', 1); // Only check against active sections
             }),
         ],
         'exam_id' => 'required|exists:exams,id',
@@ -188,7 +189,8 @@ class SectionController extends Controller
             'string',
             'max:255',
             Rule::unique('sections')->where(function ($query) use ($request) {
-                return $query->where('exam_id', $request->exam_id);
+                return $query->where('exam_id', $request->exam_id)
+                             ->where('status', 1); // Only check against active sections
             })->ignore($id),
         ],
         'exam_id' => 'required|exists:exams,id',
@@ -359,6 +361,7 @@ class SectionController extends Controller
                     'content' => $sourceSection->content,
                     'order_no' => Section::where('exam_id', $targetExam->id)->max('order_no') + 1,
                     'status' => 1,
+                    'cloned_from_id' => $sourceSection->id, // Track source section
                 ]);
                 
                 $lastCreatedSectionId = $newSection->id;
