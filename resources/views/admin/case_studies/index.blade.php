@@ -369,7 +369,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
                                     <label class="form-label fw-bold mb-0">Select Sections to Clone</label>
                                     <div class="form-check m-0">
                                         <input class="form-check-input" type="checkbox" id="select_all_sections">

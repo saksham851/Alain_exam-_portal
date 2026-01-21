@@ -117,7 +117,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
                                     <label class="form-label fw-bold mb-0">Select Case Studies to Clone</label>
                                     <div class="form-check m-0">
                                         <input class="form-check-input" type="checkbox" id="select_all_case_studies">
@@ -202,12 +202,12 @@ document.addEventListener('DOMContentLoaded', function() {
         sectionSelect.disabled = true;
 
         if (examId) {
-            return fetch(`/admin/case-studies-bank/sections/${examId}`)
+            return fetch(`/admin/questions-ajax/case-studies/${examId}`)
                 .then(response => response.json())
                 .then(data => {
                     sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-                    if (data.success && data.sections.length > 0) {
-                        data.sections.forEach(section => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(section => {
                             sectionSelect.innerHTML += `<option value="${section.id}">${section.title}</option>`;
                         });
                         sectionSelect.disabled = false;
@@ -736,17 +736,19 @@ function loadSections() {
         return;
     }
     
-    fetch(`/admin/case-studies-bank/sections/${examId}`)
+    fetch(`/admin/questions-ajax/case-studies/${examId}`)
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
+            if (Array.isArray(data) && data.length > 0) {
                 sectionSelect.innerHTML = '<option value="">Choose Section...</option>';
-                data.sections.forEach(section => {
+                data.forEach(section => {
                     const option = document.createElement('option');
                     option.value = section.id;
                     option.textContent = section.title;
                     sectionSelect.appendChild(option);
                 });
+            } else {
+                 sectionSelect.innerHTML = '<option value="">No sections found</option>';
             }
         })
         .catch(error => {
