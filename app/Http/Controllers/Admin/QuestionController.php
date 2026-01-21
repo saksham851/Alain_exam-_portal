@@ -159,11 +159,24 @@ class QuestionController extends Controller
                 foreach ($request->existing_questions as $qId => $qData) {
                     $question = Question::find($qId);
                     if ($question && $question->case_study_id == $request->sub_case_id) {
+                        
+                        // Check for duplicate options
+                        if (isset($qData['options']) && $this->hasDuplicateOptions($qData['options'])) {
+                            $strippedText = strip_tags($qData['question_text']);
+                            throw new \Exception("Question '{$strippedText}' has duplicate options.");
+                        }
+
+                        // Check for duplicate question text in exam
+                        if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $qData['question_text'], $question->id)) {
+                             $strippedText = strip_tags($qData['question_text']);
+                             throw new \Exception("Question '{$strippedText}' already exists in this exam.");
+                        }
+
                         $igWeight = $qData['question_category'] === 'ig' ? 1 : 0;
                         $dmWeight = $qData['question_category'] === 'dm' ? 1 : 0;
 
                         $question->update([
-                            'question_text' => $qData['question_text'],
+                            'question_text' => trim($qData['question_text']),
                             'question_type' => $qData['question_type'],
                             'ig_weight' => $igWeight,
                             'dm_weight' => $dmWeight,
@@ -182,7 +195,7 @@ class QuestionController extends Controller
                                 QuestionOption::create([
                                     'question_id' => $question->id,
                                     'option_key' => chr(65 + $index),
-                                    'option_text' => $optionData['text'],
+                                    'option_text' => trim($optionData['text']),
                                     'is_correct' => $isCorrect,
                                 ]);
                             }
@@ -198,6 +211,18 @@ class QuestionController extends Controller
                     // Skip if empty text (just in case)
                     if(empty($qData['question_text'])) continue;
 
+                    // Check for duplicate options
+                    if (isset($qData['options']) && $this->hasDuplicateOptions($qData['options'])) {
+                        $strippedText = strip_tags($qData['question_text']);
+                        throw new \Exception("New Question '{$strippedText}' has duplicate options.");
+                    }
+
+                    // Check for duplicate question text in exam
+                    if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $qData['question_text'])) {
+                            $strippedText = strip_tags($qData['question_text']);
+                            throw new \Exception("Question '{$strippedText}' already exists in this exam.");
+                    }
+
                     // Set weights based on category
                     $igWeight = $qData['question_category'] === 'ig' ? 1 : 0;
                     $dmWeight = $qData['question_category'] === 'dm' ? 1 : 0;
@@ -205,7 +230,7 @@ class QuestionController extends Controller
                     // Create question
                     $question = Question::create([
                         'case_study_id' => $request->sub_case_id,
-                        'question_text' => $qData['question_text'],
+                        'question_text' => trim($qData['question_text']),
                         'question_type' => $qData['question_type'],
                         'ig_weight' => $igWeight,
                         'dm_weight' => $dmWeight,
@@ -223,7 +248,7 @@ class QuestionController extends Controller
                             QuestionOption::create([
                                 'question_id' => $question->id,
                                 'option_key' => chr(65 + $index),
-                                'option_text' => $optionData['text'],
+                                'option_text' => trim($optionData['text']),
                                 'is_correct' => $isCorrect,
                             ]);
                         }
@@ -289,12 +314,24 @@ class QuestionController extends Controller
             return back()->with('error', 'Question not found');
         }
 
+        if ($this->hasDuplicateOptions($request->options)) {
+             return back()->with('error', "The question has duplicate options.");
+        }
+
+        // Check for duplicate question text in exam
+        // Need to load exam first
+        $caseStudy = CaseStudy::with('section.exam')->find($request->sub_case_id);
+        if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $request->question_text, $id)) {
+             $strippedText = strip_tags($request->question_text);
+             return back()->with('error', "Question '{$strippedText}' already exists in this exam.");
+        }
+
         $igWeight = $request->question_category === 'ig' ? 1 : 0;
         $dmWeight = $request->question_category === 'dm' ? 1 : 0;
 
         $question->update([
             'case_study_id' => $request->sub_case_id,
-            'question_text' => $request->question_text,
+            'question_text' => trim($request->question_text),
             'question_type' => $request->question_type,
             'ig_weight' => $igWeight,
             'dm_weight' => $dmWeight,
@@ -311,7 +348,7 @@ class QuestionController extends Controller
             QuestionOption::create([
                 'question_id' => $question->id,
                 'option_key' => chr(65 + $index),
-                'option_text' => $optionData['text'],
+                'option_text' => trim($optionData['text']),
                 'is_correct' => $isCorrect,
             ]);
         }
@@ -437,9 +474,15 @@ class QuestionController extends Controller
             foreach ($request->source_question_ids as $questionId) {
                 $sourceQuestion = Question::with('options')->findOrFail($questionId);
 
+                // Check for duplicates in TARGET exam
+                if ($this->isQuestionDuplicateInExam($targetCaseStudy->section->exam_id, $sourceQuestion->question_text)) {
+                     $strippedText = strip_tags($sourceQuestion->question_text);
+                     throw new \Exception("Question '{$strippedText}' already exists in the target exam.");
+                }
+
                 $newQuestion = Question::create([
                     'case_study_id' => $targetCaseStudy->id,
-                    'question_text' => $sourceQuestion->question_text,
+                    'question_text' => trim($sourceQuestion->question_text),
                     'question_type' => $sourceQuestion->question_type,
                     'ig_weight' => $sourceQuestion->ig_weight,
                     'dm_weight' => $sourceQuestion->dm_weight,
@@ -451,7 +494,7 @@ class QuestionController extends Controller
                     QuestionOption::create([
                         'question_id' => $newQuestion->id,
                         'option_key' => $option->option_key,
-                        'option_text' => $option->option_text,
+                        'option_text' => trim($option->option_text),
                         'is_correct' => $option->is_correct,
                     ]);
                 }
@@ -481,17 +524,31 @@ class QuestionController extends Controller
             'sub_case_id' => 'required|exists:case_studies,id'
         ]);
 
+        $caseStudy = CaseStudy::with('section.exam')->findOrFail($request->sub_case_id);
+        if ($caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot import questions into an active exam.');
+        }
+
         $file = $request->file('file');
         $handle = fopen($file->getRealPath(), 'r');
         
         fgetcsv($handle); // Skip header
         
         $imported = 0;
+        $skipped = 0;
         while (($data = fgetcsv($handle)) !== false) {
             if (count($data) >= 4) { 
+                $qText = trim($data[0]);
+                
+                // Check if already exists in Exam
+                if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $qText)) {
+                    $skipped++;
+                    continue; 
+                }
+
                 Question::create([
                     'case_study_id' => $request->sub_case_id,
-                    'question_text' => $data[0],
+                    'question_text' => $qText,
                     'question_type' => $data[1] ?? 'single',
                     'ig_weight' => $data[2] ?? 0,
                     'dm_weight' => $data[3] ?? 0,
@@ -501,9 +558,14 @@ class QuestionController extends Controller
             }
         }
         fclose($handle);
+        
+        $msg = "Successfully imported $imported questions!";
+        if ($skipped > 0) {
+            $msg .= " ($skipped duplicates skipped)";
+        }
 
         return redirect()->route('admin.questions.index')
-            ->with('success', "Successfully imported $imported questions!");
+            ->with('success', $msg);
     }
 
     // ACTIVATE QUESTION
@@ -531,5 +593,41 @@ class QuestionController extends Controller
             ->get();
         
         return response()->json($questions);
+    }
+
+    /**
+     * Check if a question with the same text exists in the given exam.
+     *
+     * @param int $examId
+     * @param string $questionText
+     * @param int|null $excludeQuestionId
+     * @return bool
+     */
+    private function isQuestionDuplicateInExam($examId, $questionText, $excludeQuestionId = null)
+    {
+        return Question::whereHas('caseStudy.section', function($q) use ($examId) {
+            $q->where('exam_id', $examId);
+        })
+        ->where('question_text', trim($questionText))
+        ->where('status', 1) // Only check against active questions? Or all? User said "repeat na ho", usually implies visible ones. But to satisfy strict uniqueness, maybe all. Let's stick to status=1 for now as deleted ones might be restored.
+        ->when($excludeQuestionId, function($q) use ($excludeQuestionId) {
+            $q->where('id', '!=', $excludeQuestionId);
+        })
+        ->exists();
+    }
+
+    /**
+     * Check if the provided options array has duplicate texts.
+     *
+     * @param array $options
+     * @return bool
+     */
+    private function hasDuplicateOptions(array $options)
+    {
+        $texts = array_map(function($opt) {
+            return trim(strtolower($opt['text']));
+        }, $options);
+        
+        return count($texts) !== count(array_unique($texts));
     }
 }
