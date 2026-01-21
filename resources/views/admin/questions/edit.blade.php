@@ -70,7 +70,7 @@
 
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Case Study <span class="text-danger">*</span></label>
-                            <select class="form-select" name="sub_case_id" id="sub_case_id" :disabled="subCaseStudies.length === 0" @change="loadExistingQuestions($event.target.value)" required>
+                            <select class="form-select" name="sub_case_id" id="sub_case_id" :disabled="subCaseStudies.length === 0" @change="!isEdit && loadExistingQuestions($event.target.value)" required>
                                 <option value="">Select Case Study</option>
                                 <template x-for="scs in subCaseStudies" :key="scs.id">
                                     <option :value="scs.id" x-text="scs.title"></option>
@@ -733,8 +733,10 @@ function questionForm() {
                 if(this.selectedSubCaseId) {
                     this.$nextTick(() => {
                         document.getElementById('sub_case_id').value = this.selectedSubCaseId;
-                         // Load existing questions for the selected sub case
-                        this.loadExistingQuestions(this.selectedSubCaseId);
+                         // Load existing questions for the selected sub case (only in create mode)
+                        if (!this.isEdit) {
+                            this.loadExistingQuestions(this.selectedSubCaseId);
+                        }
                     });
                 }
             } catch(error) {

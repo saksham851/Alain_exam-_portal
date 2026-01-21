@@ -509,22 +509,31 @@ class ExamController extends Controller
             return back()->with('error', 'Exam not found');
         }
 
-        // 1. Check if exam has at least one section
-        if ($exam->sections->isEmpty()) {
-            return back()->with('error', 'Cannot publish: The exam must have at least one section.');
+        // Filter only active sections (status = 1)
+        $activeSections = $exam->sections->where('status', 1);
+
+        // 1. Check if exam has at least one active section
+        if ($activeSections->isEmpty()) {
+            return back()->with('error', 'Cannot publish: The exam must have at least one active section.');
         }
 
-        // 2. Check each section for at least one case study
-        foreach ($exam->sections as $section) {
-            if ($section->caseStudies->isEmpty()) {
-                return back()->with('error', "Cannot publish: '{$section->title}' must have at least one case study.");
+        // 2. Check each active section for at least one active case study
+        foreach ($activeSections as $section) {
+            // Filter only active case studies (status = 1)
+            $activeCaseStudies = $section->caseStudies->where('status', 1);
+            
+            if ($activeCaseStudies->isEmpty()) {
+                return back()->with('error', "Cannot publish: '{$section->title}' must have at least one active case study.");
             }
 
-            // 3. Check each Case Study for at least one question
-            foreach ($section->caseStudies as $caseStudy) {
-                if ($caseStudy->questions->isEmpty()) {
+            // 3. Check each active Case Study for at least one active question
+            foreach ($activeCaseStudies as $caseStudy) {
+                // Filter only active questions (status = 1)
+                $activeQuestions = $caseStudy->questions->where('status', 1);
+                
+                if ($activeQuestions->isEmpty()) {
                     $csTitle = $caseStudy->title ?? "Case Study";
-                    return back()->with('error', "Cannot publish: '{$csTitle}' in '{$section->title}' must have at least one question.");
+                    return back()->with('error', "Cannot publish: '{$csTitle}' in '{$section->title}' must have at least one active question.");
                 }
             }
         }

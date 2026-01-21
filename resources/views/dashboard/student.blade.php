@@ -3,14 +3,7 @@
 @section('content')
 <div class="row mb-4">
     <!-- Welcome Section matches Admin header style implicitly but adds personalization -->
-    <div class="col-12 mb-4">
-         <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h3 class="mb-0 fw-bold">Welcome back, {{ auth()->user()->first_name }}! 👋</h3>
-                <p class="text-muted mb-0">{{ now()->format('l, d M Y') }}</p>
-            </div>
-         </div>
-    </div>
+
 
     <!-- Stats Cards - Matching Admin Dashboard Style -->
     <div class="col-md-6 col-xl-3">
@@ -57,7 +50,7 @@
 <div class="row">
     <!-- Active Exams Section - Can use Cards but styled consistently -->
     <div class="col-lg-8">
-        <div class="card h-100" style="min-height: 350px;">
+        <div class="card h-100" style="min-height: 500px;">
             <div class="card-header">
                 <h5>My Exams</h5>
             </div>
@@ -148,7 +141,7 @@
 
     <!-- Recent History Sidebar - Matching Admin's Recent Activity Card -->
     <div class="col-lg-4">
-        <div class="card h-100" style="min-height: 350px;">
+        <div class="card h-100" style="min-height: 500px;">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Recent History</h5>
                 <a href="{{ route('student.history') }}" class="btn btn-sm btn-light-primary">
@@ -162,6 +155,8 @@
                             <tr>
                                 <th>EXAM</th>
                                 <th>SCORE</th>
+                                <th>IG</th>
+                                <th>DM</th>
                                 <th class="text-end">STATUS</th>
                             </tr>
                         </thead>
@@ -170,12 +165,18 @@
                             <tr>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="fw-semibold text-truncate" style="max-width: 150px;">{{ $attempt->exam_title }}</span>
+                                        <span class="fw-semibold text-truncate" style="max-width: 120px;" title="{{ $attempt->exam_title }}">{{ $attempt->exam_title }}</span>
                                         <small class="text-muted">{{ \Carbon\Carbon::parse($attempt->date)->diffForHumans() }}</small>
                                     </div>
                                 </td>
                                 <td>
                                     <span class="fw-bold">{{ $attempt->score }}%</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">{{ $attempt->ig_score }}%</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">{{ $attempt->dm_score }}%</span>
                                 </td>
                                 <td class="text-end">
                                     @if($attempt->status == 'Pass')
@@ -190,7 +191,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-4">
+                                <td colspan="5" class="text-center text-muted py-4">
                                     No recent history.
                                 </td>
                             </tr>

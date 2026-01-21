@@ -44,9 +44,20 @@ class ExamController extends Controller
         // Get exam details for student
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
-            ->with(['exam.sections.caseStudies.questions', 'attempts' => function($query) {
-                $query->where('status', 'submitted')->orderBy('created_at', 'desc');
-            }])
+            ->with([
+                'exam.sections' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies.questions' => function($query) {
+                    $query->where('status', 1);
+                },
+                'attempts' => function($query) {
+                    $query->where('status', 'submitted')->orderBy('created_at', 'desc');
+                }
+            ])
             ->firstOrFail();
             
         $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
@@ -63,9 +74,38 @@ class ExamController extends Controller
     }
     
     /**
-     * Start exam - Create attempt record
+     * Show exam instructions before starting
      */
     public function start($id)
+    {
+        $studentId = auth()->id();
+        $studentExam = StudentExam::where('student_id', $studentId)
+            ->where('exam_id', $id)
+            ->with('exam.category')
+            ->firstOrFail();
+            
+        $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
+        
+        // Validate can start
+        if ($attemptsLeft <= 0) {
+            return redirect()->route('exams.index')
+                ->with('error', 'No attempts remaining');
+        }
+        
+        if (now() > $studentExam->expiry_date) {
+            return redirect()->route('exams.index')
+                ->with('error', 'Exam has expired');
+        }
+        
+        $exam = $studentExam->exam;
+        
+        return view('exams.instructions', compact('exam', 'studentExam', 'attemptsLeft'));
+    }
+    
+    /**
+     * Confirm and create exam attempt
+     */
+    public function confirmStart($id)
     {
         $studentId = auth()->id();
         $studentExam = StudentExam::where('student_id', $studentId)
@@ -76,12 +116,12 @@ class ExamController extends Controller
         
         // Validate can start
         if ($attemptsLeft <= 0) {
-            return redirect()->route('exams.show', $id)
+            return redirect()->route('exams.index')
                 ->with('error', 'No attempts remaining');
         }
         
         if (now() > $studentExam->expiry_date) {
-            return redirect()->route('exams.show', $id)
+            return redirect()->route('exams.index')
                 ->with('error', 'Exam has expired');
         }
         
@@ -107,7 +147,18 @@ class ExamController extends Controller
         $studentId = auth()->id();
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
-            ->with('exam.sections.caseStudies.questions.options')
+            ->with([
+                'exam.sections' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies.questions' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies.questions.options'
+            ])
             ->firstOrFail();
             
         // Get active attempt
@@ -216,7 +267,20 @@ class ExamController extends Controller
      */
     public function result($attemptId)
     {
-        $attempt = \App\Models\ExamAttempt::with('studentExam.exam')
+        $attempt = \App\Models\ExamAttempt::with([
+            'studentExam.exam.sections' => function($query) {
+                $query->where('status', 1);
+            },
+            'studentExam.exam.sections.caseStudies' => function($query) {
+                $query->where('status', 1);
+            },
+            'studentExam.exam.sections.caseStudies.questions' => function($query) {
+                $query->where('status', 1);
+            },
+            'studentExam.exam.sections.caseStudies.questions.options',
+            'studentExam.student',
+            'answers.question.options'
+        ])
             ->findOrFail($attemptId);
             
         // Verify ownership
@@ -224,7 +288,17 @@ class ExamController extends Controller
             abort(403);
         }
         
-        return view('exams.result', compact('attempt'));
+        // Create a map of user answers for easy lookup
+        $userAnswers = [];
+        foreach ($attempt->answers as $answer) {
+            // selected_options is already cast to array in the model
+            $userAnswers[$answer->question_id] = [
+                'selected_options' => $answer->selected_options ?? [],
+                'is_correct' => $answer->is_correct
+            ];
+        }
+        
+        return view('exams.result', compact('attempt', 'userAnswers'));
     }
     
     /**
@@ -232,7 +306,19 @@ class ExamController extends Controller
      */
     public function download($attemptId)
     {
-        $attempt = \App\Models\ExamAttempt::with(['studentExam.student', 'studentExam.exam.sections.caseStudies.questions', 'answers'])
+        $attempt = \App\Models\ExamAttempt::with([
+            'studentExam.student',
+            'studentExam.exam.sections' => function($query) {
+                $query->where('status', 1);
+            },
+            'studentExam.exam.sections.caseStudies' => function($query) {
+                $query->where('status', 1);
+            },
+            'studentExam.exam.sections.caseStudies.questions' => function($query) {
+                $query->where('status', 1);
+            },
+            'answers'
+        ])
             ->findOrFail($attemptId);
             
         // Verify ownership
@@ -278,7 +364,18 @@ class ExamController extends Controller
         // Get exam details for student
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
-            ->with(['exam.sections.caseStudies.questions.options'])
+            ->with([
+                'exam.sections' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies.questions' => function($query) {
+                    $query->where('status', 1);
+                },
+                'exam.sections.caseStudies.questions.options'
+            ])
             ->firstOrFail();
             
         $exam = $studentExam->exam;
