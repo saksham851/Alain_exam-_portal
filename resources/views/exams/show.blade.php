@@ -167,9 +167,7 @@
                                         <a href="{{ route('exams.result', $attempt->id) }}" class="btn btn-light-primary" data-bs-toggle="tooltip" title="View Detailed Analysis">
                                             <i class="ti ti-chart-bar me-1"></i> Result
                                         </a>
-                                        <a href="{{ route('exams.download', $attempt->id) }}" class="btn btn-light-secondary" data-bs-toggle="tooltip" title="Download Answer Sheet">
-                                            <i class="ti ti-download"></i>
-                                        </a>
+
                                     </div>
                                 </td>
                             </tr>
@@ -262,7 +260,7 @@
         @endif
 
         <!-- Instructions -->
-        <div class="card border-0 shadow-sm" style="min-height: 325Rpx;">
+        <div class="card border-0 shadow-sm" style="min-height: 323px;">
             <div class="card-header bg-transparent border-bottom py-3">
                 <h6 class="mb-0 fw-bold"><i class="ti ti-info-circle me-2"></i>Important Instructions</h6>
             </div>

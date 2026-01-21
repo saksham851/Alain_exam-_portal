@@ -23,7 +23,7 @@
 
 <div class="row">
     <!-- Score Summary Card -->
-    <div class="col-12 mb-4">
+    <div class="col-12">
         <div class="card border-0 shadow-sm overflow-hidden">
             <div class="card-body p-0">
                 <div class="row g-0">
@@ -80,7 +80,14 @@
                                     <i class="ti ti-clock text-muted"></i>
                                     <div>
                                         <small class="text-muted d-block">Duration</small>
-                                        <strong>{{ $attempt->started_at->diffInMinutes($attempt->ended_at) }} minutes</strong>
+                                        @php
+                                            $diff = $attempt->started_at->diff($attempt->ended_at);
+                                        @endphp
+                                        <strong>
+                                            @if($diff->h > 0) {{ $diff->h }} hr @endif
+                                            @if($diff->i > 0) {{ $diff->i }} min @endif
+                                            {{ $diff->s }} sec
+                                        </strong>
                                     </div>
                                 </div>
                             </div>
@@ -91,61 +98,15 @@
         </div>
     </div>
     
-    <!-- Actions -->
-    <div class="col-12 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex flex-wrap gap-2 justify-content-center">
-                    <a href="{{ route('exams.show', $attempt->studentExam->exam->id) }}" class="btn btn-primary">
-                        <i class="ti ti-arrow-left me-2"></i>Back to Exam Details
-                    </a>
-                    <a href="{{ route('exams.download', $attempt->id) }}" class="btn btn-outline-secondary">
-                        <i class="ti ti-download me-2"></i>Download Answer Sheet
-                    </a>
-                    @if($attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used > 0)
-                        <form action="{{ route('exams.start', $attempt->studentExam->exam->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-success">
-                                <i class="ti ti-refresh me-2"></i>Attempt Again
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+
     
-    <!-- Performance Message -->
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-5">
-                @if($attempt->is_passed)
-                    <i class="ti ti-trophy text-warning display-4 mb-3"></i>
-                    <h4 class="fw-bold mb-3">Congratulations!</h4>
-                    <p class="text-muted mb-0">
-                        You have successfully passed the exam with a score of <strong>{{ round($attempt->total_score) }}%</strong>. 
-                        Great job! Keep up the excellent work.
-                    </p>
-                @else
-                    <i class="ti ti-info-circle text-info display-4 mb-3"></i>
-                    <h4 class="fw-bold mb-3">Keep Trying!</h4>
-                    <p class="text-muted mb-0">
-                        You scored <strong>{{ round($attempt->total_score) }}%</strong> on this attempt. 
-                        @if($attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used > 0)
-                            Don't give up! You have <strong>{{ $attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used }}</strong> attempt(s) remaining. 
-                            Review your answers and try again.
-                        @else
-                            You have used all your attempts. Please contact your administrator for more information.
-                        @endif
-                    </p>
-                @endif
-    </div>
+
     
     <!-- Detailed Exam Review -->
-    <div class="col-12 mt-4">
+    <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-transparent border-bottom py-3">
-                <h5 class="mb-0 fw-bold"><i class="ti ti-file-text me-2"></i>Detailed Exam Review</h5>
+                <h5 class="mb-0 fw-bold"><i class="ti ti-file-text me-2"></i>Exam Result</h5>
             </div>
             <div class="card-body p-4">
                 @php
@@ -156,9 +117,7 @@
                     <!-- Section Header -->
                     <div class="section-header mb-4">
                         <div class="d-flex align-items-center gap-2 mb-2">
-                            <div class="bg-primary text-white rounded px-3 py-1">
-                                <strong>Section {{ $sectionIndex + 1 }}</strong>
-                            </div>
+
                             <h4 class="mb-0 fw-bold">{{ $section->title }}</h4>
                         </div>
                         @if($section->content)
@@ -170,9 +129,7 @@
                         <!-- Case Study Card -->
                         <div class="case-study-card mb-4 border rounded p-4 bg-light">
                             <div class="d-flex align-items-start gap-3 mb-3">
-                                <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="min-width: 40px; height: 40px;">
-                                    <i class="ti ti-file-description"></i>
-                                </div>
+
                                 <div class="flex-grow-1">
                                     <h5 class="fw-bold mb-2">{{ $caseStudy->title }}</h5>
                                     @if($caseStudy->content)
@@ -198,11 +155,9 @@
                                         <div class="d-flex gap-2 align-items-start flex-grow-1">
                                             <span class="badge bg-secondary">Q{{ $questionNumber }}</span>
                                             <div class="flex-grow-1">
-                                                <p class="mb-2 fw-semibold">{{ $question->question_text }}</p>
+                                                <div class="mb-2 fw-semibold">{!! $question->question_text !!}</div>
                                                 <div class="d-flex gap-2 flex-wrap">
-                                                    <span class="badge bg-light text-dark border">
-                                                        <i class="ti ti-category me-1"></i>{{ ucfirst($question->category) }}
-                                                    </span>
+
                                                     <span class="badge bg-light text-dark border">
                                                         <i class="ti ti-star me-1"></i>{{ $question->marks }} {{ $question->marks == 1 ? 'Mark' : 'Marks' }}
                                                     </span>
@@ -230,7 +185,7 @@
                                     <div class="options-list">
                                         @foreach($question->options as $option)
                                             @php
-                                                $isSelected = in_array($option->id, $selectedOptionIds);
+                                                $isSelected = in_array($option->option_text, $selectedOptionIds);
                                                 $isCorrectOption = $option->is_correct;
                                                 
                                                 // Determine the styling
@@ -271,6 +226,24 @@
                     @endif
                 @endforeach
             </div>
+        </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="col-12 mb-5">
+        <div class="d-flex flex-wrap gap-3 justify-content-center py-4">
+            <a href="{{ route('exams.show', $attempt->studentExam->exam->id) }}" class="btn btn-outline-primary px-4 py-2">
+                <i class="ti ti-arrow-left me-2"></i>Back to Exam Details
+            </a>
+
+            @if($attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used > 0)
+                <form action="{{ route('exams.start', $attempt->studentExam->exam->id) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-primary px-4 py-2 shadow-sm">
+                        <i class="ti ti-refresh me-2"></i>Attempt Again
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 </div>

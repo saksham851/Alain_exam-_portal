@@ -39,4 +39,9 @@ class Question extends Model
     {
         return $this->belongsTo(Question::class, 'cloned_from_id');
     }
+
+    public function getMarksAttribute()
+    {
+        return $this->ig_weight + $this->dm_weight;
+    }
 }

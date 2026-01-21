@@ -111,7 +111,7 @@
                                 </button>
                             </form>
                             <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-light-secondary icon-btn" data-bs-toggle="tooltip" title="View Details">
-                                <i class="ti ti-info-circle"></i>
+                                <i class="ti ti-eye"></i>
                             </a>
                         </div>
                     @endif

@@ -114,11 +114,7 @@
                                             </button>
                                         @endif
                                         
-                                        @if($exam->attempts_taken > 0)
-                                        <a href="{{ route('exams.answer-key', $exam->id) }}" class="btn btn-sm btn-light-success ms-1" data-bs-toggle="tooltip" title="Download Answer Key">
-                                            <i class="ti ti-download"></i>
-                                        </a>
-                                        @endif
+
                                     </div>
                                 </td>
                             </tr>
