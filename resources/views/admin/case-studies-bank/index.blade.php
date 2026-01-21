@@ -440,13 +440,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
 
-                        <!-- Status Filter (moved to same row) -->
+                        <!-- Status (Toggle) -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
-                            <select name="status" class="form-select form-select-sm" id="statusFilter" onchange="document.getElementById('filterForm').submit()">
-                                <option value="active" {{ request('status') !== 'inactive' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
+                            <div class="form-check form-switch mt-1">
+                                <input type="hidden" name="status" id="statusFilterInput" value="{{ request('status', 'active') }}">
+                                <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch" style="width: 3em; height: 1.5em;"
+                                       {{ request('status', 'active') == 'active' ? 'checked' : '' }}
+                                       onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; document.getElementById('filterForm').submit()">
+                                <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
+                                    {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
+                                </label>
+                            </div>
                         </div>
                         
                         <!-- Clear Button -->
@@ -458,6 +463,50 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
             </div>
             </form>
+
+            <!-- Active Filters Indicator -->
+            @php
+                $hasActiveFilters = request('search') || 
+                                  request('exam_category') || 
+                                  request('certification_type') || 
+                                  request('exam') ||
+                                  request('status') === 'inactive';
+            @endphp
+            
+            @if($hasActiveFilters)
+            <div class="card-body border-top border-bottom bg-light-subtle py-3">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small fw-semibold">
+                        <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
+                    </span>
+                    @if(request('search'))
+                        <span class="badge rounded-pill bg-dark">
+                            <i class="ti ti-search me-1"></i>{{ request('search') }}
+                        </span>
+                    @endif
+                    @if(request('status') === 'inactive')
+                        <span class="badge rounded-pill bg-danger">
+                            <i class="ti ti-trash me-1"></i>Deleted
+                        </span>
+                    @endif
+                    @if(request('exam_category'))
+                        <span class="badge rounded-pill bg-info">
+                            <i class="ti ti-category me-1"></i>{{ $examCategories->firstWhere('id', request('exam_category'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('certification_type'))
+                        <span class="badge rounded-pill bg-success">
+                            <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
+                        </span>
+                    @endif
+                    @if(request('exam'))
+                        <span class="badge rounded-pill bg-primary">
+                            <i class="ti ti-file-text me-1"></i>{{ $exams->firstWhere('id', request('exam'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                </div>
+            </div>
+            @endif
 
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -487,25 +536,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                     {{ $caseStudy->section->exam->name ?? 'N/A' }}
                                 </td>
                                 <td>
-                                    @if($caseStudy->cloned_from_id)
-                                        <div class="d-flex flex-column gap-1">
-                                            <span class="badge bg-warning text-dark">
-                                                <i class="ti ti-copy"></i> Cloned
-                                            </span>
-                                            <small class="text-muted">
-                                                <strong>From:</strong> {{ $caseStudy->clonedFromSection->title ?? 'N/A' }}
-                                            </small>
-                                            <small class="text-muted">
-                                                <strong>Exam:</strong> {{ $caseStudy->clonedFromSection->exam->name ?? 'N/A' }}
-                                            </small>
-                                            <small class="text-muted">
-                                                <strong>Date:</strong> {{ $caseStudy->cloned_at ? $caseStudy->cloned_at->format('d M Y, h:i A') : 'N/A' }}
-                                            </small>
-                                        </div>
-                                    @else
-                                        <span class="badge bg-light-success">
-                                            <i class="ti ti-star"></i> Original
+                                    @if($caseStudy->cloned_from_id && $caseStudy->clonedFromSection && $caseStudy->clonedFromSection->exam)
+                                        <span class="text-muted small">
+                                           Clone from <strong>{{ Str::limit($caseStudy->clonedFromSection->exam->name, 20) }}</strong>
                                         </span>
+                                    @elseif($caseStudy->cloned_from_id)
+                                         <span class="text-muted small"><em>Source Deleted</em></span>
+                                    @else
+                                        <span class="text-muted">-</span>
                                     @endif
                                 </td>
                                 <td>

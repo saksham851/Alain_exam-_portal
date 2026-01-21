@@ -20,7 +20,7 @@ class QuestionController extends Controller
         $status = $request->get('status') === 'inactive' ? 0 : 1;
 
         $query = Question::where('status', $status)
-            ->with(['caseStudy.section.exam.category', 'options']);
+            ->with(['caseStudy.section.exam.category', 'options', 'clonedFrom.caseStudy.section.exam']);
 
         // Filter by Exam Category (Primary Filter)
         if ($request->filled('exam_category')) {

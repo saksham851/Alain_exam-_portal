@@ -45,19 +45,27 @@
                         </div>
 
                         <!-- Status -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
-                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="active" {{ request('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
-                        </div>
+
 
                         <!-- Exam Count -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">EXAM COUNT</label>
                             <input type="number" name="exam_count" class="form-control form-control-sm" 
                                    placeholder="Count" min="0" value="{{ request('exam_count') }}">
+                        </div>
+
+                        <!-- Status (Toggle) -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <div class="form-check form-switch mt-1">
+                                <input type="hidden" name="status" id="statusFilterInput" value="{{ request('status', 'active') }}">
+                                <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch" style="width: 3em; height: 1.5em;"
+                                       {{ request('status', 'active') == 'active' ? 'checked' : '' }}
+                                       onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; this.form.submit()">
+                                <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
+                                    {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Buttons -->
@@ -93,7 +101,7 @@
 
                     @if(request('status') === 'inactive')
                         <span class="badge rounded-pill bg-danger">
-                            <i class="ti ti-trash-off me-1"></i>Inactive
+                            <i class="ti ti-trash me-1"></i>Deleted
                         </span>
                     @endif
                 </div>

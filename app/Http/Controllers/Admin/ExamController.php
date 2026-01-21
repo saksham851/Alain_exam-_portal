@@ -21,7 +21,7 @@ class ExamController extends Controller
 
         // Base query - Filter by status (Active/Inactive)
         $query = Exam::where('status', $status)
-            ->with('category'); // Eager load category
+            ->with(['category', 'clonedFrom']); // Eager load category and clonedFrom
 
         // Search by exam name or code
         if ($search) {

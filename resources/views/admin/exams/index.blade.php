@@ -211,14 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
 
-                        <!-- Status -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
-                            <select name="status" class="form-select form-select-sm">
-                                <option value="active" {{ request('status', 'active') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
-                        </div>
+
 
                         <!-- Certification Type -->
                         <div class="col-md-2">
@@ -241,6 +234,20 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>Published</option>
                                 <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>Unpublished</option>
                             </select>
+                        </div>
+
+                        <!-- Status (Toggle) -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                            <div class="form-check form-switch mt-1">
+                                <input type="hidden" name="status" id="statusFilterInput" value="{{ request('status', 'active') }}">
+                                <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch" style="width: 3em; height: 1.5em;"
+                                       {{ request('status', 'active') == 'active' ? 'checked' : '' }}
+                                       onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; this.form.submit()">
+                                <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
+                                    {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Buttons -->
@@ -308,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <th style="white-space: nowrap;">Certification Type</th>
                                 <th>Exam Name</th>
                                 <th>Exam Code</th>
+                                <th>Source</th>
                                 <th style="white-space: nowrap;">Publish Status</th>
                                 <th>Duration</th>
                                 <th class="text-end">Actions</th>
@@ -316,51 +324,59 @@ document.addEventListener('DOMContentLoaded', function() {
                         <tbody>
                             @forelse($exams as $exam)
                             <tr>
-                                <td style="width: 12%;">
+                                <td style="width: 10%;">
                                     @if($exam->category)
                                         <span class="badge bg-light-info">{{ $exam->category->name }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td style="width: 13%; white-space: nowrap;">
+                                <td style="width: 10%; white-space: nowrap;">
                                     @if($exam->certification_type)
                                         <span class="badge bg-light-success">{{ $exam->certification_type }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td style="width: 25%;">
+                                <td style="width: 20%;">
                                     <h5 class="mb-1 fw-bold">
                                         {{ $exam->name }}
-                                        @if($exam->cloned_from_id)
-                                            <span class="badge bg-warning text-dark ms-2"><i class="ti ti-copy"></i> Cloned</span>
-                                        @endif
                                     </h5>
                                     @if($exam->description)
                                         <small class="text-muted d-block">{{ Str::limit($exam->description, 40) }}</small>
                                     @endif
                                 </td>
-                                <td style="width: 10%;">
+                                <td style="width: 8%;">
                                     @if($exam->exam_code)
                                         <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td style="width: 9%;">
+                                <td style="width: 15%;">
+                                    @if($exam->cloned_from_id && $exam->clonedFrom)
+                                        <span class="text-muted small">
+                                            Clone from <strong>{{ $exam->clonedFrom->name }}</strong>
+                                        </span>
+                                    @elseif($exam->cloned_from_id)
+                                        <span class="text-muted small"><em>Source Deleted</em></span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td style="width: 8%;">
                                     @if($exam->is_active == 1)
                                         <span class="badge bg-success">Published</span>
                                     @else
                                         <span class="badge bg-danger">Unpublished</span>
                                     @endif
                                 </td>
-                                <td style="width: 11%;">
+                                <td style="width: 8%;">
                                     <span class="badge bg-light-primary">
                                         <i class="ti ti-clock me-1"></i>{{ $exam->duration_minutes }} mins
                                     </span>
                                 </td>
-                                <td class="text-end" style="width: 20%;">
+                                <td class="text-end" style="width: 5%;">
                                     <div class="dropdown">
                                         <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
                                                 data-bs-toggle="dropdown" 

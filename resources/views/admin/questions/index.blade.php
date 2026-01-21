@@ -154,13 +154,18 @@
                             </select>
                         </div>
 
-                        <!-- Status Filter -->
+                        <!-- Status (Toggle) -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
-                            <select name="status" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="active" {{ request('status') !== 'inactive' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                            </select>
+                            <div class="form-check form-switch mt-1">
+                                <input type="hidden" name="status" id="statusFilterInput" value="{{ request('status', 'active') }}">
+                                <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch" style="width: 3em; height: 1.5em;"
+                                       {{ request('status', 'active') == 'active' ? 'checked' : '' }}
+                                       onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; document.getElementById('filterForm').submit()">
+                                <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
+                                    {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Buttons -->
@@ -175,43 +180,64 @@
                         </div>
                     </div>
 
-                    <!-- Active Filters Indicator -->
-                    @if(request()->hasAny(['certification_type', 'exam_category', 'exam', 'category', 'case_study', 'question_type']))
-                        <div class="mt-2 d-flex align-items-center flex-wrap gap-2">
-                            <span class="text-muted small fw-semibold">
-                                <i class="ti ti-filter-check me-1"></i>ACTIVE:
-                            </span>
-                            @if(request('certification_type'))
-                                <span class="badge rounded-pill bg-success small">{{ request('certification_type') }}</span>
-                            @endif
-                            @if(request('exam_category'))
-                                @php $selectedExamCategory = $examCategories->firstWhere('id', request('exam_category')); @endphp
-                                @if($selectedExamCategory)
-                                    <span class="badge rounded-pill bg-secondary small">{{ $selectedExamCategory->name }}</span>
-                                @endif
-                            @endif
-                            @if(request('exam'))
-                                @php $selectedExam = $exams->firstWhere('id', request('exam')); @endphp
-                                @if($selectedExam)
-                                    <span class="badge rounded-pill bg-primary small">{{ $selectedExam->name }}</span>
-                                @endif
-                            @endif
-                            @if(request('case_study'))
-                                @php $selectedCaseStudy = $caseStudies->firstWhere('id', request('case_study')); @endphp
-                                @if($selectedCaseStudy)
-                                    <span class="badge rounded-pill bg-info small">{{ $selectedCaseStudy->title }}</span>
-                                @endif
-                            @endif
-                            @if(request('category'))
-                                <span class="badge rounded-pill bg-warning small text-dark">{{ request('category') == 'ig' ? 'IG' : 'DM' }}</span>
-                            @endif
-                            @if(request('question_type'))
-                                <span class="badge rounded-pill bg-success small">{{ request('question_type') == 'single' ? 'Single' : 'Multiple' }}</span>
-                            @endif
-                        </div>
-                    @endif
                 </form>
             </div>
+
+            <!-- Active Filters Indicator -->
+            @php
+                $hasActiveFilters = request('certification_type') || 
+                                  request('exam_category') || 
+                                  request('exam') || 
+                                  request('category') || 
+                                  request('case_study') || 
+                                  request('question_type') ||
+                                  request('status') === 'inactive';
+            @endphp
+            
+            @if($hasActiveFilters)
+            <div class="card-body border-top border-bottom bg-light-subtle py-3">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small fw-semibold">
+                        <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
+                    </span>
+                    @if(request('status') === 'inactive')
+                        <span class="badge rounded-pill bg-danger">
+                            <i class="ti ti-trash me-1"></i>Deleted
+                        </span>
+                    @endif
+                    @if(request('certification_type'))
+                        <span class="badge rounded-pill bg-success">
+                            <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
+                        </span>
+                    @endif
+                    @if(request('exam_category'))
+                        <span class="badge rounded-pill bg-info">
+                            <i class="ti ti-category me-1"></i>{{ $examCategories->firstWhere('id', request('exam_category'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('exam'))
+                        <span class="badge rounded-pill bg-primary">
+                            <i class="ti ti-file-text me-1"></i>{{ $exams->firstWhere('id', request('exam'))->name ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('case_study'))
+                        <span class="badge rounded-pill bg-secondary">
+                            <i class="ti ti-file-analytics me-1"></i>{{ $caseStudies->firstWhere('id', request('case_study'))->title ?? 'Unknown' }}
+                        </span>
+                    @endif
+                    @if(request('category'))
+                        <span class="badge rounded-pill bg-warning text-dark">
+                            <i class="ti ti-bookmark me-1"></i>{{ request('category') == 'ig' ? 'IG' : 'DM' }}
+                        </span>
+                    @endif
+                    @if(request('question_type'))
+                        <span class="badge rounded-pill bg-dark">
+                            <i class="ti ti-help me-1"></i>{{ request('question_type') == 'single' ? 'Single' : 'Multiple' }}
+                        </span>
+                    @endif
+                </div>
+            </div>
+            @endif
             
             <script>
             function handleCertificationTypeChange() {
@@ -249,12 +275,13 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 35%;">Question</th>
-                                <th>Case Study</th>
-                                <th>Type</th>
-                                <th>Groups</th>
-                                <th>Options</th>
-                                <th class="text-end">Actions</th>
+                                <th style="width: 30%;">Question</th>
+                                <th style="width: 15%;">Case Study</th>
+                                <th style="width: 15%;">Source</th>
+                                <th style="width: 10%;">Type</th>
+                                <th style="width: 10%;">Groups</th>
+                                <th style="width: 10%;">Options</th>
+                                <th class="text-end" style="width: 10%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -263,9 +290,6 @@
                                 <td>
                                     <div class="fw-bold mb-1">
                                         {{ Str::limit(strip_tags($question->question_text), 80) }}
-                                        @if($question->cloned_from_id)
-                                            <span class="badge bg-warning text-dark ms-2"><i class="ti ti-copy"></i> Cloned</span>
-                                        @endif
                                     </div>
                                     <small class="text-muted">
                                         <i class="ti ti-file-text"></i> {{ $question->caseStudy->section->title ?? 'N/A' }}
@@ -276,6 +300,17 @@
                                         <strong>{{ $question->caseStudy->title ?? 'N/A' }}</strong><br>
                                         <span class="text-muted">{{ $question->caseStudy->section->exam->name ?? 'N/A' }}</span>
                                     </div>
+                                </td>
+                                <td>
+                                    @if($question->cloned_from_id && $question->clonedFrom && $question->clonedFrom->caseStudy && $question->clonedFrom->caseStudy->section && $question->clonedFrom->caseStudy->section->exam)
+                                         <span class="text-muted small">
+                                            Clone from <strong>{{ Str::limit($question->clonedFrom->caseStudy->section->exam->name, 20) }}</strong>
+                                        </span>
+                                    @elseif(!empty($question->cloned_from_id))
+                                        <span class="text-muted small"><em>Source Deleted</em></span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if($question->question_type == 'single')
