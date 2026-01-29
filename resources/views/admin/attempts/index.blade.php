@@ -210,6 +210,7 @@
                                 <th>Student</th>
                                 <th>Exam</th>
                                 <th>Score</th>
+                                <th>Duration</th>
                                 <th>Date</th>
                                 <th>Warnings</th>
                                 <th class="text-end">Actions</th>
@@ -238,6 +239,9 @@
                                     <span class="badge {{ $isPassed ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }}">
                                         {{ round($attempt->percentage, 1) }}%
                                     </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted fw-semibold">{{ $attempt->formatted_duration }}</span>
                                 </td>
                                 <td>{{ $attempt->created_at->format('M d, Y H:i') }}</td>
                                 <td>

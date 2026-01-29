@@ -36,6 +36,7 @@
                         <thead>
                             <tr>
                                 <th>Exam Name</th>
+                                <th>Duration</th>
                                 <th>Started At</th>
                                 <th>IG Score</th>
                                 <th>DM Score</th>
@@ -48,6 +49,9 @@
                             @forelse($attempts as $attempt)
                             <tr>
                                 <td>{{ $attempt->exam_name }}</td>
+                                <td>
+                                    <span class="text-muted fw-semibold">{{ $attempt->formatted_duration }}</span>
+                                </td>
                                 <td>{{ $attempt->started_at->format('M d, Y H:i') }}</td>
                                 <td>{{ round($attempt->ig_score, 1) }}%</td>
                                 <td>{{ round($attempt->dm_score, 1) }}%</td>

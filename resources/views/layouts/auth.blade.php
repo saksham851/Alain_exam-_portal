@@ -27,6 +27,14 @@
   <!-- [Template CSS Files] -->
   <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" id="main-style-link" >
   <link rel="stylesheet" href="{{ asset('assets/css/style-preset.css') }}" >
+  <style>
+    .auth-main .auth-wrapper.v3 .auth-form {
+      background: none !important;
+    }
+    .auth-main .auth-wrapper.v3 .auth-form:after {
+      display: none !important;
+    }
+  </style>
 </head>
 
 <body>

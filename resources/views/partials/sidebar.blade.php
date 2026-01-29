@@ -67,6 +67,34 @@
                 </li>
             </ul>
         </li>
+        </li>
+        @endif
+
+        @if(auth()->check() && auth()->user()->role === 'manager')
+        {{-- MANAGER LINKS --}}
+        <li class="pc-item pc-caption">
+            <label>Manager Panel</label>
+            <i class="ti ti-user-check"></i>
+        </li>
+        
+        <li class="pc-item {{ request()->routeIs('manager.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('manager.dashboard') }}" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-dashboard"></i></span>
+                <span class="pc-mtext">Dashboard</span>
+            </a>
+        </li>
+        <li class="pc-item {{ request()->routeIs('manager.students.*') ? 'active' : '' }}">
+            <a href="{{ route('manager.students.index') }}" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-users"></i></span>
+                <span class="pc-mtext">Students</span>
+            </a>
+        </li>
+        <li class="pc-item {{ request()->routeIs('manager.attempts.*') ? 'active' : '' }}">
+            <a href="{{ route('manager.attempts.index') }}" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-file-check"></i></span>
+                <span class="pc-mtext">Results & Attempts</span>
+            </a>
+        </li>
         @endif
 
         @if(auth()->check() && auth()->user()->role === 'student')

@@ -40,6 +40,7 @@
                 <label class="form-label">Role</label>
                 <select name="role" class="form-control" required>
                     <option value="student" selected>Student</option>
+                    <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                 </select>
                 @error('role') <small class="text-danger">{{ $message }}</small> @enderror

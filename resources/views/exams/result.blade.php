@@ -237,12 +237,9 @@
             </a>
 
             @if($attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used > 0)
-                <form action="{{ route('exams.start', $attempt->studentExam->exam->id) }}" method="POST" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-primary px-4 py-2 shadow-sm">
-                        <i class="ti ti-refresh me-2"></i>Attempt Again
-                    </button>
-                </form>
+                <a href="{{ route('exams.start', $attempt->studentExam->exam->id) }}" class="btn btn-primary px-4 py-2 shadow-sm">
+                    <i class="ti ti-refresh me-2"></i>Attempt Again
+                </a>
             @endif
         </div>
     </div>

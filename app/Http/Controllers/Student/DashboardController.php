@@ -47,16 +47,16 @@ class DashboardController extends Controller
             ->get()
             ->map(function($attempt) {
                 $passingScore = 65; // 65%
-                $passed = $attempt->total_score >= $passingScore;
                 
                 return (object)[
-                    'id' => $attempt->id, // Added ID
+                    'id' => $attempt->id,
                     'exam_title' => $attempt->studentExam->exam->name ?? 'Unknown Exam',
                     'date' => $attempt->ended_at,
+                    'duration' => $attempt->formatted_duration,
                     'score' => round($attempt->total_score),
                     'ig_score' => round($attempt->ig_score ?? 0),
                     'dm_score' => round($attempt->dm_score ?? 0),
-                    'status' => $attempt->is_passed ? 'Pass' : 'Fail', // Use is_passed from DB directly
+                    'status' => $attempt->is_passed ? 'Pass' : 'Fail',
                 ];
             });
         

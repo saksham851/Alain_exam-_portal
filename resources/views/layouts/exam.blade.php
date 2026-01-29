@@ -29,45 +29,22 @@
                 margin: 0 auto;
                 padding: 20px;
             }
-            .exam-header {
-                background: white;
-                padding: 15px 30px;
-                border-bottom: 1px solid #e0e0e0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                position: fixed;
-                top: 0;
-                width: 100%;
-                z-index: 1050;
-                height: 70px;
+        <style>
+            body {
+                background-color: #f8fafc;
+            }
+            .exam-container {
+                max-width: 1440px;
+                margin: 0 auto;
+                padding: 0;
             }
             .exam-content {
-                margin-top: 80px; /* Space for fixed header */
+                padding: 0;
             }
         </style>
     </head>
     <body data-pc-preset="preset-1" data-pc-theme="light">
         
-        <!-- [ Minimal Header ] -->
-        <div class="exam-header shadow-sm">
-            <div class="d-flex align-items-center">
-                
-                <h4 class="mb-0 text-primary ms-2"><i class="ti ti-activity-heartbeat me-2"></i>Exam Portal</h4>
-            </div>
-            <div class="d-flex align-items-center">
-                <div class="d-flex align-items-center ms-3">
-                    <div class="avtar avtar-s bg-light-primary text-primary rounded-circle me-2">
-                        <i class="ti ti-user"></i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h6>
-                        <small class="text-muted">Candidate</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- [ Main Content ] -->
         <div class="exam-container exam-content">
             @yield('content')

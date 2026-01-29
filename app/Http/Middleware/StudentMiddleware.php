@@ -20,7 +20,16 @@ class StudentMiddleware
             return $next($request);
         }
 
-        // Redirect to admin dashboard if not student
-        return redirect()->route('admin.dashboard')->with('error', 'You do not have student access.');
+        // Redirect based on user role
+        if (auth()->check()) {
+            if (auth()->user()->role === 'admin') {
+                return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to access this route.');
+            }
+            if (auth()->user()->role === 'manager') {
+                return redirect()->route('manager.dashboard')->with('error', 'You do not have permission to access this route.');
+            }
+        }
+
+        return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to access this route.');
     }
 }

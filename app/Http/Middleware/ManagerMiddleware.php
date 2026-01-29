@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class AdminMiddleware
+class ManagerMiddleware
 {
     /**
      * Handle an incoming request.
@@ -15,21 +15,21 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated and is an admin
-        if (auth()->check() && auth()->user()->role === 'admin') {
+        // Check if user is authenticated and is a manager
+        if (auth()->check() && auth()->user()->role === 'manager') {
             return $next($request);
         }
 
         // Redirect based on user role
         if (auth()->check()) {
-            if (auth()->user()->role === 'manager') {
-                return redirect()->route('manager.dashboard')->with('error', 'You do not have permission to access this route.');
+            if (auth()->user()->role === 'admin') {
+                return redirect()->route('admin.dashboard')->with('error', 'You do not have permission to access this route.');
             }
             if (auth()->user()->role === 'student') {
                 return redirect()->route('student.dashboard')->with('error', 'You do not have permission to access this route.');
             }
         }
 
-        return redirect()->route('login');
+        return redirect()->route('login')->with('error', 'Please login first.');
     }
 }

@@ -2,24 +2,61 @@
 
 @section('content')
 <style>
-    .sticky-timer { position: sticky; top: 0; z-index: 1000; background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .no-select { user-select: none; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Section Stepper Styles with Connecting Line */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc;
+        color: #1e293b;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Edge-to-edge layout optimization */
+    .exam-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .content-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* Fluid full-width header */
+    .premium-header { 
+        position: sticky; 
+        top: 0; 
+        z-index: 1050; 
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        width: 100%;
+    }
+
+    .header-content {
+        height: 72px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+    }
+
+    /* Polished Stepper on fluid background */
+    .stepper-section {
+        background-color: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 16px 0;
+        margin-bottom: 32px;
+        width: 100%;
+    }
     .section-stepper-container {
         position: relative;
         display: flex;
         justify-content: center;
-        margin-bottom: 1.5rem;
-    }
-    .section-stepper {
-        display: flex;
-        align-items: center;
-        position: relative;
-        z-index: 1;
-        width: 100%;
-        max-width: 900px; /* Limit width so it doesn't overflow */
-        justify-content: space-between;
+        max-width: 800px;
         margin: 0 auto;
     }
     .step-connector {
@@ -28,48 +65,163 @@
         left: 0;
         width: 100%;
         height: 2px;
-        background-color: #e9ecef;
-        z-index: 0;
+        background-color: #f1f5f9;
+        z-index: 1;
         transform: translateY(-50%);
-        max-width: 900px;
-        left: 50%;
-        transform: translate(-50%, -50%);
+    }
+    .section-stepper {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        position: relative;
+        z-index: 2;
     }
     .section-step {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background-color: #fff;
-        border: 2px solid #e9ecef;
-        color: #6c757d;
+        border: 2px solid #e2e8f0;
+        color: #94a3b8;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 1rem;
-        cursor: default;
-        transition: all 0.3s;
-        position: relative;
-        z-index: 2;
+        font-weight: 700;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
     }
     .section-step.active {
         background-color: #0F5EF7;
         border-color: #0F5EF7;
         color: white;
-        box-shadow: 0 0 0 4px rgba(15, 94, 247, 0.2);
+        transform: scale(1.1);
+        box-shadow: 0 4px 10px rgba(15, 94, 247, 0.2);
     }
     .section-step.passed {
-        background-color: #d1e7dd;
-        border-color: #198754;
-        color: #198754;
+        background-color: #f0f7ff;
+        border-color: #3b82f6;
+        color: #3b82f6;
     }
-    .animate-label {
-        animation: fadeInDown 0.3s ease-out;
+
+    /* Lean & Professional Content Cards */
+    .case-study-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 24px;
     }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
+    .case-title-area {
+        background-color: #fcfdfe;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
     }
+
+    .question-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 2.5rem; /* Added generous internal padding */
+        margin-bottom: 32px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+    .question-head {
+        margin-bottom: 1.5rem;
+    }
+    .q-badge {
+        display: inline-block;
+        background: #eff6ff;
+        color: #3b82f6;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .question-text {
+        font-size: 1.15rem; /* Reduced from 1.25rem */
+        font-weight: 700;
+        line-height: 1.6; /* More readable line height */
+        color: #0f172a;
+    }
+
+    /* Smart Full-Width Options List */
+    .options-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px; /* Balanced spacing */
+    }
+    .option-row {
+        cursor: pointer;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 1.25rem 1.5rem !important; /* Balanced padding */
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 0px;
+        background: #fff;
+    }
+    .option-row:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1 !important;
+    }
+    .option-row:has(input:checked) {
+        border-color: #0F5EF7 !important;
+        background-color: #f0f7ff;
+        box-shadow: 0 2px 8px rgba(15, 94, 247, 0.05);
+    }
+    .option-radio-ui {
+        min-width: 20px;
+        margin-top: 4px;
+    }
+    .option-text {
+        font-size: 0.95rem; /* Reduced from 1.05rem for a cleaner look */
+        font-weight: 500;
+        color: #475569;
+        margin-left: 1rem;
+        line-height: 1.5;
+    }
+    .option-row:has(input:checked) .option-text {
+        color: #0F5EF7;
+        font-weight: 600;
+    }
+
+    /* Responsive fluid action bar */
+    .action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid #e2e8f0;
+        padding: 16px 24px;
+        z-index: 1040;
+    }
+    
+    .action-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-action {
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    [x-cloak] { display: none !important; }
 </style>
 
 {{-- 
@@ -93,6 +245,7 @@
                     'section_id' => $section->id, 
                     'section_title' => $section->title,
                     'case_title' => $caseStudy->title,
+                    'case_id' => $caseStudy->id,
                     'case_content' => $caseStudy->content, 
                     // Previously 'case_content' was section content and 'sub_content' was case study content in old Loop
                     // Mapping correctly to visual expectation:
@@ -106,67 +259,71 @@
     }
 @endphp
 
-<div x-data="examWizard({{ count($questionsList) }})" x-init="initTimer()">
+<div x-data="examWizard({{ count($questionsList) }})" x-init="initTimer()" x-cloak>
     
     <!-- START OVERLAY -->
     <div id="startOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
-        <div class="text-center">
-            <h2 class="mb-4 text-primary">Ready to Begin?</h2>
-            <p class="mb-4 text-muted">The exam runs in Fullscreen mode. Please minimize distractions.</p>
-            <button class="btn btn-primary btn-lg px-5 rounded-pill shadow-lg" @click="startFullscreen()">
-                <i class="ti ti-maximize me-2"></i> Enter Fullscreen & Start
+        <div class="text-center p-4">
+            <img src="{{ asset('assets/images/logo-new.png') }}" alt="Logo" class="mb-5" style="height: 60px;">
+            <h2 class="mb-3 fw-bold text-dark">Ready to Begin?</h2>
+            <p class="mb-5 text-muted lead">The exam environment is optimized for a focus-driven experience.</p>
+            <button class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg fw-bold" @click="startFullscreen()">
+                START EXAM
             </button>
         </div>
     </div>
 
-    <!-- STICKY HEADER -->
-    <div class="card sticky-timer mb-4 overflow-hidden border-0 shadow-sm">
-        <div class="card-body py-3">
-            <div class="d-flex justify-content-between align-items-center">
+    <!-- CLEAN PROFESSIONAL HEADER (FLUID) -->
+    <header class="premium-header">
+        <div class="header-content">
+            <div class="d-flex align-items-center">
+                <img src="{{ asset('assets/images/logo-new.png') }}" alt="Logo" style="height: 32px;">
+                <div class="vr mx-3 bg-slate-200" style="height: 24px; opacity: 1;"></div>
                 <div>
-                    <h5 class="mb-0 text-primary fw-bold">{{ $exam->name }}</h5>
-                    <div class="text-muted small mt-1">
-                        Question <span x-text="currentIndex + 1"></span> of <span x-text="totalSlides"></span>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center gap-4">
-                    <div class="text-end">
-                        <p class="mb-0 text-muted extra-small text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Time Remaining</p>
-                        <h3 class="mb-0 text-danger fw-bold" x-text="formattedTime" style="letter-spacing: -1px;">--:--:--</h3>
-                    </div>
-                    <div>
-                         <button type="button" class="btn btn-outline-danger btn-sm px-3" @click="confirmSubmit('quit')">
-                            <i class="ti ti-power me-1"></i> Quit
-                         </button>
-                    </div>
+                    <h6 class="mb-0 fw-bold text-slate-800" style="font-size: 0.9rem;">{{ $exam->name }}</h6>
+                    <small class="text-muted">Question <span x-text="currentIndex + 1"></span> of <span x-text="totalSlides"></span></small>
                 </div>
             </div>
-        </div>
-        <!-- TOTAL PROGRESS BAR AT THE BOTTOM -->
-        <div class="progress rounded-0" style="height: 6px; background-color: #f0f4f8;">
-            <div class="progress-bar bg-primary transition-width" role="progressbar" 
-                 :style="`width: ${progressPercentage}%`"
-                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-    </div>
 
-    <!-- SECTION STEPPER BELOW HEADER -->
-    <div class="container mb-4 mt-5">
+            <div class="d-flex align-items-center gap-4">
+                <div class="text-end">
+                    <span class="text-slate-400 text-uppercase fw-bold" style="font-size: 0.55rem; display: block;">Time Left</span>
+                    <h5 class="mb-0 text-slate-800 fw-bold tabular-nums" x-text="formattedTime">--:--:--</h5>
+                </div>
+                
+                <div class="vr bg-slate-200" style="height: 32px; opacity: 1;"></div>
+
+                <div class="d-flex align-items-center d-none d-md-flex">
+                    <div class="avtar avtar-xs bg-light-primary text-primary rounded-circle me-2">
+                        <i class="ti ti-user fs-6"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold" style="font-size: 0.8rem;">{{ auth()->user()->first_name }}</h6>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-link text-danger fw-bold text-decoration-none p-0" data-bs-toggle="modal" data-bs-target="#quitModal">
+                    QUIT
+                </button>
+            </div>
+        </div>
+        <!-- Ultra slim progress bar -->
+        <div style="height: 2px; background: #f1f5f9; width: 100%;">
+            <div class="bg-primary transition-all" :style="`height: 100%; width: ${progressPercentage}%`"></div>
+        </div>
+    </header>
+
+    <!-- STEPPER (FLUID BG) -->
+    <div class="stepper-section">
         <div class="section-stepper-container">
             <div class="step-connector"></div>
-            <div class="section-stepper">
+            <div class="section-stepper px-3">
                 @foreach($sectionsMap as $secId => $secData)
                     <div class="section-step" 
                          :class="{ 
                             'active': currentSectionId === {{ $secId }},
                             'passed': currentSectionId > {{ $secId }}
-                         }"
-                         title="{{ $secData['title'] }}">
-                        <template x-if="currentSectionId === {{ $secId }}">
-                            <div class="position-absolute" style="top: -28px; left: 50%; transform: translateX(-50%); white-space: nowrap;">
-                                <span class="text-uppercase fw-bold text-primary animate-label" style="font-size: 0.7rem; letter-spacing: 1px;">Section</span>
-                            </div>
-                        </template>
+                         }">
                         {{ $secData['index'] }}
                     </div>
                 @endforeach
@@ -174,111 +331,110 @@
         </div>
     </div>
 
-    <!-- MAIN EXAM FORM -->
-    <form action="{{ route('exams.submit', $exam->id) }}" method="POST" id="examForm" @submit.prevent="submitForm" novalidate>
-        @csrf
+    <!-- CONTENT AREA (CENTERED INNER) -->
+    <main class="content-inner pb-5">
+        <form action="{{ route('exams.submit', $exam->id) }}" method="POST" id="examForm" @submit.prevent="submitForm" novalidate>
+            @csrf
 
-        {{-- Loop through the flattened 'Questions List' --}}
-        @foreach($questionsList as $index => $slide)
-            <div x-show="currentIndex === {{ $index }}" class="slide-container" data-section-id="{{ $slide['section_id'] }}">
-                
-                <!-- 1. ORIGINAL STYLE TOP CARD: Scenario/Section Context -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-light-primary">
-                        <h5 class="mb-0 text-primary">
-                            <i class="ti ti-notebook me-2"></i> {{ $slide['section_title'] }}
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-light border text-dark mb-0" style="font-size: 1.05rem; line-height: 1.6;">
-                            {!! $slide['scenario_content'] !!}
+            @foreach($questionsList as $index => $slide)
+                <div x-show="currentIndex === {{ $index }}" class="slide-container" data-section-id="{{ $slide['section_id'] }}">
+                    
+                    @if(!empty(strip_tags($slide['sub_content'] ?? '')))
+                    <div class="case-study-box">
+                        <div class="case-title-area" @click="isCaseExpanded = !isCaseExpanded">
+                            <div class="d-flex align-items-center">
+                                <i class="ti ti-file-text text-primary fs-5 me-2"></i>
+                                <h6 class="mb-0 fw-bold text-slate-700">{{ $slide['case_title'] }}</h6>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;" x-text="isCaseExpanded ? 'COLLAPSE' : 'EXPAND'"></span>
+                                <i class="ti fs-5 transition-all" :class="isCaseExpanded ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 2. ORIGINAL STYLE BOTTOM CARD: Sub-Case & Question -->
-                <div class="card mb-4 border-start border-4 border-info case-study-card">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 text-uppercase fw-bold text-info">
-                            <i class="ti ti-arrow-right me-2"></i> {{ $slide['case_title'] }}
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <!-- Sub Case Content -->
-                        @if(!empty(strip_tags($slide['sub_content'] ?? '')))
-                        <div class="alert alert-secondary border-0 text-dark mb-4" style="font-size: 1.0rem; line-height: 1.6;">
-                            {!! $slide['sub_content'] !!}
-                        </div>
-                        @endif
-                        
-                        <!-- SINGLE QUESTION -->
-                        <div class="card mb-4 border shadow-none bg-white">
-                            <div class="card-body">
-                                <p class="fw-bold mb-3" style="font-size: 1.1rem;">
-                                    Q{{ $index + 1 }}. {!! $slide['question']->question_text !!}
-                                </p>
-
-                                <div class="options-list">
-                                    @php $q = $slide['question']; @endphp
-                                    @foreach($q->options as $option)
-                                        <div class="form-check mb-2 p-3 rounded border hover-bg-light">
-                                            @if($q->question_type === 'multiple')
-                                                <input class="form-check-input mt-1" type="checkbox" 
-                                                    name="answers[{{ $q->id }}][]" 
-                                                    id="opt_{{ $option->id }}" 
-                                                    value="{{ $option->option_text }}">
-                                            @else
-                                                <input class="form-check-input mt-1" type="radio" 
-                                                    name="answers[{{ $q->id }}]" 
-                                                    id="opt_{{ $option->id }}" 
-                                                    value="{{ $option->option_text }}">
-                                            @endif
-                                            
-                                            <label class="form-check-label w-100 ps-2 cursor-pointer" for="opt_{{ $option->id }}">
-                                                {{ $option->option_text }}
-                                            </label>
-                                        </div>
-                                    @endforeach
+                        <div x-show="isCaseExpanded" x-transition.opacity>
+                            <div class="card-body p-4 bg-white">
+                                <div class="text-slate-700" style="font-size: 1.05rem; line-height: 1.7;">
+                                    {!! $slide['sub_content'] !!}
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    @endif
 
+                    <div class="text-center py-5" x-show="!viewedCases.includes('{{ $slide['case_id'] }}')">
+                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold" @click="viewedCases.push('{{ $slide['case_id'] }}')">
+                            VIEW QUESTION & OPTIONS
+                        </button>
+                    </div>
+
+                    <div class="question-card" x-show="viewedCases.includes('{{ $slide['case_id'] }}')" x-transition.opacity>
+                        <div class="question-head">
+                            <span class="q-badge">Question {{ $index + 1 }}</span>
+                            <h2 class="question-text">{!! $slide['question']->question_text !!}</h2>
+                        </div>
+
+                        <div class="options-container">
+                            @php $q = $slide['question']; @endphp
+                            @foreach($q->options as $option)
+                                <label class="option-row" for="opt_{{ $option->id }}">
+                                    <div class="option-radio-ui">
+                                        @if($q->question_type === 'multiple')
+                                            <input class="form-check-input" type="checkbox" name="answers[{{ $q->id }}][]" id="opt_{{ $option->id }}" value="{{ $option->option_text }}">
+                                        @else
+                                            <input class="form-check-input" type="radio" name="answers[{{ $q->id }}]" id="opt_{{ $option->id }}" value="{{ $option->option_text }}">
+                                        @endif
+                                    </div>
+                                    <span class="option-text">{{ $option->option_text }}</span>
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
+            @endforeach
 
-            </div>
-        @endforeach
-
-        <!-- NAVIGATION ACTIONS -->
-        <div style="height: 100px;"></div> 
-        <div class="fixed-bottom border-top shadow-lg bg-white" style="z-index: 999; bottom: 0;">
-            <div class="py-3">
-                <div class="container d-flex justify-content-between">
-                    
-                    <button type="button" class="btn btn-outline-secondary btn-lg px-4" 
-                            x-show="currentIndex > 0" 
-                            @click="prevSlide()">
-                        <i class="ti ti-arrow-left me-2"></i> Previous
+            <!-- Action Bar (FLUID) -->
+            <div class="action-bar shadow-sm">
+                <div class="action-inner">
+                    <button type="button" class="btn btn-light btn-action" x-show="currentIndex > 0" @click="prevSlide()">
+                       <i class="ti ti-chevron-left me-1"></i> Previous
                     </button>
+                    <div x-show="currentIndex === 0"></div>
                     
-                    <div class="ms-auto">
-                        <button type="button" class="btn btn-primary btn-lg px-5" 
-                                x-show="currentIndex < totalSlides - 1" 
-                                @click="nextSlide()">
-                            Next Question <i class="ti ti-arrow-right ms-2"></i>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary btn-action" x-show="currentIndex < totalSlides - 1" @click="nextSlide()">
+                            Next <i class="ti ti-chevron-right ms-1"></i>
                         </button>
+                        <button type="button" class="btn btn-success btn-action" x-show="currentIndex === totalSlides - 1" @click="confirmSubmit('submit')">
+                            Finish Exam <i class="ti ti-check ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
 
-                        <button type="button" class="btn btn-success btn-lg px-5" 
-                                x-show="currentIndex === totalSlides - 1"
-                                @click="confirmSubmit('submit')">
-                            Submit Exam <i class="ti ti-check ms-2"></i>
+    <!-- QUIT MODAL -->
+    <div class="modal fade" id="quitModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-body text-center p-5">
+                    <div class="avtar avtar-xl bg-light-danger text-danger mb-4" style="width: 80px; height: 80px; margin: 0 auto; font-size: 2rem;">
+                        <i class="ti ti-alert-triangle"></i>
+                    </div>
+                    <h3 class="fw-bold text-slate-800 mb-2">Quit Examination?</h3>
+                    <p class="text-muted mb-4 lead" style="font-size: 1rem;">Are you sure you want to end your exam session? Your current progress will be submitted and you won't be able to return.</p>
+                    <div class="d-grid gap-3 mt-4">
+                        <button type="button" class="btn btn-danger btn-lg py-3 rounded-3 fw-bold shadow-sm" @click="submitForm()">
+                            TERMINATE & SUBMIT
+                        </button>
+                        <button type="button" class="btn btn-light btn-lg py-3 rounded-3 fw-bold text-slate-500" data-bs-dismiss="modal">
+                            CANCEL, CONTINUE EXAM
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-
-    </form>
+    </div>
 </div>
 
     <!-- BLACK SCREEN BLOCKER -->
@@ -297,6 +453,8 @@
                 pendingAction: null,
                 isSubmitting: false, 
                 boundHandleBeforeUnload: null,
+                isCaseExpanded: true,
+                viewedCases: [],
                 
                 currentSectionId: null,
                 
@@ -368,6 +526,7 @@
                     if (this.currentIndex < this.totalSlides - 1) {
                         const oldSecId = this.currentSectionId;
                         this.currentIndex++;
+                        this.isCaseExpanded = true;
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },
@@ -376,6 +535,7 @@
                     if (this.currentIndex > 0) {
                         const oldSecId = this.currentSectionId;
                         this.currentIndex--;
+                        this.isCaseExpanded = true;
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },
@@ -476,6 +636,8 @@
             }
         }
     </script>
+
+    <!-- QUIT CONFIRMATION MODAL (Moved out of here) -->
 
     <!-- VIOLATION OVERLAY -->
     <div id="violationOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9990; justify-content: center; align-items: center; flex-direction: column; text-align: center;">

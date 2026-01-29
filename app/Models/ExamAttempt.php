@@ -37,4 +37,18 @@ class ExamAttempt extends Model
     {
         return $this->hasMany(AttemptAnswer::class, 'attempt_id');
     }
+
+    public function getFormattedDurationAttribute()
+    {
+        if (!$this->started_at || !$this->ended_at) {
+            return 'N/A';
+        }
+
+        $diff = $this->started_at->diff($this->ended_at);
+        if ($diff->h > 0) {
+            return $diff->format('%hh %im');
+        }
+        
+        return $diff->format('%im %ss');
+    }
 }

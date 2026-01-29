@@ -60,7 +60,7 @@ class DashboardController extends Controller
         // Get recent attempts (no filters, just latest 10)
         $recentAttempts = ExamAttempt::with(['studentExam.student', 'studentExam.exam.category'])
             ->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(function($attempt) {
                 return (object)[
@@ -73,6 +73,7 @@ class DashboardController extends Controller
                     'total_score' => $attempt->total_score,
                     'is_passed' => $attempt->is_passed,
                     'created_at' => $attempt->created_at,
+                    'duration' => $attempt->formatted_duration,
                     'time_ago' => $attempt->created_at->diffForHumans(),
                 ];
             });
@@ -117,7 +118,7 @@ class DashboardController extends Controller
 
         // Get exam overview data
         $examOverview = $examQuery->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(function($exam) {
                 // Count questions for this exam through case studies
@@ -178,7 +179,7 @@ class DashboardController extends Controller
 
         // Get student details data
         $studentDetails = $studentQuery->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(function($student) {
                 // Calculate average score from all attempts

@@ -12,7 +12,7 @@
             <h4 class="mb-2">{{ number_format($stats['total_students']) }} <span class="badge bg-light-primary border border-primary"><i class="ti ti-users"></i></span></h4>
             <p class="mb-0 text-muted text-sm">Registered users</p>
           </div>
-        </div>
+        </div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
       </a>
     </div>
 
@@ -453,7 +453,7 @@
                   <th>EXAM</th>
                   <th>SCORE</th>
                   <th>STATUS</th>
-                  <th class="text-end">TIME</th>
+                  <th class="text-end">DURATION</th>
                 </tr>
               </thead>
               <tbody>
@@ -472,7 +472,7 @@
                       {{ $attempt->is_passed ? 'Passed' : 'Failed' }}
                     </span>
                   </td>
-                  <td class="text-end">{{ $attempt->time_ago }}</td>
+                  <td class="text-end">{{ $attempt->duration }}</td>
                 </tr>
                 @empty
                 <tr>

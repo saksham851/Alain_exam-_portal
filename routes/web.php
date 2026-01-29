@@ -37,18 +37,27 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Dashboard
-    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+    // Generic Dashboard Redirect
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        if ($user->role === 'student') {
+            return redirect()->route('student.dashboard');
+        }
+        if ($user->role === 'manager') {
+            return redirect()->route('manager.dashboard');
+        }
+        return redirect()->route('admin.dashboard');
+    })->name('dashboard');
 
     // Student Routes
-    Route::middleware(['auth'])->prefix('student')->group(function () {
+    Route::middleware(['student'])->prefix('student')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Student\DashboardController::class, 'index'])->name('student.dashboard');
         Route::get('/history', [\App\Http\Controllers\Student\DashboardController::class, 'history'])->name('student.history');
 
         // Exams
         Route::get('/exams', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('exams.index');
         Route::get('/exams/{id}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
-        Route::post('/exams/{id}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
+        Route::get('/exams/{id}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
         Route::post('/exams/{id}/confirm-start', [\App\Http\Controllers\Student\ExamController::class, 'confirmStart'])->name('exams.confirm-start');
         Route::get('/exams/{id}/take', [\App\Http\Controllers\Student\ExamController::class, 'take'])->name('exams.take');
         Route::post('/exams/{id}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
@@ -57,8 +66,30 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/exams/{id}/answer-key', [\App\Http\Controllers\Student\ExamController::class, 'downloadAnswerKey'])->name('exams.answer-key');
     });
 
+    // Manager Routes
+    Route::middleware(['manager'])->prefix('manager')->name('manager.')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
+        
+        // Students Management (View Only)
+        Route::get('/students', [UserController::class, 'index'])->name('students.index');
+        Route::get('/students/{id}', [UserController::class, 'show'])->name('students.show');
+        
+        // Student Attempts Management (View Only)
+        Route::get('/students/{id}/assigned-exams', [UserController::class, 'getAssignedExams'])->name('students.assigned-exams');
+        Route::get('/students/{studentId}/exam/{examId}/attempts', [UserController::class, 'getStudentExamAttempts'])->name('students.exam-attempts');
+        
+        // Attempts (View Only)
+        Route::get('/attempts', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('attempts.index');
+        Route::get('/attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
+        Route::get('/attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');
+    });
+
     // Admin Routes
-    Route::name('admin.')->prefix('admin')->group(function () {
+    Route::middleware(['admin'])->name('admin.')->prefix('admin')->group(function () {
+        
+        // Admin Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
         // Users Management
         Route::resource('users', UserController::class);

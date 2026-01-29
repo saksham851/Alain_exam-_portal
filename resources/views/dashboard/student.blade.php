@@ -1,6 +1,57 @@
 @extends('layouts.app')
 
 @section('content')
+
+<!-- Premium Student Profile Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm mb-0 overflow-hidden" style="border-radius: 15px;">
+            <div class="card-body p-0">
+                <div class="d-flex align-items-stretch">
+                    <!-- Name & ID Section -->
+                    <div class="bg-primary d-flex align-items-center px-4 py-3" style="min-width: 250px; background: linear-gradient(45deg, #0d6efd, #3e8ef7);">
+                        <div class="avtar avtar-lg bg-white bg-opacity-25 text-white rounded-circle me-3">
+                            <i class="ti ti-user fs-2"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white fw-bold mb-0 lh-1">{{ auth()->user()->name }}</h4>
+                            <span class="text-white text-opacity-75 small fw-medium text-uppercase ls-1">Verified Student</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Section -->
+                    <div class="flex-grow-1 bg-white d-flex align-items-center px-4 py-3 border-start">
+                        <div class="row w-100 g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avtar avtar-m rounded-2 me-3" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ti ti-mail fs-4"></i>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <p class="text-uppercase fw-bold mb-0" style="font-size: 0.72rem; letter-spacing: 0.5px; color: #5b6b79;">EMAIL ADDRESS</p>
+                                        <h6 class="mb-0 fw-bold text-truncate" style="color: #121926;">{{ auth()->user()->email }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 border-start d-none d-md-block">
+                                <div class="d-flex align-items-center ms-md-4">
+                                    <div class="avtar avtar-m rounded-2 me-3" style="background: rgba(40, 167, 69, 0.1); color: #28a745; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="ti ti-phone fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-uppercase fw-bold mb-0" style="font-size: 0.72rem; letter-spacing: 0.5px; color: #5b6b79;">PHONE NUMBER</p>
+                                        <h6 class="mb-0 fw-bold" style="color: #121926;">{{ auth()->user()->phone ?? 'N/A' }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-4">
     <!-- Welcome Section matches Admin header style implicitly but adds personalization -->
 
@@ -105,7 +156,7 @@
                                 <td class="text-end">
                                     <div class="btn-group">
                                         @if($exam->can_attempt)
-                                            <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-sm btn-primary">
+                                            <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-sm btn-primary">
                                                 Start <i class="ti ti-player-play ms-1"></i>
                                             </a>
                                         @else
@@ -139,7 +190,7 @@
     <div class="col-lg-4">
         <div class="card h-100" style="min-height: 500px;">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent History</h5>
+                <h5 class="mb-0">Recent Attempts History</h5>
                 <a href="{{ route('student.history') }}" class="btn btn-sm btn-light-primary">
                     <i class="ti ti-eye me-1"></i> View All
                 </a>
@@ -150,7 +201,7 @@
                         <thead>
                             <tr>
                                 <th>EXAM</th>
-                                <th>SCORE</th>
+                                <th>DURATION</th>
                                 <th>IG</th>
                                 <th>DM</th>
                                 <th class="text-end">STATUS</th>
@@ -161,12 +212,11 @@
                             <tr>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="fw-semibold text-truncate" style="max-width: 120px;" title="{{ $attempt->exam_title }}">{{ $attempt->exam_title }}</span>
-                                        <small class="text-muted">{{ \Carbon\Carbon::parse($attempt->date)->diffForHumans() }}</small>
+                                        <span class="fw-semibold text-truncate" style="max-width: 100px;" title="{{ $attempt->exam_title }}">{{ $attempt->exam_title }}</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-bold">{{ $attempt->score }}%</span>
+                                    <span class="text-muted small">{{ $attempt->duration }}</span>
                                 </td>
                                 <td>
                                     <span class="text-muted small">{{ $attempt->ig_score }}%</span>
@@ -176,13 +226,10 @@
                                 </td>
                                 <td class="text-end">
                                     @if($attempt->status == 'Pass')
-                                        <span class="badge bg-light-success border border-success">Pass</span>
+                                        <span class="badge bg-light-success border border-success" style="padding: 2px 6px; font-size: 0.75rem;">Pass</span>
                                     @else
-                                        <span class="badge bg-light-danger border border-danger">Fail</span>
+                                        <span class="badge bg-light-danger border border-danger" style="padding: 2px 6px; font-size: 0.75rem;">Fail</span>
                                     @endif
-                                    <div class="mt-1">
-                                        <a href="{{ route('exams.result', $attempt->id) }}" class="f-12 link-primary">Result</a>
-                                    </div>
                                 </td>
                             </tr>
                             @empty

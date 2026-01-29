@@ -1,300 +1,147 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- [ breadcrumb ] start -->
-<div class="page-header">
-  <div class="page-block">
-    <div class="row align-items-center">
-      <div class="col-md-12">
-        <div class="page-header-title">
-          <h5 class="m-b-10">{{ $exam->name }}</h5>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-<!-- [ breadcrumb ] end -->
-
-<!-- [ breadcrumb ] start -->
-<div class="page-header">
-  <div class="page-block">
-    <div class="row align-items-center">
-      <div class="col-md-12">
-        <div class="page-header-title">
-          <h5 class="m-b-10">Exam Details</h5>
-        </div>
-        <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('student.dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('exams.index') }}">My Exams</a></li>
-          <li class="breadcrumb-item" aria-current="page">{{ $exam->name }}</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- [ breadcrumb ] end -->
-
-<div class="row">
-    <!-- Left Column: Details & History -->
-    <div class="col-lg-8">
-        <!-- Exam Header Card -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                             <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{{ $exam->category->name ?? 'General' }}</span>
-                             <span class="badge bg-light-secondary text-secondary">{{ $exam->exam_code }}</span>
+<div class="pt-2">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Exam Title Card -->
+            <div class="card border mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-light-primary text-primary rounded p-3 me-3">
+                            <i class="ti ti-notebook f-30"></i>
                         </div>
-                        <h2 class="fw-bold text-dark mb-2">{{ $exam->name }}</h2>
-                        @if($exam->certification_type)
-                            <p class="text-muted mb-0"><i class="ti ti-certificate me-1"></i>{{ $exam->certification_type }}</p>
-                        @endif
-                    </div>
-                    <div class="text-end">
-                        <h3 class="mb-0 text-primary">{{ $exam->duration_minutes }} <span class="fs-6 text-muted">mins</span></h3>
-                        <small class="text-muted">Duration</small>
-                    </div>
-                </div>
-                
-                <h5 class="fw-semibold mt-4 mb-2">Description</h5>
-                <p class="text-muted mb-0">{{ $exam->description ?? 'No detailed description available for this exam.' }}</p>
-
-                @php
-                    $totalSections = $exam->sections->count();
-                    $totalCaseStudies = 0;
-                    $totalQuestions = 0;
-                    foreach($exam->sections as $section) {
-                        $totalCaseStudies += $section->caseStudies->count();
-                        foreach($section->caseStudies as $caseStudy) {
-                            $totalQuestions += $caseStudy->questions->count();
-                        }
-                    }
-                @endphp
-
-                <div class="row g-0 mt-4 pt-4 border-top">
-                    <div class="col-4 border-end">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <div class="bg-light-primary text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="ti ti-folders f-20"></i>
-                            </div>
-                            <div>
-                                <h5 class="mb-0 fw-bold">{{ $totalSections }}</h5>
-                                <small class="text-muted d-block" style="line-height: 1;">Sections</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-4 border-end">
-                         <div class="d-flex align-items-center justify-content-center gap-2">
-                            <div class="bg-light-info text-info rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="ti ti-files f-20"></i>
-                            </div>
-                            <div>
-                                <h5 class="mb-0 fw-bold">{{ $totalCaseStudies }}</h5>
-                                <small class="text-muted d-block" style="line-height: 1;">Case Studies</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                         <div class="d-flex align-items-center justify-content-center gap-2">
-                            <div class="bg-light-warning text-warning rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="ti ti-help f-20"></i>
-                            </div>
-                            <div>
-                                <h5 class="mb-0 fw-bold">{{ $totalQuestions }}</h5>
-                                <small class="text-muted d-block" style="line-height: 1;">Questions</small>
+                        <div>
+                            <h2 class="fw-bold text-dark mb-1">{{ $exam->name }}</h2>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white px-2 py-1">{{ $exam->category->name ?? 'General' }}</span>
+                                <span class="text-muted small fw-bold">ID: {{ $exam->exam_code }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Attempts History -->
-        <div class="card border-0 shadow-sm" style="min-height: 406px;">
-            <div class="card-header bg-transparent border-bottom py-3">
-                <h5 class="mb-0 fw-bold"><i class="ti ti-history me-2"></i>Attempt History</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Date</th>
-                                <th>Scores (IG / DM)</th>
-                                <th>Total Score</th>
-                                <th>Status</th>
-                                <th class="text-end pe-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($attempts as $attempt)
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-semibold text-dark">{{ $attempt->created_at->format('M d, Y') }}</span>
-                                        <small class="text-muted">{{ $attempt->created_at->format('h:i A') }}</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="d-flex flex-column align-items-center">
-                                            <small class="text-muted text-uppercase" style="font-size: 0.65rem;">IG Score</small>
-                                            <span class="fw-semibold">{{ round($attempt->ig_score ?? 0) }}%</span>
-                                        </div>
-                                        <div class="vr opacity-25"></div>
-                                        <div class="d-flex flex-column align-items-center">
-                                            <small class="text-muted text-uppercase" style="font-size: 0.65rem;">DM Score</small>
-                                            <span class="fw-semibold">{{ round($attempt->dm_score ?? 0) }}%</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="fw-bold fs-6 {{ $attempt->is_passed ? 'text-success' : 'text-danger' }}">
-                                        {{ round($attempt->total_score) }}%
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($attempt->is_passed)
-                                        <span class="badge bg-light-success text-success border border-success">Passed</span>
-                                    @else
-                                        <span class="badge bg-light-danger text-danger border border-danger">Failed</span>
-                                    @endif
-                                </td>
-                                <td class="text-end pe-4">
-                                    <div class="input-group input-group-sm justify-content-end">
-                                        <a href="{{ route('exams.result', $attempt->id) }}" class="btn btn-light-primary" data-bs-toggle="tooltip" title="View Detailed Analysis">
-                                            <i class="ti ti-chart-bar me-1"></i> Result
-                                        </a>
-
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-5">
-                                    <div class="mb-3">
-                                        <i class="ti ti-history-toggle text-muted f-30"></i>
-                                    </div>
-                                    <h6 class="text-muted">No attempts yet</h6>
-                                    <p class="text-muted small mb-0">Start the exam to see your history here.</p>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right Column: Actions & Stats -->
-    <div class="col-lg-4">
-        <!-- Action Card -->
-        <div class="card border-0 shadow-sm mb-4 bg-primary text-white overflow-hidden position-relative">
-            <!-- Decorative circle -->
-            <div style="position: absolute; top:-50px; right:-50px; width:150px; height:150px; background:rgba(255,255,255,0.1); border-radius:50%;"></div>
-            
-            <div class="card-body p-4 position-relative">
-                <h5 class="text-white mb-3">Ready to start?</h5>
-                
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between text-white-50 small mb-1">
-                        <span>Attempts Remaining</span>
-                        <span>{{ $exam->attempts_left }} of {{ $exam->max_attempts }}</span>
-                    </div>
-                    @php
-                        $used = $exam->max_attempts - $exam->attempts_left;
-                        $percent = ($used / $exam->max_attempts) * 100;
-                    @endphp
-                    <div class="progress" style="height: 6px; background: rgba(255,255,255,0.2);">
-                        <div class="progress-bar bg-white" role="progressbar" style="width: {{ $percent }}%"></div>
+            <!-- Stats Grid -->
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6">
+                    <div class="card border text-center h-100">
+                        <div class="card-body py-4">
+                            <i class="ti ti-clock text-muted f-24 mb-2"></i>
+                            <h6 class="text-muted mb-1 small text-uppercase fw-bold">Duration</h6>
+                            <h4 class="fw-bold mb-0 text-dark">{{ $exam->duration_minutes }} Mins</h4>
+                        </div>
                     </div>
                 </div>
+                <div class="col-sm-6">
+                    <div class="card border text-center h-100">
+                        <div class="card-body py-4">
+                            <i class="ti ti-repeat text-muted f-24 mb-2"></i>
+                            <h6 class="text-muted mb-1 small text-uppercase fw-bold">Attempts Left</h6>
+                            <h4 class="fw-bold mb-0 text-dark">{{ $exam->attempts_left }} / {{ $exam->max_attempts }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                @if($exam->attempts_left > 0)
-                    @if(now() > $exam->expiry_date)
-                        <button class="btn btn-light w-100 disabled" disabled>
-                            <i class="ti ti-clock-off me-2"></i> Exam Expired
-                        </button>
-                    @else
-                        <form action="{{ route('exams.start', $exam->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-light w-100 fw-bold text-primary shadow-sm py-2">
-                                <i class="ti ti-player-play me-2"></i> Start New Attempt
-                            </button>
-                        </form>
+            <!-- Description -->
+            <div class="card border mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold">Exam Description</h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-0 lh-lg">
+                        {{ $exam->description ?? 'This examination session is designed to evaluate your comprehensive understanding of the subject matter. Please ensure you have reviewed all study materials before starting.' }}
+                    </p>
+                    @if($exam->certification_type)
+                        <div class="mt-3 p-2 px-3 border rounded d-inline-block bg-light">
+                            <i class="ti ti-certificate me-1"></i> <strong>Certification:</strong> {{ $exam->certification_type }}
+                        </div>
                     @endif
-                @else
-                    <button class="btn btn-light w-100 disabled opacity-75" disabled>
-                        <i class="ti ti-lock me-2"></i> No Attempts Left
-                    </button>
-                @endif
-                
-                <div class="mt-3 text-center">
-                    <small class="text-white-50">Valid until {{ \Carbon\Carbon::parse($exam->expiry_date)->format('M d, Y') }}</small>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card border">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold">Important Instructions</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6 border-end">
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-1">1. Time Management</h6>
+                                <p class="text-muted mb-0 small">The exam timer cannot be paused once started. If you close the browser, the timer continues to run.</p>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">2. Network Stability</h6>
+                                <p class="text-muted mb-0 small">Ensure a stable internet connection. Use a laptop or desktop for the best experience.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-1">3. Navigation</h6>
+                                <p class="text-muted mb-0 small">Do not use the browser back button or refresh the page during the exam.</p>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">4. Proctored Session</h6>
+                                <p class="text-muted mb-0 small">Your session is monitored. Any switch to other browser tabs may be logged.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Performance Summary -->
-        @if($attempts->count() > 0)
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-bottom py-3">
-                <h6 class="mb-0 fw-bold">Performance Summary</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-0">
-                    <div class="col-6 border-end pe-3">
-                        <small class="text-muted d-block mb-1">Best Score</small>
-                        <h3 class="mb-0 fw-bold text-success">{{ round($attempts->max('total_score')) }}%</h3>
+        <!-- Sidebar Actions -->
+        <div class="col-lg-4">
+            <div class="card border shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="ti ti-shield-check text-success f-40 mb-2"></i>
+                        <h4 class="fw-bold mb-1">Ready to Start</h4>
+                        <p class="text-muted small">Please verify all details before clicking the button below.</p>
                     </div>
-                    <div class="col-6 ps-3">
-                        <small class="text-muted d-block mb-1">Average</small>
-                        <h3 class="mb-0 fw-bold text-primary">{{ round($attempts->avg('total_score')) }}%</h3>
+
+                    <div class="border rounded p-3 mb-4 text-center bg-light">
+                        <span class="text-muted small d-block mb-1">VALID UNTIL</span>
+                        <h6 class="mb-0 fw-bold">{{ \Carbon\Carbon::parse($exam->expiry_date)->format('M d, Y') }}</h6>
+                    </div>
+
+                    @if($exam->attempts_left > 0)
+                        @if(now() > $exam->expiry_date)
+                            <button class="btn btn-secondary w-100 py-3 disabled" disabled>Exam Expired</button>
+                        @else
+                            <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary w-100 py-3 fw-bold">
+                                START NEW ATTEMPT
+                            </a>
+                        @endif
+                    @else
+                        <div class="alert alert-danger px-3 py-3 border-0 rounded text-center mb-0">
+                            <p class="mb-0 small fw-bold">No attempts remaining for this exam.</p>
+                        </div>
+                    @endif
+
+                    <div class="mt-4 text-center p-2 border-top">
+                        <span class="text-muted x-small"><i class="ti ti-lock me-1"></i> Secure exam session active</span>
                     </div>
                 </div>
-            </div>
-        </div>
-        @endif
-
-        <!-- Instructions -->
-        <div class="card border-0 shadow-sm" style="min-height: 323px;">
-            <div class="card-header bg-transparent border-bottom py-3">
-                <h6 class="mb-0 fw-bold"><i class="ti ti-info-circle me-2"></i>Important Instructions</h6>
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
-                    <li class="d-flex align-items-start text-muted">
-                        <i class="ti ti-point me-2 mt-1 text-primary"></i>
-                        <span>Read each question carefully before answering.</span>
-                    </li>
-                    <li class="d-flex align-items-start text-muted">
-                        <i class="ti ti-point me-2 mt-1 text-primary"></i>
-                        <span>Total duration is {{ $exam->duration_minutes }} minutes. Timer starts immediately.</span>
-                    </li>
-                    <li class="d-flex align-items-start text-muted">
-                        <i class="ti ti-point me-2 mt-1 text-primary"></i>
-                        <span>Ensure you have a stable internet connection.</span>
-                    </li>
-                    <li class="d-flex align-items-start text-muted">
-                        <i class="ti ti-point me-2 mt-1 text-primary"></i>
-                        <span>Do not refresh the page during the exam.</span>
-                    </li>
-                </ul>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
-</script>
-
+<style>
+    .f-30 { font-size: 30px; }
+    .f-24 { font-size: 24px; }
+    .f-40 { font-size: 40px; }
+    .x-small { font-size: 0.75rem; }
+    .bg-light-primary { background-color: rgba(70, 128, 255, 0.1); }
+   
+    .card {
+        border-radius: 8px;
+        transition: none !important;
+    }
+</style>
 @endsection

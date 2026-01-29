@@ -104,12 +104,9 @@
                         </div>
                     @else
                         <div class="d-flex gap-2">
-                            <form action="{{ route('exams.start', $exam->id) }}" method="POST" class="flex-grow-1">
-                                @csrf
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="ti ti-player-play me-1"></i> Start Exam
-                                </button>
-                            </form>
+                            <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary flex-grow-1">
+                                <i class="ti ti-player-play me-1"></i> Start Exam
+                            </a>
                             <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-light-secondary icon-btn" data-bs-toggle="tooltip" title="View Details">
                                 <i class="ti ti-eye"></i>
                             </a>
