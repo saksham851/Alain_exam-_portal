@@ -1,3 +1,6 @@
+@php
+  $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 @extends('layouts.app')
 
 @section('content')
@@ -25,7 +28,7 @@
             
             <!-- Filter Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
-              <form method="GET" action="{{ route('admin.attempts.index') }}" id="attemptsFilterForm">
+              <form method="GET" action="{{ route($routePrefix . '.attempts.index') }}" id="attemptsFilterForm">
                 <div class="row g-2 align-items-end">
                   <!-- Student Name Search (Searchable Dropdown) -->
                   <div class="col-md-3">
@@ -86,7 +89,7 @@
                   <!-- Refresh Button -->
                   <div class="col-md-3">
                     <div class="d-flex gap-1 justify-content-end">
-                      <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters">
+                      <a href="{{ route($routePrefix . '.attempts.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters" id="clearFilterBtn">
                         <i class="ti ti-rotate"></i>
                       </a>
                     </div>
@@ -154,7 +157,7 @@
                 }
                 
                 // Clear focus tracking when form is submitted via button
-                const clearButton = document.querySelector('a[href*="admin.attempts.index"]');
+                const clearButton = document.getElementById('clearFilterBtn');
                 if (clearButton) {
                     clearButton.addEventListener('click', function() {
                         localStorage.removeItem('lastFocusedFilter');
@@ -252,7 +255,7 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('admin.attempts.show', $attempt->id) }}" class="btn btn-icon btn-link-primary btn-sm">
+                                    <a href="{{ route($routePrefix . '.attempts.show', $attempt->id) }}" class="btn btn-icon btn-link-primary btn-sm">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </td>

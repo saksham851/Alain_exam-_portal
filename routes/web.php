@@ -49,6 +49,11 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('admin.dashboard');
     })->name('dashboard');
 
+    // Shared Exam Routes (Student & Manager)
+    Route::get('/exams/result/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('exams.result');
+    Route::get('/exams/download/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'download'])->name('exams.download');
+    Route::get('/exams/{id}/answer-key', [\App\Http\Controllers\Student\ExamController::class, 'downloadAnswerKey'])->name('exams.answer-key');
+
     // Student Routes
     Route::middleware(['student'])->prefix('student')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Student\DashboardController::class, 'index'])->name('student.dashboard');
@@ -61,9 +66,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/exams/{id}/confirm-start', [\App\Http\Controllers\Student\ExamController::class, 'confirmStart'])->name('exams.confirm-start');
         Route::get('/exams/{id}/take', [\App\Http\Controllers\Student\ExamController::class, 'take'])->name('exams.take');
         Route::post('/exams/{id}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
-        Route::get('/exams/result/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('exams.result');
-        Route::get('/exams/download/{attemptId}', [\App\Http\Controllers\Student\ExamController::class, 'download'])->name('exams.download');
-        Route::get('/exams/{id}/answer-key', [\App\Http\Controllers\Student\ExamController::class, 'downloadAnswerKey'])->name('exams.answer-key');
     });
 
     // Manager Routes
@@ -103,9 +105,17 @@ Route::middleware(['auth'])->group(function () {
         // Role & Permission Management
         Route::resource('roles-permissions', RolePermissionController::class);
 
-        // Data Management (Import)
+        // Data Management (Import/Export)
         Route::get('data-management', [DataManagementController::class, 'index'])->name('data.index');
-        Route::post('data-management/import', [DataManagementController::class, 'import'])->name('data.import');
+        
+        // Import Routes
+        Route::post('data-management/import-questions', [DataManagementController::class, 'importQuestions'])->name('data.import-questions');
+        Route::post('data-management/import-case-studies', [DataManagementController::class, 'importCaseStudies'])->name('data.import-case-studies');
+        
+        // Sample CSV Downloads
+        Route::get('data-management/sample/questions', [DataManagementController::class, 'downloadQuestionSample'])->name('data.download-question-sample');
+        Route::get('data-management/sample/case-studies', [DataManagementController::class, 'downloadCaseStudySample'])->name('data.download-case-study-sample');
+
 
 
         // Exam Categories

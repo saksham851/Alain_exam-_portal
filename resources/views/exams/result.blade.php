@@ -10,9 +10,13 @@
           <h5 class="m-b-10">Exam Result</h5>
         </div>
         <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('student.dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('exams.index') }}">My Exams</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('exams.show', $attempt->studentExam->exam->id) }}">{{ $attempt->studentExam->exam->name }}</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+          @if(auth()->user()->isStudent())
+            <li class="breadcrumb-item"><a href="{{ route('exams.index') }}">My Exams</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('exams.show', $attempt->studentExam->exam->id) }}">{{ $attempt->studentExam->exam->name }}</a></li>
+          @else
+             <li class="breadcrumb-item">Exam Results</li>
+          @endif
           <li class="breadcrumb-item" aria-current="page">Result</li>
         </ul>
       </div>
@@ -143,13 +147,19 @@
     <!-- Bottom Actions -->
     <div class="col-12 mt-3 text-center">
         <div class="d-flex flex-wrap gap-2 justify-content-center py-2">
-            <a href="{{ route('exams.show', $attempt->studentExam->exam->id) }}" class="btn btn-outline-primary px-3 py-2" style="font-size: 0.9rem;">
-                <i class="ti ti-arrow-left me-2"></i>Back to Exam Details
-            </a>
+            @if(auth()->user()->isStudent())
+                <a href="{{ route('exams.show', $attempt->studentExam->exam->id) }}" class="btn btn-outline-primary px-3 py-2" style="font-size: 0.9rem;">
+                    <i class="ti ti-arrow-left me-2"></i>Back to Exam Details
+                </a>
 
-            @if($attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used > 0)
-                <a href="{{ route('exams.start', $attempt->studentExam->exam->id) }}" class="btn btn-primary px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
-                    <i class="ti ti-refresh me-2"></i>Attempt Again
+                @if($attempt->studentExam->attempts_allowed - $attempt->studentExam->attempts_used > 0)
+                    <a href="{{ route('exams.start', $attempt->studentExam->exam->id) }}" class="btn btn-primary px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
+                        <i class="ti ti-refresh me-2"></i>Attempt Again
+                    </a>
+                @endif
+            @else
+                <a href="{{ route('manager.dashboard') }}" class="btn btn-primary px-3 py-2" style="font-size: 0.9rem;">
+                    <i class="ti ti-arrow-left me-2"></i>Back to Dashboard
                 </a>
             @endif
         </div>

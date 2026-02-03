@@ -26,45 +26,98 @@
                 <h5>Import/Export Data</h5>
             </div>
             <div class="card-body">
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="ti ti-check me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="ti ti-alert-circle me-2"></i>{{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
                 <div class="row">
-                    <!-- Import Section -->
-                    <div class="col-md-6">
-                        <h6 class="mb-3">Import Data</h6>
-                        <form action="{{ route('admin.data.import') }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            <div class="mb-3">
-                                <label class="form-label">Import Type</label>
-                                <select name="import_type" class="form-select" required>
-                                    <option value="">Select Type</option>
-                                    <option value="students">Students</option>
-                                    <option value="exams">Exams</option>
-                                    <option value="questions">Questions</option>
-                                </select>
+                    <!-- Import Questions Section -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="ti ti-file-import me-2"></i>Import Questions</h6>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Select File</label>
-                                <input type="file" name="file" class="form-control" accept=".csv,.xlsx,.xls" required>
-                                <small class="text-muted">Supported formats: CSV, Excel</small>
+                            <div class="card-body">
+                                <p class="text-muted small">Import questions into unpublished exams with specific sections and case studies.</p>
+                                
+                                <form action="{{ route('admin.data.import-questions') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label">Select CSV File</label>
+                                        <input type="file" name="file" class="form-control" accept=".csv,.txt" required>
+                                        <small class="text-muted">Only CSV format supported</small>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="ti ti-upload me-2"></i>Import Questions
+                                        </button>
+                                        <a href="{{ route('admin.data.download-question-sample') }}" class="btn btn-outline-secondary">
+                                            <i class="ti ti-download me-2"></i>Download Sample CSV
+                                        </a>
+                                    </div>
+                                </form>
+
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <strong>CSV Format:</strong><br>
+                                        • Exam must be unpublished<br>
+                                        • Section must exist in exam<br>
+                                        • Case study is optional<br>
+                                        • Correct option: 1, 2, 3, or 4
+                                    </small>
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="ti ti-upload me-2"></i>Import Data
-                            </button>
-                        </form>
+                        </div>
                     </div>
 
-                    <!-- Export Section -->
-                    <div class="col-md-6">
-                        <h6 class="mb-3">Export Data</h6>
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('admin.sections.index') }}?export=csv" class="btn btn-outline-primary">
-                                <i class="ti ti-download me-2"></i>Export Sections
-                            </a>
-                            <a href="{{ route('admin.case-studies-bank.index') }}?export=csv" class="btn btn-outline-primary">
-                                <i class="ti ti-download me-2"></i>Export Case Studies
-                            </a>
-                            <a href="{{ route('admin.questions.index') }}?export=csv" class="btn btn-outline-primary">
-                                <i class="ti ti-download me-2"></i>Export Questions
-                            </a>
+                    <!-- Import Case Studies Section -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="ti ti-file-import me-2"></i>Import Case Studies</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">Import case studies into specific exam sections.</p>
+                                
+                                <form action="{{ route('admin.data.import-case-studies') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label">Select CSV File</label>
+                                        <input type="file" name="file" class="form-control" accept=".csv,.txt" required>
+                                        <small class="text-muted">Only CSV format supported</small>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="ti ti-upload me-2"></i>Import Case Studies
+                                        </button>
+                                        <a href="{{ route('admin.data.download-case-study-sample') }}" class="btn btn-outline-secondary">
+                                            <i class="ti ti-download me-2"></i>Download Sample CSV
+                                        </a>
+                                    </div>
+                                </form>
+
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <strong>CSV Format:</strong><br>
+                                        • Exam must be unpublished<br>
+                                        • Section must exist in exam<br>
+                                        • Order number for sorting<br>
+                                        • Content can be detailed text
+                                    </small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

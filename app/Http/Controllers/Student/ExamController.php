@@ -284,7 +284,7 @@ class ExamController extends Controller
             ->findOrFail($attemptId);
             
         // Verify ownership
-        if ($attempt->studentExam->student_id !== auth()->id()) {
+        if ($attempt->studentExam->student_id !== auth()->id() && !auth()->user()->isManager()) {
             abort(403);
         }
         
@@ -322,7 +322,7 @@ class ExamController extends Controller
             ->findOrFail($attemptId);
             
         // Verify ownership
-        if ($attempt->studentExam->student_id !== auth()->id()) {
+        if ($attempt->studentExam->student_id !== auth()->id() && !auth()->user()->isManager()) {
             abort(403);
         }
         
