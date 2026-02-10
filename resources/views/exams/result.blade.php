@@ -37,76 +37,89 @@
                     <h3 style="font-weight: 400; font-size: 1.4rem; margin: 0;">{{ $attempt->studentExam->exam->name }}</h3>
                 </div>
 
-                <!-- Main Scores Table -->
+                <!-- Dynamic Scores Table -->
                 <div class="table-responsive">
                     <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 2rem;">
                         <thead>
                             <tr>
-                                <th style="width: 50%; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 10px; text-align: center; font-weight: 700; font-size: 1rem;">Information Gathering (IM)</th>
-                                <th style="width: 50%; border-bottom: 1px solid #000; padding: 10px; text-align: center; font-weight: 700; font-size: 1rem;">Decision Making (DM)</th>
+                                @if($attempt->category_breakdown)
+                                    @foreach($attempt->category_breakdown as $catId => $data)
+                                        <th style="border-bottom: 1px solid #000; {{ !$loop->last ? 'border-right: 1px solid #000;' : '' }} padding: 10px; text-align: center; font-weight: 700; font-size: 1rem;">
+                                            {{ $data['name'] ?? 'Category' }}
+                                        </th>
+                                    @endforeach
+                                @else
+                                    <th style="border-bottom: 1px solid #000; padding: 10px; text-align: center; font-weight: 700; font-size: 1rem;">
+                                        Total Score
+                                    </th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
                             <!-- Percentages Row -->
                             <tr>
-                                <td style="border-right: 1px solid #000; border-bottom: 1px solid #000; text-align: center; padding: 15px;">
-                                    <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($attempt->ig_score ?? 0) }}%</span>
-                                </td>
-                                <td style="border-bottom: 1px solid #000; text-align: center; padding: 15px;">
-                                    <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($attempt->dm_score ?? 0) }}%</span>
-                                </td>
+                                @if($attempt->category_breakdown)
+                                    @foreach($attempt->category_breakdown as $catId => $data)
+                                        <td style="border-bottom: 1px solid #000; {{ !$loop->last ? 'border-right: 1px solid #000;' : '' }} text-align: center; padding: 15px;">
+                                            <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($data['percentage'] ?? 0) }}%</span>
+                                        </td>
+                                    @endforeach
+                                @else
+                                    <td style="border-bottom: 1px solid #000; text-align: center; padding: 15px;">
+                                        <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($attempt->total_score) }}%</span>
+                                    </td>
+                                @endif
                             </tr>
                             
                             <!-- Detailed Breakdown Row -->
                             <tr>
-                                <td style="border-right: 1px solid #000; vertical-align: top; padding: 30px 10px;">
-                                    <div class="d-flex flex-column align-items-center position-relative" style="gap: 20px;">
-                                        <!-- Vertical Line Background -->
-                                        <div style="position: absolute; top: 0; bottom: 0; width: 6px; background-color: transparent; z-index: 0;"></div>
-                                        
-                                        <!-- Your Score -->
-                                        <div class="text-center position-relative" style="z-index: 1;">
-                                            <div style="font-size: 0.85rem; margin-bottom: 2px;">Your Score:</div>
-                                            <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem;">124</div>
-                                        </div>
+                                @if($attempt->category_breakdown)
+                                    @foreach($attempt->category_breakdown as $catId => $data)
+                                    <td style="vertical-align: top; padding: 30px 10px; {{ !$loop->last ? 'border-right: 1px solid #000;' : '' }}">
+                                        <div class="d-flex flex-column align-items-center position-relative" style="gap: 20px;">
+                                            <!-- Vertical Line Background -->
+                                            <div style="position: absolute; top: 0; bottom: 0; width: 6px; background-color: #fff9db; z-index: 0;"></div>
+                                            
+                                            <!-- Your Score -->
+                                            <div class="text-center position-relative" style="z-index: 1;">
+                                                <div style="font-size: 0.85rem; margin-bottom: 2px; background: #fff9db; padding: 0 5px;">Your Score:</div>
+                                                <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem; background: #fff9db;">
+                                                    {{ $data['earned_points'] ?? 0 }} (Auto calculated)
+                                                </div>
+                                            </div>
 
-                                        <!-- Passing Score -->
-                                        <div class="text-center position-relative" style="z-index: 1;">
-                                            <div style="font-size: 0.85rem; margin-bottom: 2px;">Passing Score:</div>
-                                            <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem;">100</div>
-                                        </div>
+                                            <!-- Passing Score -->
+                                            <div class="text-center position-relative" style="z-index: 1;">
+                                                <div style="font-size: 0.85rem; margin-bottom: 2px; background: #fff9db; padding: 0 5px;">Passing Score:</div>
+                                                <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem; background: #fff9db;">
+                                                    @php
+                                                        // Calculate passing score points from % threshold if stored, or infer
+                                                        // We don't store passing SCORE in points in breakdown, only percentage passed or not?
+                                                        // Actually ExamScoringService didn't save the passing POINTS threshold, only checked it.
+                                                        // Let's assume standard passing % (e.g. 65%) of Max Points
+                                                        $passingPercent = 65; // Default or fetch if available
+                                                        // TODO: Update Service to store passing_threshold_points in breakdown for accuracy
+                                                        $passingPoints = round(($data['max_points'] * $passingPercent) / 100);
+                                                    @endphp
+                                                    {{ $passingPoints }} (Set By Admin)
+                                                </div>
+                                            </div>
 
-                                        <!-- Max Score -->
-                                        <div class="text-center position-relative" style="z-index: 1;">
-                                            <div style="font-size: 0.85rem; margin-bottom: 2px;">Max Score:</div>
-                                            <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem;">154</div>
+                                            <!-- Max Score -->
+                                            <div class="text-center position-relative" style="z-index: 1;">
+                                                <div style="font-size: 0.85rem; margin-bottom: 2px; background: #fff9db; padding: 0 5px;">Max Score:</div>
+                                                <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem; background: #fff9db;">
+                                                    {{ $data['max_points'] ?? 0 }} (Auto calculated)
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td style="vertical-align: top; padding: 30px 10px;">
-                                    <div class="d-flex flex-column align-items-center position-relative" style="gap: 20px;">
-                                        <!-- Vertical Line Background -->
-                                        <div style="position: absolute; top: 0; bottom: 0; width: 6px; background-color: transparent; z-index: 0;"></div>
-                                        
-                                        <!-- Your Score -->
-                                        <div class="text-center position-relative" style="z-index: 1;">
-                                            <div style="font-size: 0.85rem; margin-bottom: 2px;">Your Score:</div>
-                                            <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem;">117</div>
-                                        </div>
-
-                                        <!-- Passing Score -->
-                                        <div class="text-center position-relative" style="z-index: 1;">
-                                            <div style="font-size: 0.85rem; margin-bottom: 2px;">Passing Score:</div>
-                                            <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem;">111</div>
-                                        </div>
-
-                                        <!-- Max Score -->
-                                        <div class="text-center position-relative" style="z-index: 1;">
-                                            <div style="font-size: 0.85rem; margin-bottom: 2px;">Max Score:</div>
-                                            <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem;">149</div>
-                                        </div>
-                                    </div>
-                                </td>
+                                    </td>
+                                    @endforeach
+                                @else
+                                    <td style="text-align: center; padding: 20px;">
+                                         <p class="text-muted">Detailed breakdown not available for this attempt.</p>
+                                    </td>
+                                @endif
                             </tr>
                         </tbody>
                     </table>

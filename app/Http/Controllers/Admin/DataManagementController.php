@@ -156,6 +156,7 @@ class DataManagementController extends Controller
 
             $importedCount = 0;
             $errors = [];
+            $examCounts = []; // Track counts to prevent exceeding limits
 
             foreach ($csvData as $index => $row) {
                 $rowNumber = $index + 2; // +2 because of header and 0-index
@@ -165,6 +166,19 @@ class DataManagementController extends Controller
                     $exam = Exam::where('name', $row[0])->where('is_active', 0)->first();
                     if (!$exam) {
                         $errors[] = "Row {$rowNumber}: Exam '{$row[0]}' not found or is published.";
+                        continue;
+                    }
+
+                    // Check Capacity
+                    if (!isset($examCounts[$exam->id])) {
+                        // Initialize with current DB count
+                        $examCounts[$exam->id] = Question::whereHas('caseStudy.section', function($q) use ($exam) {
+                            $q->where('exam_id', $exam->id);
+                        })->where('status', 1)->count();
+                    }
+
+                    if ($exam->total_questions && $examCounts[$exam->id] >= $exam->total_questions) {
+                        $errors[] = "Row {$rowNumber}: Exam '{$row[0]}' is full (Limit: {$exam->total_questions}).";
                         continue;
                     }
 
@@ -199,6 +213,8 @@ class DataManagementController extends Controller
                         'dm_weight' => (int)$row[6],
                         'status' => 1,
                     ]);
+
+                    $examCounts[$exam->id]++; // Increment count
 
                     // Create options
                     $options = [

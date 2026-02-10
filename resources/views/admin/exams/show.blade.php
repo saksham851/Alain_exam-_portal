@@ -95,6 +95,94 @@
     </div>
 </div>
 
+
+<!-- Standard Validation Table -->
+@if(isset($compliance) && !empty($compliance['content_areas']))
+<div class="card mb-4 shadow-sm border-0 rounded-3">
+    <div class="card-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 fw-bold text-dark">
+            <i class="ti ti-checklist me-2 text-primary"></i> Standard Compliance Validation
+        </h5>
+        @if(!$compliance['valid'])
+            <span class="badge bg-danger-subtle text-danger"><i class="ti ti-alert-triangle me-1"></i> Issues Found</span>
+        @else
+            <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i> Validated</span>
+        @endif
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered mb-0">
+                <thead class="bg-light fw-bold text-uppercase small text-muted">
+                    <tr>
+                        <th class="ps-4">Standard Areas</th>
+                        <th class="text-center" style="width: 100px;">Max Points</th>
+                        <th class="text-center" style="width: 100px;">Exam Total</th>
+                        @if(isset($compliance['sections']))
+                            @foreach($compliance['sections'] as $sec)
+                                <th class="text-center" style="width: 120px;">{{ $sec['name'] }}</th>
+                            @endforeach
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $currentCategory = null; @endphp
+                    @foreach($compliance['content_areas'] as $area)
+                        @if($currentCategory !== $area['category'])
+                            @php $currentCategory = $area['category']; @endphp
+                            <tr class="bg-light-subtle">
+                                <td colspan="{{ 3 + (isset($compliance['sections']) ? count($compliance['sections']) : 0) }}" class="ps-4 py-2 fw-bold text-primary text-uppercase fs-7">
+                                    {{ $currentCategory }}
+                                </td>
+                            </tr>
+                        @endif
+                        <tr>
+                            <td class="ps-4">{{ $area['name'] }}</td>
+                            <td class="text-center">{{ $area['allowed_points'] }}</td>
+                            <td class="text-center fw-bold {{ $area['valid'] ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
+                                {{ $area['assigned_points'] }}
+                            </td>
+                            @if(isset($compliance['sections']))
+                                @foreach($compliance['sections'] as $sec)
+                                    <td class="text-center text-muted">
+                                        {{ $area['section_breakdown'][$sec['id']] ?? 0 }}
+                                    </td>
+                                @endforeach
+                            @endif
+                        </tr>
+                    @endforeach
+                    <!-- Total Row -->
+                    <tr class="fw-bold bg-light">
+                        <td class="ps-4 text-end">TOTAL</td>
+                        <td class="text-center">{{ collect($compliance['content_areas'])->sum('allowed_points') }}</td>
+                        <td class="text-center">{{ collect($compliance['content_areas'])->sum('assigned_points') }}</td>
+                        @if(isset($compliance['sections']))
+                             @foreach($compliance['sections'] as $sec)
+                                    <td class="text-center">
+                                        {{ collect($compliance['content_areas'])->sum(fn($a) => $a['section_breakdown'][$sec['id']] ?? 0) }}
+                                    </td>
+                            @endforeach
+                        @endif
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if(!$compliance['valid'] && !empty($compliance['errors']))
+        <div class="card-footer bg-danger-subtle text-danger">
+            <h6 class="fw-bold"><i class="ti ti-alert-circle me-1"></i> Corrections Needed:</h6>
+            <ul class="mb-0 small">
+                @foreach(array_slice($compliance['errors'], 0, 5) as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+                @if(count($compliance['errors']) > 5)
+                    <li>+ {{ count($compliance['errors']) - 5 }} more issues...</li>
+                @endif
+            </ul>
+        </div>
+    @endif
+</div>
+@endif
+
 <!-- Hierarchy Content -->
 <div class="row">
     <div class="col-12">

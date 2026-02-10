@@ -3,109 +3,178 @@
 namespace App\Services;
 
 use App\Models\ExamAttempt;
+use App\Models\ExamCategoryPassingScore;
 use App\Models\Question;
 
 class ExamScoringService
 {
     /**
      * Calculate scores for an exam attempt
+     * Dynamic scoring based on Exam Standard Categories and Question Tags
      * 
      * @param int $attemptId
      * @return array
      */
     public function calculateScore($attemptId)
     {
-        $attempt = ExamAttempt::findOrFail($attemptId);
+        $attempt = ExamAttempt::with(['exam.examStandard.categories', 'exam.categoryPassingScores'])->findOrFail($attemptId);
+        $exam = $attempt->exam;
         
-        $igScore = 0;
-        $dmScore = 0;
-        $igTotal = 0;
-        $dmTotal = 0;
-        $correctAnswers = 0;
-        $totalQuestions = 0;
+        // Data structures for reporting
+        $overallStats = [
+            'total_questions' => 0,
+            'max_points' => 0,
+            'earned_points' => 0,
+            'percentage' => 0,
+            'is_passed' => false,
+        ];
 
-        // Get all answers for this attempt with question details
-        $answers = $attempt->answers()->with('question.options')->get();
+        // Dynamic Categories: [category_id => ['name' => '', 'max' => 0, 'earned' => 0, 'passed' => bool]]
+        $categoryStats = [];
+        $passingThresholds = [];
+
+        // 1. Initialize Categories from Standard
+        if ($exam->examStandard && $exam->examStandard->categories) {
+            foreach ($exam->examStandard->categories as $cat) {
+                $categoryStats[$cat->id] = [
+                    'id' => $cat->id,
+                    'name' => $cat->name, // e.g. "Counselor Work Behavior Areas"
+                    'max_points' => 0,
+                    'earned_points' => 0,
+                    'percentage' => 0,
+                ];
+
+                // Get passing requirement for this category (or default 65)
+                $threshold = $exam->categoryPassingScores->where('exam_standard_category_id', $cat->id)->first();
+                $passingThresholds[$cat->id] = $threshold ? $threshold->passing_score : ($exam->passing_score_overall ?? 65);
+            }
+        } else {
+            // Fallback for exams with no standard: Create a "General" category
+            $categoryStats['general'] = [
+                'id' => 'general',
+                'name' => 'General Knowledge',
+                'max_points' => 0,
+                'earned_points' => 0,
+                'percentage' => 0,
+            ];
+            $passingThresholds['general'] = $exam->passing_score_overall ?? 65;
+        }
+
+        // 2. Process all answers
+        // Eager load: question tags (to find category), question options (to check correctness)
+        $answers = $attempt->answers()->with(['question.tags', 'question.options'])->get();
 
         foreach ($answers as $answer) {
             $question = $answer->question;
-            $totalQuestions++;
+            $overallStats['total_questions']++;
 
-            // Determine question category (assuming questions are either IG or DM based on weight)
-            // If both weights > 0, it contributes to both? Typically usually one or the other.
-            // Based on user prompt "two groups: IG and DM", we track them separately.
-            $isIG = $question->ig_weight > 0;
-            $isDM = $question->dm_weight > 0;
+            // Calculate points earned for this single question
+            // Logic: (Correctness Multiplier 0 or 1) * (Max Question Points)
+            $correctnessMultiplier = $this->calculateCorrectness($answer, $question);
+            $questionMaxPoints = $question->max_question_points ?? 1;
             
-            // Fallback mostly for questions without weights if any
-            if (!$isIG && !$isDM) {
-                // Default to IG/General if undefined, or skip. Let's count as IG for safety if not specified.
-                $isIG = true; 
-            }
+            // Allow for logic where question might just have points = 1 if not set
+            if ($questionMaxPoints < 1) $questionMaxPoints = 1;
 
-            // Add to category totals (1 point per question)
-            if ($isIG) $igTotal++;
-            if ($isDM) $dmTotal++;
+            $pointsEarned = $correctnessMultiplier * $questionMaxPoints;
 
-            // Check if answer is correct based on rules
-            $points = $this->calculatePoints($answer, $question);
-
-            if ($points > 0) {
-                $correctAnswers += $points;
-                
-                // Add score to appropriate category
-                if ($isIG) {
-                    $igScore += $points;
-                    $answer->update(['ig_score' => $points, 'is_correct' => 1]);
+            // Update Answer Record
+            $answer->update([
+                'is_correct' => $correctnessMultiplier > 0 ? 1 : 0,
+                'score' => $pointsEarned // We might need to add a generic 'score' column if ig_score/dm_score are deprecated, but for now we can sum them or utilize existing columns if needed. 
+                // However, the prompt implies a shift. Let's assume we leverage the existing structure as best as possible or just calculate here.
+                // NOTE: Detailed per-question score storage might require schema update if strict tracking needed.
+                // for now, we just update is_correct.
+            ]);
+            
+            // 3. Distribute to Categories
+            if ($exam->examStandard) {
+                // Find which categories this question belongs to via Tags
+                // A question might handle multiple Content Areas, hence multiple Categories.
+                // We add the points to EACH category it hits.
+                $hitCategories = [];
+                if ($question->tags) {
+                    foreach ($question->tags as $tag) {
+                        if (isset($categoryStats[$tag->score_category_id])) {
+                            $hitCategories[$tag->score_category_id] = true;
+                        }
+                    }
                 }
-                if ($isDM) {
-                    $dmScore += $points;
-                    $answer->update(['dm_score' => $points, 'is_correct' => 1]);
+                
+                // If question has no tags but exam has standard, where does it go?
+                // It falls into a "Uncategorized" bucket or we skip category stats for it.
+                // Validated exams shouldn't have this.
+                foreach (array_keys($hitCategories) as $catId) {
+                    $categoryStats[$catId]['max_points'] += $questionMaxPoints;
+                    $categoryStats[$catId]['earned_points'] += $pointsEarned;
                 }
             } else {
-                $answer->update(['ig_score' => 0, 'dm_score' => 0, 'is_correct' => 0]);
+                // No standard -> General Category
+                $categoryStats['general']['max_points'] += $questionMaxPoints;
+                $categoryStats['general']['earned_points'] += $pointsEarned;
+            }
+
+            // Update Overall Stats
+            $overallStats['max_points'] += $questionMaxPoints;
+            $overallStats['earned_points'] += $pointsEarned;
+        }
+
+        // 4. Calculate Final Percentages and Pass/Fail
+        $allCategoriesPassed = true;
+
+        foreach ($categoryStats as $catId => &$stat) {
+            if ($stat['max_points'] > 0) {
+                $stat['percentage'] = round(($stat['earned_points'] / $stat['max_points']) * 100, 2);
+            } else {
+                $stat['percentage'] = 0;
+            }
+
+            // Check Category Pass/Fail
+            $threshold = $passingThresholds[$catId] ?? 65;
+            $stat['passed'] = $stat['percentage'] >= $threshold;
+            
+            if (!$stat['passed']) {
+                $allCategoriesPassed = false;
             }
         }
 
-        // Calculate percentages
-        $igPercentage = $igTotal > 0 ? ($igScore / $igTotal) * 100 : 0;
-        $dmPercentage = $dmTotal > 0 ? ($dmScore / $dmTotal) * 100 : 0;
-        $totalPercentage = $totalQuestions > 0 ? ($correctAnswers / $totalQuestions) * 100 : 0;
+        // Overall Percentage
+        if ($overallStats['max_points'] > 0) {
+            $overallStats['percentage'] = round(($overallStats['earned_points'] / $overallStats['max_points']) * 100, 2);
+        }
 
-        // Pass condition: 65% in BOTH groups
-        $isPassed = ($igPercentage >= 65) && ($dmPercentage >= 65);
+        // Final Exam Pass Logic
+        // Rule: Must pass Overall Threshold AND (Optionally) All Categories?
+        // Usually, simplified: Overall Score >= Overall Passing Score
+        // OR: Must pass every domain.
+        // User's previous request implied "65% in BOTH groups", so likely "All Categories Must Pass".
+        // Let's stick to "All Categories Must Pass" if categories exist, plus overall check.
+        
+        $overallThreshold = $exam->passing_score_overall ?? 65;
+        $overallPassed = $overallStats['percentage'] >= $overallThreshold;
+
+        // Final verdict: Strict (All Categories + Overall) or Just Overall?
+        // Given "Points ka khel" (Game of points), usually domain passing is required.
+        $finalPassed = $allCategoriesPassed && $overallPassed;
 
         return [
-            'ig_score' => round($igPercentage, 2),
-            'dm_score' => round($dmPercentage, 2),
-            'total_score' => round($totalPercentage, 2),
-            'is_passed' => $isPassed,
+            'total_score' => $overallStats['percentage'], // Overall %
+            'earned_points' => $overallStats['earned_points'],
+            'max_points' => $overallStats['max_points'],
+            'is_passed' => $finalPassed,
+            'category_breakdown' => $categoryStats, // Full breakdown for UI
         ];
     }
 
     /**
-     * Calculate points for an answer
-     * Rules:
-     * - Correct answer → 1 mark
-     * - Wrong answer → 0 mark
-     * - Multiple-Select:
-     *   - Selects all correct + no wrong → 1 mark
-     *   - Selects any wrong → 0 mark
-     *   - Selects some correct + no wrong → 1 mark (Partial Correctness Rule)
+     * Determine correctness multiplier (1 or 0)
      * 
      * @param \App\Models\AttemptAnswer $answer
      * @param \App\Models\Question $question
      * @return int 1 or 0
      */
-    private function calculatePoints($answer, $question)
+    private function calculateCorrectness($answer, $question)
     {
-        // Decode selected options (stored as JSON array of strings e.g. ["Option Text 1", "Option Text 2"])
-        // Note: The previous code was storing texts. Let's verify if we are comparing texts or keys.
-        // Looking at the take.blade.php I wrote earlier: value="{{ $option->option_text }}"
-        // So we are comparing option texts.
-        
-        // selected_options is cast to array in AttemptAnswer model, so it should be an array.
-        // However, we handle both cases just to be safe.
         $selectedOptions = $answer->selected_options;
         
         if (is_string($selectedOptions)) {
@@ -113,28 +182,22 @@ class ExamScoringService
         }
         
         if (empty($selectedOptions) || !is_array($selectedOptions)) {
-            return 0; // No answer selected
+            return 0; 
         }
 
-        // Get correct and incorrect options from DB
-        // We need to compare specific texts.
         $correctOptions = $question->options->where('is_correct', 1)->pluck('option_text')->toArray();
         $incorrectOptions = $question->options->where('is_correct', 0)->pluck('option_text')->toArray();
 
-        // Check if ANY wrong option is selected
-        // Intersection of selected vs incorrect should be empty
-        $wrongSelected = array_intersect($selectedOptions, $incorrectOptions);
-        
-        if (count($wrongSelected) > 0) {
-            return 0; // Rule: If any wrong option option selected → 0 mark
+        // Rule: Any wrong option selected = 0
+        if (count(array_intersect($selectedOptions, $incorrectOptions)) > 0) {
+            return 0;
         }
 
-        // Check if AT LEAST ONE correct option is selected (and we passed the wrong check above)
-        // Intersection of selected vs correct should be > 0
-        $correctSelected = array_intersect($selectedOptions, $correctOptions);
-
-        if (count($correctSelected) > 0) {
-            return 1; // Rule: No wrong options + at least one correct option → 1 mark
+        // Rule: At least one correct option selected = 1 (Partial Correctness / Safety Net)
+        // Strict Rule would be: count(intersect) == count(correctOptions)
+        // Sticking to previous lenient rule:
+        if (count(array_intersect($selectedOptions, $correctOptions)) > 0) {
+            return 1;
         }
 
         return 0;

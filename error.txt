@@ -1,0 +1,3 @@
+﻿
+   Illuminate\Database\QueryException  SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`exam_portal`.`exams`, CONSTRAINT `exams_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `exam_categories` (`id`) ON DELETE SET NULL) (Connection: mysql, SQL: insert into `exams` (`is_active`, `name`, `exam_code`, `category_id`, `passing_score_overall`, `updated_at`, `created_at`) values (0, Test, T1, 1, 65, 2026-02-06 13:50:07, 2026-02-06 13:50:07)).
+

@@ -59,6 +59,8 @@ class DashboardController extends Controller
 
         // Get recent attempts (no filters, just latest 10)
         $recentAttempts = ExamAttempt::with(['studentExam.student', 'studentExam.exam.category'])
+            ->whereHas('studentExam.student') // Ensure student exists
+            ->whereHas('studentExam.exam') // Ensure exam exists
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()

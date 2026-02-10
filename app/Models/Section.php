@@ -13,6 +13,7 @@ class Section extends Model
         'order_no',
         'status',
         'cloned_from_id',
+        'exam_standard_category_id',
     ];
 
     protected $casts = [
@@ -24,6 +25,11 @@ class Section extends Model
         return $this->belongsTo(Exam::class);
     }
 
+    public function examStandardCategory()
+    {
+        return $this->belongsTo(ExamStandardCategory::class, 'exam_standard_category_id');
+    }
+
     public function caseStudies()
     {
         return $this->hasMany(CaseStudy::class, 'section_id');
@@ -32,5 +38,10 @@ class Section extends Model
     public function clonedFrom()
     {
         return $this->belongsTo(Section::class, 'cloned_from_id');
+    }
+
+    public function questions()
+    {
+        return $this->hasManyThrough(Question::class, CaseStudy::class);
     }
 }

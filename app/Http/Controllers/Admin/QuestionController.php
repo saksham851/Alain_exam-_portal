@@ -10,7 +10,10 @@ use App\Models\Exam;
 use App\Models\Section;
 use App\Models\CaseStudy;
 use Illuminate\Support\Facades\DB;
-use App\Models\ExamCategory; // Added this line
+use App\Models\ExamCategory; 
+use App\Models\QuestionTag;
+use App\Models\ScoreCategory;
+use App\Models\ContentArea;
 
 class QuestionController extends Controller
 {
@@ -20,7 +23,7 @@ class QuestionController extends Controller
         $status = $request->get('status') === 'inactive' ? 0 : 1;
 
         $query = Question::where('status', $status)
-            ->with(['caseStudy.section.exam.category', 'options', 'clonedFrom.caseStudy.section.exam']);
+            ->with(['caseStudy.section.exam.category', 'options', 'clonedFrom.caseStudy.section.exam', 'tags.scoreCategory', 'tags.contentArea']);
 
         // Filter by Exam Category (Primary Filter)
         if ($request->filled('exam_category')) {
@@ -41,14 +44,7 @@ class QuestionController extends Controller
             $query->where('case_study_id', $request->case_study);
         }
 
-        // Filter by Category (IG or DM)
-        if ($request->filled('category')) {
-            if ($request->category === 'ig') {
-                $query->where('ig_weight', '>', 0);
-            } elseif ($request->category === 'dm') {
-                $query->where('dm_weight', '>', 0);
-            }
-        }
+
 
         // Filter by Certification Type (through Exam)
         if ($request->filled('certification_type')) {
@@ -115,7 +111,7 @@ class QuestionController extends Controller
     public function create(Request $request)
     {
         $question = null;
-        $exams = Exam::where('status', 1)->get();
+        $exams = Exam::where('status', 1)->with('examStandard.categories.contentAreas')->get();
         
         $existingQuestions = collect();
         if ($request->has('case_study_id')) {
@@ -126,6 +122,31 @@ class QuestionController extends Controller
         }
 
         return view('admin.questions.edit', compact('question', 'exams', 'existingQuestions'));
+    }
+
+    /**
+     * Check if adding questions would exceed the exam's total_questions limit.
+     *
+     * @param int $examId
+     * @param int $countToAdd
+     * @return bool|string True if capacity is okay, Error string if exceeded.
+     */
+    private function checkExamLimit($examId, $countToAdd = 1)
+    {
+        $exam = Exam::find($examId);
+        if (!$exam || !$exam->total_questions) {
+            return true; // No limit defined
+        }
+
+        $currentCount = Question::whereHas('caseStudy.section', function($q) use ($examId) {
+            $q->where('exam_id', $examId);
+        })->where('status', 1)->count();
+
+        if (($currentCount + $countToAdd) > $exam->total_questions) {
+            return "Cannot add {$countToAdd} question(s). Exam limit is {$exam->total_questions} and current count is {$currentCount}.";
+        }
+
+        return true;
     }
 
     public function store(Request $request)
@@ -141,19 +162,38 @@ class QuestionController extends Controller
             'existing_questions' => 'nullable|array',
             'existing_questions.*.question_text' => 'required|string',
             'existing_questions.*.question_type' => 'required|in:single,multiple',
-            'existing_questions.*.question_category' => 'required|in:ig,dm',
+            'existing_questions.*.max_question_points' => 'nullable|integer|min:1|max:3',
+            'existing_questions.*.tags' => 'nullable|array',
+            'existing_questions.*.tags.*.score_category_id' => 'required_with:existing_questions.*.tags|exists:score_categories,id',
+            'existing_questions.*.tags.*.content_area_id' => 'required_with:existing_questions.*.tags|exists:content_areas,id',
             'existing_questions.*.options' => 'required|array|min:2',
             'existing_questions.*.options.*.text' => 'required|string',
             'questions' => 'nullable|array',
             'questions.*.question_text' => 'required_with:questions|string',
             'questions.*.question_type' => 'required_with:questions|in:single,multiple',
-            'questions.*.question_category' => 'required_with:questions|in:ig,dm',
+            'questions.*.max_question_points' => 'required_with:questions|integer|min:1|max:3',
+            'questions.*.tags' => 'nullable|array',
+            'questions.*.tags.*.score_category_id' => 'required_with:questions.*.tags|exists:score_categories,id',
+            'questions.*.tags.*.content_area_id' => 'required_with:questions.*.tags|exists:content_areas,id',
             'questions.*.options' => 'required_with:questions|array|min:2',
             'questions.*.options.*.text' => 'required_with:questions|string',
         ]);
         
         if (empty($request->existing_questions) && empty($request->questions)) {
              return redirect()->back()->with('error', 'Please add at least one question or edit existing ones.');
+        }
+
+        // CHECK CAPACITY
+        $newCount = 0;
+        if($request->has('questions')) {
+             $newCount = count($request->questions);
+        }
+        
+        if ($newCount > 0) {
+            $capacityCheck = $this->checkExamLimit($caseStudy->section->exam_id, $newCount);
+            if ($capacityCheck !== true) {
+                return redirect()->back()->with('error', $capacityCheck);
+            }
         }
 
         DB::beginTransaction();
@@ -180,15 +220,23 @@ class QuestionController extends Controller
                              throw new \Exception("Question '{$strippedText}' already exists in this exam.");
                         }
 
-                        $igWeight = $qData['question_category'] === 'ig' ? 1 : 0;
-                        $dmWeight = $qData['question_category'] === 'dm' ? 1 : 0;
-
                         $question->update([
                             'question_text' => trim($qData['question_text']),
                             'question_type' => $qData['question_type'],
-                            'ig_weight' => $igWeight,
-                            'dm_weight' => $dmWeight,
+                            'max_question_points' => $qData['max_question_points'] ?? 1,
                         ]);
+
+                        // Sync Tags
+                        QuestionTag::where('question_id', $question->id)->delete();
+                        if (isset($qData['tags']) && is_array($qData['tags'])) {
+                            foreach ($qData['tags'] as $tagData) {
+                                QuestionTag::create([
+                                    'question_id' => $question->id,
+                                    'score_category_id' => $tagData['score_category_id'],
+                                    'content_area_id' => $tagData['content_area_id'],
+                                ]);
+                            }
+                        }
 
                         // Handle Options - simpler to delete and recreate for consistency with strict key matching
                         QuestionOption::where('question_id', $question->id)->delete();
@@ -231,19 +279,25 @@ class QuestionController extends Controller
                             throw new \Exception("Question '{$strippedText}' already exists in this exam.");
                     }
 
-                    // Set weights based on category
-                    $igWeight = $qData['question_category'] === 'ig' ? 1 : 0;
-                    $dmWeight = $qData['question_category'] === 'dm' ? 1 : 0;
-
                     // Create question
                     $question = Question::create([
                         'case_study_id' => $request->sub_case_id,
                         'question_text' => trim($qData['question_text']),
                         'question_type' => $qData['question_type'],
-                        'ig_weight' => $igWeight,
-                        'dm_weight' => $dmWeight,
+                        'max_question_points' => $qData['max_question_points'] ?? 1,
                         'status' => 1,
                     ]);
+
+                    // Create Tags
+                    if (isset($qData['tags']) && is_array($qData['tags'])) {
+                         foreach ($qData['tags'] as $tagData) {
+                             QuestionTag::create([
+                                 'question_id' => $question->id,
+                                 'score_category_id' => $tagData['score_category_id'],
+                                 'content_area_id' => $tagData['content_area_id'],
+                             ]);
+                         }
+                    }
 
                     // Create options
                     if (isset($qData['options']) && is_array($qData['options'])) {
@@ -288,13 +342,13 @@ class QuestionController extends Controller
 
     public function edit($id)
     {
-        $question = Question::with(['options', 'caseStudy.section.exam'])->find($id);
+        $question = Question::with(['options', 'caseStudy.section.exam.examStandard.categories.contentAreas', 'tags'])->find($id);
         
         if (!$question || $question->status == 0) {
             return back()->with('error', 'Question not found');
         }
 
-        $exams = Exam::where('status', 1)->get();
+        $exams = Exam::where('status', 1)->with('examStandard.categories.contentAreas')->get();
         
         return view('admin.questions.edit', compact('question', 'exams'));
     }
@@ -311,7 +365,10 @@ class QuestionController extends Controller
             'sub_case_id' => 'required|exists:case_studies,id',
             'question_text' => 'required|string',
             'question_type' => 'required|in:single,multiple',
-            'question_category' => 'required|in:ig,dm',
+            'max_question_points' => 'required|integer|min:1|max:3',
+            'tags' => 'nullable|array',
+            'tags.*.score_category_id' => 'required_with:tags|exists:score_categories,id',
+            'tags.*.content_area_id' => 'required_with:tags|exists:content_areas,id',
             'options' => 'required|array|min:2',
             'options.*.text' => 'required|string',
         ]);
@@ -334,16 +391,24 @@ class QuestionController extends Controller
              return back()->with('error', "Question '{$strippedText}' already exists in this exam.");
         }
 
-        $igWeight = $request->question_category === 'ig' ? 1 : 0;
-        $dmWeight = $request->question_category === 'dm' ? 1 : 0;
-
         $question->update([
             'case_study_id' => $request->sub_case_id,
             'question_text' => trim($request->question_text),
             'question_type' => $request->question_type,
-            'ig_weight' => $igWeight,
-            'dm_weight' => $dmWeight,
+            'max_question_points' => $request->max_question_points,
         ]);
+
+        // Sync Tags
+        QuestionTag::where('question_id', $question->id)->delete();
+        if ($request->has('tags') && is_array($request->tags)) {
+            foreach ($request->tags as $tagData) {
+                QuestionTag::create([
+                    'question_id' => $question->id,
+                    'score_category_id' => $tagData['score_category_id'],
+                    'content_area_id' => $tagData['content_area_id'],
+                ]);
+            }
+        }
 
         QuestionOption::where('question_id', $question->id)->delete();
         
@@ -393,18 +458,31 @@ class QuestionController extends Controller
     public function getCaseStudies($examId)
     {
         // This actually fetches Sections for the Exam
-        // The endpoint name in route is still 'questions.getCaseStudies' for now.
-        $exam = Exam::find($examId);
+        $exam = Exam::with('examStandard.categories.contentAreas')->find($examId);
         $sections = Section::where('exam_id', $examId)
             ->where('status', 1)
-            ->get(['id', 'title']);
+            ->with(['examStandardCategory'])
+            ->withCount(['questions' => function($q) { $q->where('status', 1); }])
+            ->get();
         
-        // Add exam active status to each section
+        // Add exam active status and category data
         $sections->each(function($section) use ($exam) {
             $section->exam_is_active = $exam ? $exam->is_active : 0;
+            if ($section->examStandardCategory) {
+                // Pass category name and its content areas for filtering in UI
+                $section->category_name = $section->examStandardCategory->name;
+                $section->category_id = $section->examStandardCategory->id;
+                $section->allowed_content_areas = $section->examStandardCategory->contentAreas;
+            }
         });
         
-        return response()->json($sections);
+        $compliance = $exam ? $exam->validateStandardCompliance() : null;
+        
+        return response()->json([
+            'sections' => $sections,
+            'compliance' => $compliance,
+            'exam' => $exam // Include total_questions limit
+        ]);
     }
 
     public function getSubCaseStudies($sectionId)
@@ -421,7 +499,7 @@ class QuestionController extends Controller
     {
         $questions = Question::where('case_study_id', $caseStudyId)
             ->where('status', 1)
-            ->with(['options'])
+            ->with(['options', 'tags'])
             ->get(); // Return full objects
             
         return response()->json($questions);
@@ -431,7 +509,7 @@ class QuestionController extends Controller
     public function export()
     {
         $questions = Question::where('status', 1)
-            ->with(['caseStudy.section', 'options'])
+            ->with(['caseStudy.section', 'options', 'tags'])
             ->get();
         
         $filename = 'questions_' . date('Y-m-d_His') . '.csv';
@@ -442,7 +520,7 @@ class QuestionController extends Controller
 
         $callback = function() use ($questions) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Case Study', 'Question Text', 'Type', 'IG Weight', 'DM Weight', 'Created At']);
+            fputcsv($file, ['ID', 'Case Study', 'Question Text', 'Type', 'Max Points', 'Created At']);
 
             foreach ($questions as $q) {
                 fputcsv($file, [
@@ -450,8 +528,7 @@ class QuestionController extends Controller
                     $q->caseStudy->title ?? '',
                     strip_tags($q->question_text),
                     $q->question_type,
-                    $q->ig_weight,
-                    $q->dm_weight,
+                    $q->max_question_points,
                     $q->created_at->format('Y-m-d H:i:s'),
                 ]);
             }
@@ -476,11 +553,19 @@ class QuestionController extends Controller
             return redirect()->back()->with('error', 'Cannot clone questions into an active exam. Please deactivate the exam first.');
         }
 
+        // CHECK CAPACITY
+        $countToClone = count($request->source_question_ids);
+        $capacityCheck = $this->checkExamLimit($targetCaseStudy->section->exam_id, $countToClone);
+        if ($capacityCheck !== true) {
+             return redirect()->back()->with('error', $capacityCheck);
+        }
+
         DB::beginTransaction();
         try {
             $clonedCount = 0;
+            
             foreach ($request->source_question_ids as $questionId) {
-                $sourceQuestion = Question::with('options')->findOrFail($questionId);
+                 $sourceQuestion = Question::with(['options', 'tags'])->findOrFail($questionId);
 
                 // Check for duplicates in TARGET exam
                 if ($this->isQuestionDuplicateInExam($targetCaseStudy->section->exam_id, $sourceQuestion->question_text)) {
@@ -492,11 +577,19 @@ class QuestionController extends Controller
                     'case_study_id' => $targetCaseStudy->id,
                     'question_text' => trim($sourceQuestion->question_text),
                     'question_type' => $sourceQuestion->question_type,
-                    'ig_weight' => $sourceQuestion->ig_weight,
-                    'dm_weight' => $sourceQuestion->dm_weight,
+                    'max_question_points' => $sourceQuestion->max_question_points,
                     'status' => $sourceQuestion->status,
                     'cloned_from_id' => $sourceQuestion->id,
                 ]);
+
+                // Clone Tags
+                foreach ($sourceQuestion->tags as $tag) {
+                     QuestionTag::create([
+                         'question_id' => $newQuestion->id,
+                         'score_category_id' => $tag->score_category_id,
+                         'content_area_id' => $tag->content_area_id,
+                     ]);
+                }
 
                 foreach ($sourceQuestion->options as $option) {
                     QuestionOption::create([
@@ -508,7 +601,7 @@ class QuestionController extends Controller
                 }
                 $clonedCount++;
             }
-
+            
             DB::commit();
 
             return redirect()->route('admin.questions.index')
@@ -538,6 +631,24 @@ class QuestionController extends Controller
         }
 
         $file = $request->file('file');
+        
+        $csvData = array_map('str_getcsv', file($file->getRealPath()));
+        $header = array_shift($csvData); 
+        
+        $countToImport = 0;
+        foreach($csvData as $row) {
+            if(count($row) >= 4) {
+                 $countToImport++;
+            }
+        }
+
+        if ($countToImport > 0) {
+            $capacityCheck = $this->checkExamLimit($caseStudy->section->exam_id, $countToImport);
+            if ($capacityCheck !== true) {
+                 return redirect()->back()->with('error', $capacityCheck);
+            }
+        }
+
         $handle = fopen($file->getRealPath(), 'r');
         
         fgetcsv($handle); // Skip header
@@ -558,8 +669,7 @@ class QuestionController extends Controller
                     'case_study_id' => $request->sub_case_id,
                     'question_text' => $qText,
                     'question_type' => $data[1] ?? 'single',
-                    'ig_weight' => $data[2] ?? 0,
-                    'dm_weight' => $data[3] ?? 0,
+                    'content_area_id' => null, 
                     'status' => 1,
                 ]);
                 $imported++;
@@ -585,8 +695,65 @@ class QuestionController extends Controller
             return redirect()->back()->with('error', 'Cannot activate question in an active exam.');
         }
 
+        if ($question->status == 0) {
+             $capacityCheck = $this->checkExamLimit($question->caseStudy->section->exam_id, 1);
+             if ($capacityCheck !== true) {
+                  return redirect()->back()->with('error', $capacityCheck);
+             }
+        }
+
         $question->update(['status' => 1]);
         return redirect()->back()->with('success', 'Question activated successfully!');
+    }
+
+    public function updateField(Request $request, $id)
+    {
+        $request->validate([
+            'field' => 'required|in:question_text,question_type,content_area_id,max_question_points',
+            'value' => 'nullable'
+        ]);
+
+        $question = Question::with('caseStudy.section.exam')->findOrFail($id);
+
+        if ($question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1) {
+            return response()->json(['success' => false, 'message' => 'Cannot modify question in an active exam.']);
+        }
+
+        $field = $request->field;
+        $value = $request->value;
+
+        // Special validation/logic if needed
+        if ($field === 'content_area_id') {
+            if ($value && !\App\Models\ContentArea::where('id', $value)->exists()) {
+                 return response()->json(['success' => false, 'message' => 'Invalid content area selected.']);
+            }
+            if (!$value) $value = null; // Convert empty string to null
+        }
+
+        if ($field === 'max_question_points') {
+            if (!is_numeric($value) || $value < 1) {
+                return response()->json(['success' => false, 'message' => 'Points must be at least 1.']);
+            }
+        }
+
+        $question->$field = $value;
+        $question->save();
+
+        // Get updated compliance stats
+        // Reload relationships to ensure we get the full chain
+        $question->load('caseStudy.section.exam.examStandard.categories.contentAreas');
+        $exam = $question->caseStudy->section->exam;
+        
+        $compliance = null;
+        if($exam) {
+             $compliance = $exam->validateStandardCompliance();
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Updated successfully',
+            'compliance' => $compliance
+        ]);
     }
 
     /**
@@ -596,7 +763,7 @@ class QuestionController extends Controller
     {
         $questions = Question::where('case_study_id', $caseStudyId)
             ->where('status', 1)
-            ->with('options')
+            ->with(['options', 'tags'])
             ->orderBy('id')
             ->get();
         

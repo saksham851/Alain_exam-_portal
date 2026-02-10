@@ -12,9 +12,8 @@ class ExamAttempt extends Model
         'ended_at',
         'status',
         'time_remaining',
-        'ig_score',
-        'dm_score',
         'total_score',
+        'category_breakdown',
         'is_passed',
         'tab_switch_count',
     ];
@@ -23,9 +22,8 @@ class ExamAttempt extends Model
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
         'is_passed' => 'boolean',
-        'ig_score' => 'float',
-        'dm_score' => 'float',
         'total_score' => 'float',
+        'category_breakdown' => 'array',
     ];
 
     public function studentExam()

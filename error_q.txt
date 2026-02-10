@@ -1,0 +1,3 @@
+﻿
+   Illuminate\Database\QueryException  SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`exam_portal`.`questions`, CONSTRAINT `questions_sub_case_id_foreign` FOREIGN KEY (`case_study_id`) REFERENCES `case_studies` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `questions` (`case_study_id`, `question_text`, `question_type`, `max_question_points`, `status`, `updated_at`, `created_at`) values (1, T, single, 3, 1, 2026-02-06 13:50:31, 2026-02-06 13:50:31)).
+

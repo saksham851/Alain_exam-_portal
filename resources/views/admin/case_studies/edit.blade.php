@@ -16,7 +16,7 @@
 </div>
 <!-- [ breadcrumb ] end -->
 
-<div class="row">
+<div class="row" x-data="sectionForm()">
     <div class="col-md-12">
         @if(isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1)
         <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
@@ -40,10 +40,10 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assign to Exam</label>
-                            <select name="exam_id" class="form-select" required {{ request('exam_id') ? 'style=pointer-events:none;background-color:#e9ecef;' : '' }}>
+                            <select name="exam_id" class="form-select" required {{ request('exam_id') ? 'style=pointer-events:none;background-color:#e9ecef;' : '' }} x-model="selectedExamId" @change="onExamChange($event.target.value)">
                                 <option value="">Select Exam</option>
                                 @foreach($exams as $exam)
-                                   <option value="{{ $exam->id }}" {{ (old('exam_id', request('exam_id', $caseStudy->exam_id ?? '')) == $exam->id) ? 'selected' : '' }}>{{ $exam->name }}</option>
+                                   <option value="{{ $exam->id }}">{{ $exam->name }}</option>
                                 @endforeach
                             </select>
                             @if(request('exam_id'))
@@ -51,8 +51,21 @@
                             @endif
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Assign to Standard Category</label>
+                            <select name="exam_standard_category_id" id="category_id" class="form-select" @change="onCategorySelect($event.target.value)">
+                                <option value="">Select Category (Optional)</option>
+                                <template x-if="selectedExamId">
+                                    <template x-for="cat in getStandardCategories(selectedExamId)" :key="cat.id">
+                                        <option :value="cat.id" :selected="cat.id == {{ old('exam_standard_category_id', $caseStudy->exam_standard_category_id ?? '0') }}" x-text="cat.name"></option>
+                                    </template>
+                                </template>
+                            </select>
+                            <small class="text-muted">Linking here helps in compliance tracking.</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Section Name</label>
-                            <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $caseStudy->title ?? '') }}" required>
+                            <input type="text" name="title" id="section_title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title', $caseStudy->title ?? '') }}" required>
                             @error('title')
                                 <div class="invalid-feedback text-danger">{{ $message }}</div>
                             @enderror
@@ -126,5 +139,35 @@
             }
         });
     });
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+    function sectionForm() {
+        return {
+            selectedExamId: "{{ old('exam_id', request('exam_id', $caseStudy->exam_id ?? '')) }}",
+            exams: @json($exams),
+            
+            getStandardCategories(examId) {
+                const exam = this.exams.find(e => e.id == examId);
+                return (exam && exam.exam_standard) ? exam.exam_standard.categories : [];
+            },
+
+            onExamChange(id) {
+                this.selectedExamId = id;
+                // Dispatch event for the other script (Smart Suggestion)
+                document.querySelector('select[name="exam_id"]').dispatchEvent(new Event('change'));
+            },
+
+            onCategorySelect(catId) {
+                const cat = this.getStandardCategories(this.selectedExamId).find(c => c.id == catId);
+                if (cat) {
+                    const titleInput = document.getElementById('section_title');
+                    if (titleInput && (!titleInput.value || titleInput.value.trim() === '')) {
+                        titleInput.value = cat.name;
+                    }
+                }
+            }
+        }
+    }
 </script>
 @endsection

@@ -116,11 +116,11 @@ class ExamController extends Controller
             ->with('success', 'Exam Activated Successfully! All related content has been restored.');
     }
 
-    // CREATE FORM
     public function create()
     {
         $exam = null;
         $categories = \App\Models\ExamCategory::where('status', 1)->orderBy('name')->get();
+        $examStandards = \App\Models\ExamStandard::with(['categories.contentAreas'])->get();
 
         // Auto-generate next exam code
         $latestExam = Exam::orderBy('id', 'desc')->first();
@@ -130,7 +130,7 @@ class ExamController extends Controller
             $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
         }
 
-        return view('admin.exams.edit', compact('exam', 'categories', 'nextCode'));
+        return view('admin.exams.edit', compact('exam', 'categories', 'nextCode', 'examStandards'));
     }
 
     // SAVE NEW
@@ -177,6 +177,10 @@ class ExamController extends Controller
             'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
+            'exam_standard_id' => 'nullable|exists:exam_standards,id',
+            'passing_score_overall' => 'nullable|integer|min:0|max:100',
+            'passing_scores.*' => 'nullable|integer|min:0|max:100',
+            'total_questions' => 'nullable|integer|min:0',
         ], [
             'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
             'certification_type.regex' => 'The certification type must only contain letters, numbers, and spaces.',
@@ -190,9 +194,23 @@ class ExamController extends Controller
             'certification_type' => $certificationType,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
+            'exam_standard_id' => $request->exam_standard_id,
+            'passing_score_overall' => $request->passing_score_overall ?? 65,
+            'total_questions' => $request->total_questions,
             'status' => 1,
             'is_active' => 0, // New exams start as inactive
         ]);
+
+        // Process Passing Scores if provided
+        if ($request->has('passing_scores') && is_array($request->passing_scores)) {
+            foreach ($request->passing_scores as $catId => $score) {
+                \App\Models\ExamCategoryPassingScore::create([
+                    'exam_id' => $exam->id,
+                    'exam_standard_category_id' => $catId,
+                    'passing_score' => $score,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.sections.index')
             ->with('open_add_section_modal', true)
@@ -200,6 +218,7 @@ class ExamController extends Controller
             ->with('success', 'Exam Created Successfully!');
     }
 
+    // SHOW EXAM
     // SHOW EXAM
     public function show($id)
     {
@@ -212,18 +231,21 @@ class ExamController extends Controller
         }, 'sections.caseStudies.questions.options'])
         ->findOrFail($id);
 
-        return view('admin.exams.show', compact('exam'));
+        $compliance = $exam->validateStandardCompliance();
+
+        return view('admin.exams.show', compact('exam', 'compliance'));
     }
 
     // EDIT FORM
     public function edit($id)
     {
-        $exam = Exam::find($id);
+        $exam = Exam::with('categoryPassingScores')->find($id);
 
         if (!$exam) return redirect()->back()->with('error', 'Exam Not Found');
 
         $categories = \App\Models\ExamCategory::where('status', 1)->orderBy('name')->get();
-        return view('admin.exams.edit', compact('exam', 'categories'));
+        $examStandards = \App\Models\ExamStandard::with(['categories.contentAreas'])->get();
+        return view('admin.exams.edit', compact('exam', 'categories', 'examStandards'));
     }
 
     // UPDATE EXAM
@@ -268,6 +290,10 @@ class ExamController extends Controller
             'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
+            'exam_standard_id' => 'nullable|exists:exam_standards,id',
+            'passing_score_overall' => 'nullable|integer|min:0|max:100',
+            'passing_scores.*' => 'nullable|integer|min:0|max:100',
+            'total_questions' => 'nullable|integer|min:0',
         ], [
             'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
             'certification_type.regex' => 'The certification type must only contain letters, numbers, and spaces.',
@@ -281,7 +307,23 @@ class ExamController extends Controller
             'certification_type' => $certificationType,
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
+            'exam_standard_id' => $request->exam_standard_id,
+            'passing_score_overall' => $request->passing_score_overall ?? 65,
+            'total_questions' => $request->total_questions,
         ]);
+
+        // Process Passing Scores if provided
+        if ($request->has('passing_scores') && is_array($request->passing_scores)) {
+            foreach ($request->passing_scores as $catId => $score) {
+                \App\Models\ExamCategoryPassingScore::updateOrCreate(
+                    [
+                        'exam_id' => $exam->id, 
+                        'exam_standard_category_id' => $catId
+                    ],
+                    ['passing_score' => $score]
+                );
+            }
+        }
 
         return redirect()->route('admin.exams.index')
             ->with('success', 'Exam Updated Successfully!');
@@ -439,10 +481,20 @@ class ExamController extends Controller
             'certification_type' => $sourceExam->certification_type,
             'description' => $sourceExam->description,
             'duration_minutes' => $sourceExam->duration_minutes,
-            'status' => 1,
-            'is_active' => 0, // Cloned exams start as inactive
+            'exam_standard_id' => $sourceExam->exam_standard_id,
+            'total_questions' => $sourceExam->total_questions,
+            'passing_score_overall' => $sourceExam->passing_score_overall,
             'cloned_from_id' => $sourceExam->id,
         ]);
+
+        // Clone Passing Scores
+        foreach($sourceExam->categoryPassingScores as $score) {
+            \App\Models\ExamCategoryPassingScore::create([
+                'exam_id' => $newExam->id,
+                'exam_standard_category_id' => $score->exam_standard_category_id,
+                'passing_score' => $score->passing_score
+            ]);
+        }
 
         // Clone all active sections
         foreach ($activeSections as $section) {
@@ -503,7 +555,7 @@ class ExamController extends Controller
     // PUBLISH EXAM WITH VALIDATION
     public function publish($id)
     {
-        $exam = Exam::with(['sections.caseStudies.questions'])->find($id);
+        $exam = Exam::with(['sections.caseStudies.questions', 'examStandard.categories.contentAreas'])->find($id);
 
         if (!$exam) {
             return back()->with('error', 'Exam not found');
@@ -535,6 +587,17 @@ class ExamController extends Controller
                     $csTitle = $caseStudy->title ?? "Case Study";
                     return back()->with('error', "Cannot publish: '{$csTitle}' in '{$section->title}' must have at least one active question.");
                 }
+            }
+        }
+
+        // 4. NEW: Validate Exam Standard Compliance (if exam has a standard assigned)
+        if ($exam->exam_standard_id) {
+            $validation = $exam->validateStandardCompliance();
+            
+            if (!$validation['valid']) {
+                $errorMessage = "Cannot publish: Exam does not meet the standard requirements.\n\n";
+                $errorMessage .= implode("\n", $validation['errors']);
+                return back()->with('error', $errorMessage);
             }
         }
 
@@ -577,6 +640,21 @@ class ExamController extends Controller
                     }
                 }
             }
+
+            // 4. EXAM STANDARD VALIDATION (NEW!)
+            if ($exam->exam_standard_id) {
+                $validation = $exam->validateStandardCompliance();
+                
+                if (!$validation['valid']) {
+                    $errorMessage = "Cannot publish: Exam does not meet standard requirements.\n\n";
+                    
+                    foreach ($validation['errors'] as $error) {
+                        $errorMessage .= "• " . $error . "\n";
+                    }
+                    
+                    return back()->with('error', $errorMessage);
+                }
+            }
         }
 
         // Update Status if no validation errors (or if unpublishing)
@@ -584,5 +662,89 @@ class ExamController extends Controller
 
         $statusText = $newStatus ? 'published' : 'unpublished';
         return back()->with('success', "Exam {$statusText} successfully!");
+    }
+    // AJAX Validation for Publishing
+    public function validateCompliance($id)
+    {
+        $exam = Exam::with(['examStandard.categories.contentAreas', 'sections.caseStudies.questions'])->findOrFail($id);
+        
+        if (!$exam->examStandard) {
+             return response()->json([
+                 'success' => true, 
+                 'no_standard' => true,
+                 'message' => 'This exam does not follow a specific standard. It can be published immediately.'
+             ]);
+        }
+
+        $compliance = $exam->validateStandardCompliance();
+        
+        return response()->json([
+            'success' => true,
+            'compliance' => $compliance,
+            'exam_name' => $exam->name
+        ]);
+    }
+    // Auto-Fix Compliance: Distribute uncategorized questions to deficient areas
+    public function autoFixCompliance($id)
+    {
+        $exam = Exam::with(['examStandard.categories.contentAreas', 'sections.caseStudies.questions'])->findOrFail($id);
+        
+        $totalQuestions = $exam->total_questions ?? $exam->questions()->count();
+        if($totalQuestions == 0) return response()->json(['success' => false, 'message' => 'No questions in exam']);
+
+        // 1. Calculate Deficiencies
+        $deficiencies = []; // [content_area_id => count_needed]
+        
+        // Helper to check deficiencies
+        $checkDeficiency = function($area) use ($totalQuestions, $exam, &$deficiencies) {
+             if ($area->percentage == 0) return;
+             $current = $exam->questions()->where('content_area_id', $area->id)->count();
+             $required = (int) round(($totalQuestions * $area->percentage) / 100);
+             if ($current < $required) {
+                 $deficiencies[$area->id] = $required - $current;
+             }
+        };
+
+        if ($exam->examStandard->categories) {
+            foreach ($exam->examStandard->categories as $category) {
+                if($category->contentAreas) {
+                    foreach ($category->contentAreas as $area) $checkDeficiency($area);
+                }
+            }
+        }
+        
+        if(empty($deficiencies)) {
+            return response()->json(['success' => true, 'message' => 'No deficiencies found']);
+        }
+
+        // 2. Get Uncategorized Questions
+        // We find questions that have NULL content area OR (optional: invalid content area)
+        // Simplest: NULL content_area_id
+        $uncategorized = $exam->questions()
+            ->whereNull('content_area_id')
+            ->get();
+            
+        if($uncategorized->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No uncategorized questions available to distribute']);
+        }
+        
+        // 3. Distribute
+        $distributedCount = 0;
+        foreach ($deficiencies as $areaId => $needed) {
+            if($uncategorized->isEmpty()) break;
+
+            $chunk = $uncategorized->splice(0, $needed);
+            foreach ($chunk as $q) {
+                // Update question
+                $qModel = \App\Models\Question::find($q->id);
+                if($qModel) {
+                    $qModel->content_area_id = $areaId;
+                    $qModel->save();
+                    $distributedCount++;
+                }
+            }
+        }
+        
+        return response()->json(['success' => true, 'distributed' => $distributedCount]);
     }
 }

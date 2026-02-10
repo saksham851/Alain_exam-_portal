@@ -17,7 +17,7 @@
 <!-- [ breadcrumb ] end -->
 
 <div class="row" x-data="questionForm()">
-    <div class="col-md-12">
+    <div class="col-md-8">
         @php
             $isActiveExam = false;
             // For edit mode check
@@ -48,32 +48,32 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Exam <span class="text-danger">*</span></label>
-                            <select class="form-select" id="exam_id" @change="loadCaseStudies($event.target.value)" required {{ request('exam_id') ? 'style=pointer-events:none;background-color:#e9ecef;' : '' }}>
+                            <select class="form-select" id="exam_id" name="exam_id" x-model="selectedExamId" @change="loadCaseStudies($event.target.value)" :disabled="isEdit" required>
                                 <option value="">Select Exam</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ (request('exam_id', (isset($question) && $question->caseStudy->section->exam_id == $exam->id) ? $exam->id : '') == $exam->id) ? 'selected' : '' }}>
-                                        {{ $exam->name }}
-                                    </option>
-                                @endforeach
+                                <template x-for="e in allExams" :key="e.id">
+                                    <option :value="e.id" :selected="String(e.id) === String(selectedExamId)" x-text="e.name"></option>
+                                </template>
                             </select>
                         </div>
 
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Section <span class="text-danger">*</span></label>
-                            <select class="form-select" id="case_study_id" @change="loadSubCaseStudies($event.target.value)" :disabled="caseStudies.length === 0" required>
+                            <select class="form-select" id="case_study_id" name="section_id" x-model="selectedCaseStudyId" @change="loadSubCaseStudies($event.target.value)" :disabled="caseStudies.length === 0" required>
                                 <option value="">Select Section</option>
                                 <template x-for="cs in caseStudies" :key="cs.id">
-                                    <option :value="cs.id" x-text="cs.title"></option>
+                                    <option :value="cs.id" :selected="String(cs.id) === String(selectedCaseStudyId)"
+                                            :data-category-id="cs.exam_standard_category_id"
+                                            x-text="cs.title + (cs.category_name ? ' [' + cs.category_name + ']' : '')"></option>
                                 </template>
                             </select>
                         </div>
 
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Case Study <span class="text-danger">*</span></label>
-                            <select class="form-select" name="sub_case_id" id="sub_case_id" :disabled="subCaseStudies.length === 0" @change="!isEdit && loadExistingQuestions($event.target.value)" required>
+                            <select class="form-select" name="sub_case_id" id="sub_case_id" x-model="selectedSubCaseId" :disabled="subCaseStudies.length === 0" @change="!isEdit && loadExistingQuestions($event.target.value)" required>
                                 <option value="">Select Case Study</option>
                                 <template x-for="scs in subCaseStudies" :key="scs.id">
-                                    <option :value="scs.id" x-text="scs.title"></option>
+                                    <option :value="scs.id" :selected="String(scs.id) === String(selectedSubCaseId)" x-text="scs.title"></option>
                                 </template>
                             </select>
                             @error('sub_case_id') <small class="text-danger">{{ $message }}</small> @enderror
@@ -136,16 +136,68 @@
                                         </div>
                                     </div>
 
+
+                                    <!-- Content Area for Existing Questions -->
+                                    <!-- Tags / Content Areas for Existing Questions -->
                                     <div class="col-md-12 mb-3">
-                                        <label class="form-label">Group <span class="text-danger">*</span></label>
-                                        <select :name="'existing_questions['+exQ.id+'][question_category]'" 
-                                                class="form-select" 
-                                                x-model="exQ.question_category"
-                                                required>
-                                            <option value="">Select group</option>
-                                            <option value="ig">IG - Internal Governance</option>
-                                            <option value="dm">DM - Decision Making</option>
-                                        </select>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label text-primary fw-bold mb-0">
+                                                <i class="ti ti-tags me-1"></i> Question Tags (Category Mapping)
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" @click="addExistingTag(eqIndex)">
+                                                <i class="ti ti-plus me-1"></i> Add Tag
+                                            </button>
+                                        </div>
+                                        
+                                        <template x-if="exQ.tags.length === 0">
+                                            <div class="alert alert-warning py-2 mb-2">
+                                                <small><i class="ti ti-alert-triangle me-1"></i> No content area assigned. Please add at least one tag.</small>
+                                            </div>
+                                        </template>
+
+                                        <template x-for="(tag, tIndex) in exQ.tags" :key="tIndex">
+                                            <div class="row align-items-center mb-2">
+                                                <div class="col-md-5">
+                                                    <select :name="'existing_questions['+exQ.id+'][tags]['+tIndex+'][score_category_id]'" 
+                                                            class="form-select form-select-sm"
+                                                            x-model="tag.score_category_id">
+                                                        <option value="">Select Category</option>
+                                                        <template x-for="cat in examStandardCategories" :key="cat.id">
+                                                            <option :value="cat.id" x-text="cat.name" :selected="tag.score_category_id == cat.id"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <select :name="'existing_questions['+exQ.id+'][tags]['+tIndex+'][content_area_id]'" 
+                                                            class="form-select form-select-sm"
+                                                            x-model="tag.content_area_id"
+                                                            :disabled="!tag.score_category_id">
+                                                        <option value="">Select Content Area</option>
+                                                        <template x-for="area in getContentAreas(tag.score_category_id)" :key="area.id">
+                                                            <option :value="area.id" x-text="area.name + (area.max_points ? ' (Max: ' + area.max_points + ')' : '')" :selected="tag.content_area_id == area.id"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger w-100" @click="removeExistingTag(eqIndex, tIndex)">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                     </div>
+
+                                    <!-- Max Points Field -->
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Max Points</label>
+                                        <input type="number" 
+                                               :name="'existing_questions['+exQ.id+'][max_question_points]'"
+                                               class="form-control" 
+                                               min="1" 
+                                               max="3"
+                                               x-model="exQ.max_question_points"
+                                               @change="updateQuestionField(exQ.id, 'max_question_points', $event.target.value)">
+                                        <small class="text-muted">Max 3 points allowed per question.</small>
                                     </div>
                                 </div>
 
@@ -233,9 +285,9 @@
                     <div class="card-body">
                         <div class="row">
                             <!-- Question Text -->
-                            <div class="col-md-12 mb-3">
+                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Question Text <span class="text-danger">*</span></label>
-                                <!-- Dynamic ID for CKEditor using Unique ID -->
+                                <!-- Removed required to prevent hidden tooltip issues, handled by server & alert -->
                                 <textarea :id="'question_text_' + questionItem.id" 
                                           :name="isEdit ? 'question_text' : 'questions['+qIndex+'][question_text]'" 
                                           class="form-control" 
@@ -266,18 +318,58 @@
                                 </div>
                             </div>
 
-                            <!-- Category -->
+                            <!-- Tags for New Questions -->
+                            <div class="col-md-12 mb-3" x-show="examStandardCategories.length > 0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label text-primary fw-bold mb-0">
+                                        <i class="ti ti-tags me-1"></i> Question Tags
+                                    </label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="addTag(qIndex)">
+                                        <i class="ti ti-plus me-1"></i> Add Tag
+                                    </button>
+                                </div>
+                                <template x-for="(tag, tIndex) in questionItem.tags" :key="tIndex">
+                                    <div class="row align-items-center mb-2">
+                                        <div class="col-md-5">
+                                            <select :name="isEdit ? 'tags['+tIndex+'][score_category_id]' : 'questions['+qIndex+'][tags]['+tIndex+'][score_category_id]'"
+                                                    class="form-select form-select-sm"
+                                                    x-model="tag.score_category_id">
+                                                <option value="">Select Category</option>
+                                                <template x-for="cat in examStandardCategories" :key="cat.id">
+                                                    <option :value="cat.id" x-text="cat.name" :selected="tag.score_category_id == cat.id"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <select :name="isEdit ? 'tags['+tIndex+'][content_area_id]' : 'questions['+qIndex+'][tags]['+tIndex+'][content_area_id]'" 
+                                                    class="form-select form-select-sm"
+                                                    x-model="tag.content_area_id"
+                                                    :disabled="!tag.score_category_id">
+                                                <option value="">Select Content Area</option>
+                                                <template x-for="area in getContentAreas(tag.score_category_id)" :key="area.id">
+                                                    <option :value="area.id" x-text="area.name + (area.max_points ? ' (Max: ' + area.max_points + ')' : '')" :selected="tag.content_area_id == area.id"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-sm btn-outline-danger w-100" @click="removeTag(qIndex, tIndex)">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Max Points -->
                             <div class="col-md-12 mb-3">
-                                <label class="form-label">Group <span class="text-danger">*</span></label>
-                                <select :name="isEdit ? 'question_category' : 'questions['+qIndex+'][question_category]'" 
-                                        class="form-select" 
-                                        x-model="questionItem.question_category"
-                                        required>
-                                    <option value="">Select group</option>
-                                    <option value="ig">IG - Internal Governance</option>
-                                    <option value="dm">DM - Decision Making</option>
-                                </select>
-                                <small class="text-muted">Select which category this question belongs to</small>
+                                <label class="form-label">Max Points</label>
+                                <input type="number" 
+                                       :name="isEdit ? 'max_question_points' : 'questions['+qIndex+'][max_question_points]'"
+                                       class="form-control" 
+                                       min="1" 
+                                       max="3"
+                                       x-model="questionItem.max_question_points">
+                                <small class="text-muted">Max 3 points allowed per question.</small>
                             </div>
                         </div>
 
@@ -381,7 +473,88 @@
 
 
     </div>
-</div>
+    
+    <!-- Sidebar: Real-Time Compliance Check -->
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 20px; z-index: 100;">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white"><i class="ti ti-chart-pie me-2"></i> Standard Status</h5>
+                <button class="btn btn-sm btn-light text-primary" @click="loadComplianceData()" title="Refresh Status">
+                    <i class="ti ti-refresh"></i>
+                </button>
+            </div>
+            <div class="card-body p-0" style="max-height: 80vh; overflow-y: auto;">
+                
+                <!-- Loading State -->
+                <div x-show="isLoadingCompliance" class="p-4 text-center text-muted">
+                    <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
+                    <p class="small mb-0">Checking compliance requirements...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div x-show="!isLoadingCompliance && !complianceData.content_areas" class="p-4 text-center text-muted">
+                    <i class="ti ti-alert-circle display-6 mb-3 opacity-50"></i>
+                    <p>Select an Exam to view Standard Requirements and Progress.</p>
+                </div>
+
+                <!-- Data Content -->
+                <template x-if="!isLoadingCompliance && complianceData.content_areas">
+                    <div>
+                        <!-- Overall Status -->
+                        <div class="p-3 border-bottom bg-light">
+                             <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark">Overall Status</span>
+                                <span class="badge" :class="complianceHasErrors ? 'bg-danger' : 'bg-success'">
+                                    <i class="ti" :class="complianceHasErrors ? 'ti-alert-triangle' : 'ti-check'"></i>
+                                    <span x-text="complianceHasErrors ? 'Needs Attention' : 'Compliant'"></span>
+                                </span>
+                             </div>
+                             <small class="text-muted d-block">Add questions with tags to meet the goals below.</small>
+                        </div>
+
+                        <!-- Categories List -->
+                        <ul class="list-group list-group-flush">
+                            <template x-for="area in complianceData.content_areas" :key="area.id">
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small text-dark text-truncate" style="max-width: 65%;" :title="area.name" x-text="area.name"></span>
+                                        <div class="text-end">
+                                            <span class="badge" 
+                                                  :class="area.valid ? 'bg-light-success text-success' : 'bg-light-danger text-danger'"
+                                                  x-text="area.valid ? 'Pass' : 'Low'"></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar" 
+                                             :class="area.valid ? 'bg-success' : 'bg-danger'"
+                                             role="progressbar" 
+                                             :style="'width: ' + Math.min((area.current / (area.required || 1)) * 100, 100) + '%'"></div>
+                                    </div>
+                                    
+                                    <!-- Stats Text -->
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <small class="text-muted" style="font-size: 11px;">Current: <strong x-text="area.current"></strong></small>
+                                        <small class="text-muted" style="font-size: 11px;">Required: <strong x-text="area.required"></strong> pts</small>
+                                    </div>
+                                    
+                                    <!-- Helper Hint -->
+                                    <template x-if="!area.valid">
+                                        <div class="mt-1">
+                                            <span class="badge bg-light-warning text-warning border border-warning" style="font-size: 10px;">
+                                                Add <span x-text="(area.required - area.current)"></span> pts tagged to this area
+                                            </span>
+                                        </div>
+                                    </template>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
 
 @php
     $isEdit = false;
@@ -393,8 +566,12 @@
     $selectedCaseStudyId = null;
     $selectedExamId = null;
 
+    $selectedSectionCategoryId = null;
+    $initialAllowedContentAreas = [];
+
     if(isset($question)) {
         $isEdit = true;
+        
         // Build options array
         $opts = $question->options->map(function($opt, $index) {
             return [
@@ -411,14 +588,14 @@
             $singleCorrect = $correctIndex !== false ? $correctIndex : 0;
         }
 
-        $cat = 'ig'; // Default
-        if($question->ig_weight > 0) $cat = 'ig';
-        if($question->dm_weight > 0) $cat = 'dm';
-
         $initialQuestions[] = [
             'question_text' => $question->question_text,
             'question_type' => $question->question_type,
-            'question_category' => $cat,
+            'max_question_points' => $question->max_question_points,
+            'tags' => $question->tags->map(fn($t) => [
+                'score_category_id' => (string)$t->score_category_id, 
+                'content_area_id' => (string)$t->content_area_id
+            ])->toArray(),
             'options' => $opts,
             'singleCorrect' => $singleCorrect
         ];
@@ -427,85 +604,147 @@
         $selectedCaseStudyId = $question->caseStudy->section_id;
         $selectedExamId = $question->caseStudy->section->exam_id;
     } else {
-        // Create Mode - Start with one empty question
-        $initialQuestions[] = [
-            'question_text' => '',
-            'question_type' => 'single',
-            'question_category' => '',
-            'options' => [
-                ['text' => '', 'is_correct' => false],
-                ['text' => '', 'is_correct' => false]
-            ],
-            'singleCorrect' => 0
-        ];
+        $oldQuestions = old('questions');
+        if ($oldQuestions && is_array($oldQuestions)) {
+            foreach ($oldQuestions as $q) {
+                // Alpine needs singleCorrect for radioactivity
+                $options = array_values($q['options'] ?? [['text' => '', 'is_correct' => '0'], ['text' => '', 'is_correct' => '0']]);
+                $singleCorrect = 0;
+                foreach($options as $idx => $opt) {
+                    if (isset($opt['is_correct']) && $opt['is_correct'] == '1') {
+                        $singleCorrect = $idx;
+                        break;
+                    }
+                }
+                
+                $initialQuestions[] = [
+                    'question_text' => $q['question_text'] ?? '',
+                    'question_type' => $q['question_type'] ?? 'single',
+                    'max_question_points' => $q['max_question_points'] ?? 1,
+                    'tags' => $q['tags'] ?? [],
+                    'options' => $options,
+                    'singleCorrect' => $singleCorrect
+                ];
+            }
+        } else {
+            // Create Mode - Start with one empty question
+            $initialQuestions[] = [
+                'question_text' => '',
+                'question_type' => 'single',
+                'max_question_points' => 1,
+                'tags' => [],
+                'options' => [
+                    ['text' => '', 'is_correct' => '0'],
+                    ['text' => '', 'is_correct' => '0']
+                ],
+                'singleCorrect' => 0
+            ];
+        }
+    }
+
+    // Pre-calculate Standard Categories for tag dropdowns
+    $initialStandardCategories = [];
+    $targetExamId = old('exam_id', request('exam_id') ?? ($selectedExamId ?? null));
+    if ($targetExamId) {
+        $foundExam = $exams->where('id', $targetExamId)->first();
+        if ($foundExam) {
+            $standard = $foundExam->examStandard ?? $foundExam->exam_standard;
+            if ($standard) {
+                foreach($standard->categories as $cat) {
+                    $initialStandardCategories[] = [
+                        'id' => (string)$cat->id,
+                        'name' => $cat->name,
+                        'content_areas' => $cat->contentAreas->map(fn($a) => [
+                            'id' => (string)$a->id,
+                            'name' => $a->name,
+                            'max_points' => $a->max_points
+                        ])->toArray()
+                    ];
+                }
+            }
+        }
     }
 @endphp
-
 <script>
 function questionForm() {
     return {
         isEdit: {{ $isEdit ? 'true' : 'false' }},
         isActiveExam: {{ $isActiveExam ? 'true' : 'false' }},
         currentQuestionId: {{ isset($question) ? $question->id : 'null' }},
-        // Add random unique ID to each question for stable DOM tracking
-        questions: @json($initialQuestions).map(q => ({ ...q, id: 'q_' + Math.random().toString(36).substr(2, 9) })),
-        existingQuestions: [], // Array to hold existing questions
+        
+        // Data Models
+        questions: @json($initialQuestions).map(q => ({ 
+            ...q, 
+            id: 'q_' + Math.random().toString(36).substr(2, 9),
+            tags: (q.tags || []).map(t => ({ 
+                score_category_id: String(t.score_category_id || ''), 
+                content_area_id: String(t.content_area_id || '') 
+            })),
+            max_question_points: q.max_question_points || 1
+        })),
+        existingQuestions: [],
+        
+        // Select Options
         caseStudies: [],
         subCaseStudies: [],
-        selectedExamId: {{ request('exam_id') ?? ($selectedExamId ?? 'null') }},
-        selectedCaseStudyId: {{ request('section_id') ?? ($selectedCaseStudyId ?? 'null') }},
-        selectedSubCaseId: {{ request('case_study_id') ?? ($selectedSubCaseId ?? 'null') }},
-        editors: {}, // Map of uniqueID -> editor instance
-        existingEditors: {}, // Map of ID -> editor instance
+        allExams: @json($exams),
+        selectedExamId: {{ old('exam_id', request('exam_id') ?? ($selectedExamId ?? 'null')) }},
+        selectedCaseStudyId: {{ old('section_id', request('section_id') ?? ($selectedCaseStudyId ?? 'null')) }},
+        selectedSubCaseId: {{ old('sub_case_id', request('case_study_id') ?? ($selectedSubCaseId ?? 'null')) }},
+        
+        // Exam Standard Data for Tagging
+        examStandardCategories: @json($initialStandardCategories), // [{id, name, content_areas: []}]
+        
+        examQuestionLimit: 0,
+        currentExamQuestionCount: 0,
+
+        get totalQuestionsCount() {
+            return (this.existingQuestions ? this.existingQuestions.length : 0) + (this.questions ? this.questions.length : 0);
+        },
+        editors: {},
+        existingEditors: {},
+        
+        // Compliance Widget Data
+        complianceData: {},
+        complianceHasErrors: false,
+        isLoadingCompliance: false,
 
         init() {
-            // Load initial location data
             if(this.selectedExamId) {
-                document.getElementById('exam_id').value = this.selectedExamId;
+                // Ensure the variable is set for internal methods
                 this.loadCaseStudies(this.selectedExamId);
             }
-            
-            // If sub case is already selected (e.g. from validation error back), trigger load
             if(this.selectedSubCaseId) {
-                 this.$nextTick(() => {
-                     // We need to wait for subCaseStudies dropdown to populate potentially, handled in loadSubCaseStudies
-                 });
+                 this.$nextTick(() => { });
             }
-
-            // Initialize editors for existing questions (if any predefined)
             this.$nextTick(() => {
-                this.questions.forEach((q) => {
-                    this.initEditor(q.id);
-                });
+                if(typeof ClassicEditor !== 'undefined') {
+                    this.questions.forEach((q) => {
+                        this.initEditor(q.id);
+                    });
+                } else {
+                    console.warn('ClassicEditor not loaded yet. Editors will be initialized on first demand.');
+                }
             });
 
-            // Handle form submission
+            // Form Submit Handler
             document.getElementById('questionForm').addEventListener('submit', (e) => {
                 let isValid = true;
-                
-                // Sync New Questions CKEditors
                 this.questions.forEach((q) => {
                     if(this.editors[q.id]) {
                         const data = this.editors[q.id].getData();
                         q.question_text = data;
-                        
                         const el = document.getElementById('question_text_' + q.id);
                         if(el) el.value = data;
-
                         if(!data || data.trim() === '') isValid = false;
                     }
                 });
-
-                // Sync Existing Questions CKEditors
                 this.existingQuestions.forEach(exQ => {
                     if(this.existingEditors[exQ.id]) {
                         const data = this.existingEditors[exQ.id].getData();
                         exQ.question_text = data;
-
                         const el = document.getElementById('existing_question_text_' + exQ.id);
                         if(el) el.value = data;
-                         // Less strict on existing questions validation? Assume they were valid.
-                         // But if user cleared it, it should act as valid or error?
                     }
                 });
 
@@ -517,285 +756,271 @@ function questionForm() {
             });
         },
 
+        // --- Standard & Tagging Helpers ---
+        loadExamStandardData(standard) {
+             if(!standard) {
+                 this.examStandardCategories = [];
+                 return;
+             }
+             // Map standard categories
+             this.examStandardCategories = (standard.categories || []).map(cat => ({
+                 id: String(cat.id),
+                 name: cat.name,
+                 content_areas: (cat.content_areas || cat.contentAreas || []).map(area => ({
+                     id: String(area.id),
+                     name: area.name,
+                     max_points: area.max_points
+                 }))
+             }));
+        },
+
+        getContentAreas(categoryId) {
+            if(!categoryId) return [];
+            const cat = this.examStandardCategories.find(c => String(c.id) === String(categoryId));
+            return cat ? cat.content_areas : [];
+        },
+
+        // --- Question Actions ---
         addQuestion() {
+            if (this.examQuestionLimit > 0 && this.totalQuestionsCount >= this.examQuestionLimit) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Capacity Reached',
+                    text: `This exam has a limit of ${this.examQuestionLimit} questions. You already have ${this.totalQuestionsCount}.` 
+                });
+                return;
+            }
+
             const newId = 'q_' + Math.random().toString(36).substr(2, 9);
             this.questions.push({
                 id: newId,
                 question_text: '',
                 question_type: 'single',
-                question_category: '',
+                max_question_points: 1,
+                tags: [], // Start with empty tags
                 singleCorrect: 0,
-                options: [
-                    { text: '', is_correct: false },
-                    { text: '', is_correct: false }
-                ]
+                options: [{ text: '', is_correct: false }, { text: '', is_correct: false }]
             });
             
-            this.$nextTick(() => {
-                this.initEditor(newId);
-            });
+            this.$nextTick(() => { this.initEditor(newId); });
         },
 
         removeQuestion(index) {
             const q = this.questions[index];
-            const qId = q.id; 
             this.questions.splice(index, 1);
-            
             setTimeout(() => {
-                if(qId && this.editors[qId]) {
-                    this.editors[qId].destroy().then(() => { delete this.editors[qId]; }).catch(e => { delete this.editors[qId]; });
+                if(q.id && this.editors[q.id]) {
+                    try { this.editors[q.id].destroy(); } catch(e){}
+                    delete this.editors[q.id];
                 }
             }, 50);
         },
+        
+        // --- Tag Actions (New Questions) ---
+        addTag(qIndex) {
+            this.questions[qIndex].tags.push({ score_category_id: '', content_area_id: '' });
+        },
+        removeTag(qIndex, tIndex) {
+            this.questions[qIndex].tags.splice(tIndex, 1);
+        },
 
+        // --- Tag Actions (Existing Questions) ---
+        addExistingTag(eqIndex) {
+             this.existingQuestions[eqIndex].tags.push({ score_category_id: '', content_area_id: '' });
+        },
+        removeExistingTag(eqIndex, tIndex) {
+             this.existingQuestions[eqIndex].tags.splice(tIndex, 1);
+        },
+
+        // --- Options Actions ---
         addOption(qIndex) {
             this.questions[qIndex].options.push({ text: '', is_correct: false });
         },
-
         removeOption(qIndex, oIndex) {
             if(this.questions[qIndex].options.length > 2) {
                 this.questions[qIndex].options.splice(oIndex, 1);
-                if(this.questions[qIndex].question_type === 'single' && 
-                   this.questions[qIndex].singleCorrect >= this.questions[qIndex].options.length) {
+                if(this.questions[qIndex].question_type === 'single' && this.questions[qIndex].singleCorrect >= this.questions[qIndex].options.length) {
                     this.questions[qIndex].singleCorrect = 0;
                 }
             }
         },
-
         resetCorrectAnswers(qIndex) {
             this.questions[qIndex].singleCorrect = 0;
-            this.questions[qIndex].options.forEach(opt => {
-                opt.is_correct = false;
-            });
+            this.questions[qIndex].options.forEach(opt => opt.is_correct = false);
         },
-
-        // Existing Question Methods
+        
+        // Existing Options
         addExistingOption(eqIndex) {
             this.existingQuestions[eqIndex].options.push({ text: '', is_correct: false });
         },
-
         removeExistingOption(eqIndex, oIndex) {
              if(this.existingQuestions[eqIndex].options.length > 2) {
                 this.existingQuestions[eqIndex].options.splice(oIndex, 1);
-                // Adjust index if needed
-                 if(this.existingQuestions[eqIndex].question_type === 'single' && 
-                   this.existingQuestions[eqIndex].singleCorrect >= this.existingQuestions[eqIndex].options.length) {
+                 if(this.existingQuestions[eqIndex].question_type === 'single' && this.existingQuestions[eqIndex].singleCorrect >= this.existingQuestions[eqIndex].options.length) {
                     this.existingQuestions[eqIndex].singleCorrect = 0;
                 }
             }
         },
-
         resetExistingCorrectAnswers(eqIndex) {
             this.existingQuestions[eqIndex].singleCorrect = 0;
-            this.existingQuestions[eqIndex].options.forEach(opt => {
-                opt.is_correct = false;
-            });
+            this.existingQuestions[eqIndex].options.forEach(opt => opt.is_correct = false);
         },
 
-        async removeExistingQuestion(index, id) {
-            window.showAlert.confirm('Are you sure you want to delete this question? This action cannot be undone.', 'Delete Question?', async () => {
-                try {
-                    const response = await fetch(`/admin/questions/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    });
+        async loadComplianceData() {
+            if(!this.selectedExamId) return;
+            this.isLoadingCompliance = true;
+            try {
+                const response = await fetch(`/admin/exams/${this.selectedExamId}/validate-compliance`);
+                const data = await response.json();
+                if(data.success) {
+                    this.complianceData = data.compliance;
+                    this.complianceHasErrors = !data.compliance.valid;
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+                    // Support legacy mapping and new categories mapping from Exam::validateStandardCompliance
+                    if(data.compliance.categories && data.compliance.categories.length > 0) {
+                        this.examStandardCategories = data.compliance.categories.map(cat => ({
+                            id: String(cat.id),
+                            name: cat.name,
+                            content_areas: (cat.contentAreas || cat.content_areas || []).map(area => ({
+                                id: String(area.id),
+                                name: area.name,
+                                max_points: area.max_points
+                            }))
+                        }));
                     }
-
-                    let result;
-                    try {
-                        result = await response.json();
-                    } catch (e) {
-                        const text = await response.text();
-                        console.error('Server returned non-JSON:', text);
-                        throw new Error('Server returned invalid response. Check console.');
-                    }
-
-                    if (result.success) {
-                        // Destroy editor
-                        if(this.existingEditors[id]) {
-                            this.existingEditors[id].destroy()
-                                .then(() => { delete this.existingEditors[id]; })
-                                .catch(e => {
-                                    console.error(e);
-                                    delete this.existingEditors[id];
-                                });
-                        }
-                        
-                        // Remove from view
-                        this.existingQuestions.splice(index, 1);
-                        
-                        window.showAlert.toast('Question deleted successfully');
-                    } else {
-                        window.showAlert.error(result.message || 'Error deleting question');
-                    }
-                } catch (error) {
-                    console.error('Deletion Error:', error);
-                    window.showAlert.error('Deletion failed: ' + error.message);
                 }
-            });
+            } catch(e) {
+                console.error("Compliance Load Error", e);
+            } finally {
+                this.isLoadingCompliance = false;
+            }
         },
 
-        initEditor(uniqueId) {
-            const id = 'question_text_' + uniqueId;
-            this.$nextTick(() => { this.createEditor(id, uniqueId, false); });
-        },
-
-        initExistingEditor(questionId) {
-             const id = 'existing_question_text_' + questionId;
-             this.$nextTick(() => { this.createEditor(id, questionId, true); });
-        },
-
-        createEditor(elementId, key, isExisting) {
-            const el = document.getElementById(elementId);
-            const editorMap = isExisting ? this.existingEditors : this.editors;
-            
-            if(editorMap[key] || !el) return;
-
-             if(el.nextSibling && el.nextSibling.classList && el.nextSibling.classList.contains('ck-editor')) {
-                   el.nextSibling.remove();
-                   el.style.display = 'block';
-             }
-
-            ClassicEditor.create(el)
-                .then(editor => {
-                    editorMap[key] = editor;
-                    editor.model.document.on('change:data', () => {
-                        const data = editor.getData();
-                        if(isExisting) {
-                             const q = this.existingQuestions.find(i => i.id === key);
-                             if(q) q.question_text = data;
-                        } else {
-                             const q = this.questions.find(i => i.id === key);
-                             if(q) q.question_text = data;
-                        }
-                    });
-                    
-                    // Set initial data
-                    let initialContent = '';
-                    if(isExisting) {
-                         const q = this.existingQuestions.find(i => i.id === key);
-                         if(q) initialContent = q.question_text;
-                    } else {
-                         const q = this.questions.find(i => i.id === key);
-                         if(q) initialContent = q.question_text;
-                    }
-
-                    if(initialContent) {
-                        editor.setData(initialContent);
-                    }
-                })
-                .catch(error => { console.error('CKEditor Init Error:', error); });
-        },
-
+        // --- AJAX Loaders ---
         async loadCaseStudies(examId) {
             if(!examId) {
-                this.caseStudies = [];
-                this.subCaseStudies = [];
-                this.isActiveExam = false;
+                this.caseStudies = []; this.subCaseStudies = []; this.isActiveExam = false; this.examStandardCategories = [];
                 return;
             }
-
+            this.selectedExamId = examId; // Sync
             try {
                 const response = await fetch(`/admin/questions-ajax/case-studies/${examId}`);
                 const data = await response.json();
-                this.isActiveExam = data.some(cs => cs.exam_is_active === 1);
-                this.caseStudies = data;
                 
-                if(this.selectedCaseStudyId) {
-                    this.$nextTick(() => {
-                        document.getElementById('case_study_id').value = this.selectedCaseStudyId;
-                        this.loadSubCaseStudies(this.selectedCaseStudyId);
-                    });
+                // New robust parsing
+                const sections = (data && data.sections) ? data.sections : (Array.isArray(data) ? data : []);
+                const examObj = (data && data.exam) ? data.exam : null;
+                
+                this.isActiveExam = (examObj && examObj.is_active == 1);
+                this.caseStudies = sections;
+                this.examQuestionLimit = examObj ? examObj.total_questions : 0;
+                
+                // Trigger Compliance Check - WAIT for it to populate categories
+                await this.loadComplianceData();
+
+                // Load Exam Standard Data for Tags (Fallback if compliance didn't have it)
+                if (this.examStandardCategories.length === 0) {
+                    const selectedExam = this.allExams.find(e => String(e.id) === String(examId));
+                    const standard = selectedExam ? (selectedExam.exam_standard || selectedExam.examStandard) : null;
+                    this.loadExamStandardData(standard);
                 }
-            } catch(error) {
-                console.error('Error loading case studies:', error);
+
+                if(this.selectedCaseStudyId) {
+                    await this.loadSubCaseStudies(this.selectedCaseStudyId);
+                }
+            } catch(error) { 
+                console.error("LoadCaseStudies Error", error);
+                this.caseStudies = [];
             }
         },
 
-        async loadSubCaseStudies(caseStudyId) {
-            if(!caseStudyId) {
-                this.subCaseStudies = [];
-                this.existingQuestions = [];
-                return;
-            }
-
-            try {
-                const response = await fetch(`/admin/questions-ajax/sub-case-studies/${caseStudyId}`);
+        async loadSubCaseStudies(sectionId) {
+             if(!sectionId) return;
+             try {
+                const response = await fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`);
                 this.subCaseStudies = await response.json();
-                
                 if(this.selectedSubCaseId) {
                     this.$nextTick(() => {
-                        document.getElementById('sub_case_id').value = this.selectedSubCaseId;
-                         // Load existing questions for the selected sub case (only in create mode)
-                        if (!this.isEdit) {
-                            this.loadExistingQuestions(this.selectedSubCaseId);
-                        }
+                        if (!this.isEdit) this.loadExistingQuestions(this.selectedSubCaseId);
                     });
                 }
-            } catch(error) {
-                console.error('Error loading sub case studies:', error);
-            }
+             } catch(e) { console.error(e); }
         },
 
         async loadExistingQuestions(subCaseId) {
-            if(!subCaseId) {
-                this.existingQuestions = [];
-                return;
-            }
-            
+            if(!subCaseId) { this.existingQuestions = []; return; }
             try {
                 const response = await fetch(`/admin/questions-ajax/questions/${subCaseId}`);
                 let data = await response.json();
+                if (this.isEdit && this.currentQuestionId) data = data.filter(q => q.id != this.currentQuestionId);
 
-                // If in Edit mode, filter out the current question from the existing list
-                if (this.isEdit && this.currentQuestionId) {
-                    data = data.filter(q => q.id != this.currentQuestionId);
-                }
-
-                // Process data to match Vue/Alpine structure (e.g. options handling)
                 this.existingQuestions = data.map(q => {
-                    let cat = 'ig';
-                    if(q.dm_weight > 0) cat = 'dm';
-                    
-                    // Handle options
-                    const opts = q.options.map(o => ({
-                        text: o.option_text,
-                        is_correct: o.is_correct == 1
-                    }));
-
-                    // Find single correct index
+                    const opts = q.options.map(o => ({ text: o.option_text, is_correct: o.is_correct == 1 }));
                     let singleIdx = 0;
                     if(q.question_type === 'single') {
                          const idx = opts.findIndex(o => o.is_correct);
                          if(idx > -1) singleIdx = idx;
                     }
+                    
+                    // Map Tags - Ensuring IDs are strings for reliable dropdown matching
+                    const tags = (q.tags || []).map(t => ({
+                        score_category_id: String(t.score_category_id),
+                        content_area_id: String(t.content_area_id) 
+                    }));
 
                     return {
                         ...q,
                         question_text: q.question_text || '',
-                        question_category: cat,
+                        max_question_points: q.max_question_points || 1,
+                        tags: tags,
                         options: opts,
-                        singleCorrect: singleIdx
+                        singleCorrect: singleIdx,
+                        isSaving: false
                     };
                 });
 
-                // Init editors
                 this.$nextTick(() => {
-                    this.existingQuestions.forEach(q => {
-                        this.initExistingEditor(q.id);
-                    });
+                    this.existingQuestions.forEach(q => this.initExistingEditor(q.id));
                 });
+            } catch(error) { console.error(error); }
+        },
 
-            } catch(error) {
-                console.error('Error loading existing questions:', error);
-            }
+        // --- Editors ---
+        initEditor(uniqueId) { this.$nextTick(() => { this.createEditor('question_text_' + uniqueId, uniqueId, false); }); },
+        initExistingEditor(questionId) { this.$nextTick(() => { this.createEditor('existing_question_text_' + questionId, questionId, true); }); },
+        createEditor(elementId, key, isExisting) {
+            const el = document.getElementById(elementId);
+            const editorMap = isExisting ? this.existingEditors : this.editors;
+            if(editorMap[key] || !el) return;
+            if(el.nextSibling && el.nextSibling.classList && el.nextSibling.classList.contains('ck-editor')) el.nextSibling.remove();
+            
+            ClassicEditor.create(el).then(editor => {
+                editorMap[key] = editor;
+                editor.model.document.on('change:data', () => {
+                    const data = editor.getData();
+                    const q = isExisting ? this.existingQuestions.find(i => i.id === key) : this.questions.find(i => i.id === key);
+                    if(q) q.question_text = data;
+                });
+                // Set Data
+                const q = isExisting ? this.existingQuestions.find(i => i.id === key) : this.questions.find(i => i.id === key);
+                if(q && q.question_text) editor.setData(q.question_text);
+            }).catch(e => console.error(e));
+        },
+        
+        async removeExistingQuestion(index, id) {
+             window.showAlert.confirm('Delete this question?', 'Delete', async () => {
+                 // Fetch Delete logic... (same as before)
+                  try {
+                    const response = await fetch(`/admin/questions/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' }
+                    });
+                    if(response.ok) {
+                        this.existingQuestions.splice(index, 1);
+                        window.showAlert.toast('Deleted');
+                    }
+                  } catch(e) { window.showAlert.error('Error'); }
+             });
         }
     }
 }

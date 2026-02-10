@@ -134,16 +134,6 @@
                             </select>
                         </div>
 
-                        <!-- Category Filter -->
-                        <div class="col-md-1">
-                            <label class="form-label fw-bold text-muted small mb-1">Groups</label>
-                            <select name="category" id="category" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Groups</option>
-                                <option value="ig" {{ request('category') == 'ig' ? 'selected' : '' }}>IG</option>
-                                <option value="dm" {{ request('category') == 'dm' ? 'selected' : '' }}>DM</option>
-                            </select>
-                        </div>
-
                         <!-- Question Type Filter -->
                         <div class="col-md-1">
                             <label class="form-label fw-bold text-muted small mb-1">QUESTION TYPE</label>
@@ -225,11 +215,7 @@
                             <i class="ti ti-file-analytics me-1"></i>{{ $caseStudies->firstWhere('id', request('case_study'))->title ?? 'Unknown' }}
                         </span>
                     @endif
-                    @if(request('category'))
-                        <span class="badge rounded-pill bg-warning text-dark">
-                            <i class="ti ti-bookmark me-1"></i>{{ request('category') == 'ig' ? 'IG' : 'DM' }}
-                        </span>
-                    @endif
+
                     @if(request('question_type'))
                         <span class="badge rounded-pill bg-dark">
                             <i class="ti ti-help me-1"></i>{{ request('question_type') == 'single' ? 'Single' : 'Multiple' }}
@@ -275,11 +261,10 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 30%;">Question</th>
+                                <th style="width: 25%;">Question</th>
+                                <th style="width: 10%;">Content Area</th>
                                 <th style="width: 15%;">Case Study</th>
                                 <th style="width: 15%;">Source</th>
-                                <th style="width: 10%;">Type</th>
-                                <th style="width: 10%;">Groups</th>
                                 <th style="width: 10%;">Options</th>
                                 <th class="text-end" style="width: 10%;">Actions</th>
                             </tr>
@@ -294,6 +279,22 @@
                                     <small class="text-muted">
                                         <i class="ti ti-file-text"></i> {{ $question->caseStudy->section->title ?? 'N/A' }}
                                     </small>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        @forelse($question->tags->take(2) as $tag)
+                                            <span class="badge border border-secondary text-secondary bg-transparent text-start" 
+                                                  title="{{ $tag->scoreCategory->name }} > {{ $tag->contentArea->name }}">
+                                                <small class="fw-bold d-block text-primary">{{ Str::limit($tag->scoreCategory->name, 15) }}</small>
+                                                {{ Str::limit($tag->contentArea->name, 20) }}
+                                            </span>
+                                        @empty
+                                            <span class="text-muted small">-</span>
+                                        @endforelse
+                                        @if($question->tags->count() > 2)
+                                            <span class="badge bg-light text-dark small">+{{ $question->tags->count() - 2 }} more</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="small">
@@ -317,15 +318,6 @@
                                         <span class="badge bg-light-primary">Single Choice</span>
                                     @else
                                         <span class="badge bg-light-success">Multiple Choice</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($question->ig_weight > 0)
-                                        <span class="badge bg-info">IG - Internal Governance</span>
-                                    @elseif($question->dm_weight > 0)
-                                        <span class="badge bg-warning">DM - Decision Making</span>
-                                    @else
-                                        <span class="text-muted">Not Set</span>
                                     @endif
                                 </td>
                                 <td>
@@ -420,8 +412,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
-                        <strong>CSV Format:</strong> Question Text, Type (single/multiple), IG Weight, DM Weight<br>
-                        <small>Example: "What is Laravel?","single","1","0"</small>
+                        <strong>CSV Format:</strong> Question Text, Type (single/multiple)<br>
+                        <small>Example: "What is Laravel?","single"</small>
                     </div>
                     <div class="mb-3">
                         <label for="sub_case_id" class="form-label">Select Case Study</label>

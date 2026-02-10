@@ -10,19 +10,24 @@ class Question extends Model
         'case_study_id',
         'question_text',
         'question_type',
-        'ig_weight',
-        'dm_weight',
         'status',
         'cloned_from_id',
+        'max_question_points',
     ];
 
     protected $casts = [
         'status' => 'boolean',
+        'max_question_points' => 'integer',
     ];
 
     public function caseStudy()
     {
-        return $this->belongsTo(CaseStudy::class, 'case_study_id');
+        return $this->belongsTo(CaseStudy::class);
+    }
+
+    public function section()
+    {
+        return $this->caseStudy->section();
     }
 
     public function options()
@@ -40,8 +45,11 @@ class Question extends Model
         return $this->belongsTo(Question::class, 'cloned_from_id');
     }
 
-    public function getMarksAttribute()
+    public function tags()
     {
-        return $this->ig_weight + $this->dm_weight;
+        return $this->hasMany(QuestionTag::class);
     }
+
+
 }
+

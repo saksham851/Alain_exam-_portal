@@ -122,17 +122,22 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('exam-categories', ExamCategoryController::class);
         Route::patch('exam-categories/{id}/activate', [ExamCategoryController::class, 'activate'])->name('exam-categories.activate');
 
+        // Exam Standards
+        Route::resource('exam-standards', \App\Http\Controllers\Admin\ExamStandardController::class);
 
         // Exams Management
         Route::resource('exams', ExamController::class);
         Route::patch('exams/{id}/activate', [ExamController::class, 'activate'])->name('exams.activate');
         Route::post('exams/{id}/publish', [ExamController::class, 'publish'])->name('exams.publish'); // New Publish Route
+        Route::get('exams/{id}/validate-compliance', [ExamController::class, 'validateCompliance'])->name('exams.validate-compliance');
+        Route::post('exams/{id}/auto-fix-compliance', [ExamController::class, 'autoFixCompliance'])->name('exams.auto-fix-compliance');
         Route::put('exams/{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('exams.toggle-status');
         Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
 
         // Questions Management
         Route::resource('questions', QuestionController::class);
         Route::match(['get', 'patch'], 'questions/{id}/activate', [QuestionController::class, 'activate'])->name('questions.activate');
+        Route::patch('questions/{id}/update-field', [QuestionController::class, 'updateField'])->name('questions.update-field');
         Route::post('questions/import', [QuestionController::class, 'import'])->name('questions.import');
         Route::post('questions/clone', [QuestionController::class, 'clone'])->name('questions.clone');
         Route::get('questions/export', [QuestionController::class, 'export'])->name('questions.export');

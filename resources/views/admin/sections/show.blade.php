@@ -85,6 +85,125 @@
     </div>
 </div>
 
+@if($section->exam->exam_standard_id)
+<!-- Exam Standard Progress Tracker -->
+<div class="card mb-4 shadow-sm border-primary">
+    <div class="card-header bg-primary text-white">
+        <h6 class="mb-0">
+            <i class="ti ti-target me-2"></i>
+            Exam Standard Progress - {{ $section->exam->examStandard->name }}
+        </h6>
+    </div>
+    <div class="card-body">
+        @php
+            $validation = $section->exam->validateStandardCompliance();
+            $totalQuestions = $validation['total_questions'];
+            $expectedTotal = $section->exam->total_questions ?? 0;
+            
+            // Get current section's questions by content area
+            $sectionQuestions = [];
+            foreach($section->caseStudies as $cs) {
+                foreach($cs->questions as $q) {
+                    if($q->content_area_id) {
+                        if(!isset($sectionQuestions[$q->content_area_id])) {
+                            $sectionQuestions[$q->content_area_id] = 0;
+                        }
+                        $sectionQuestions[$q->content_area_id]++;
+                    }
+                }
+            }
+        @endphp
+
+        <!-- Overall Exam Progress -->
+        <div class="alert alert-info mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="ti ti-info-circle me-2"></i>
+                    <strong>Overall Exam Progress:</strong> {{ $totalQuestions }}/{{ $expectedTotal }} questions
+                </div>
+                <span class="badge {{ $validation['valid'] ? 'bg-success' : 'bg-warning' }}">
+                    {{ round(($totalQuestions / max($expectedTotal, 1)) * 100) }}%
+                </span>
+            </div>
+        </div>
+
+        <!-- This Section's Contribution -->
+        <h6 class="text-primary mb-3">
+            <i class="ti ti-chart-bar me-2"></i>
+            This Section's Contribution
+        </h6>
+        
+        <div class="row g-3">
+            @php
+                $hasContribution = false;
+            @endphp
+            
+            @foreach($validation['content_areas'] as $area)
+                @if(isset($sectionQuestions[$area['id']]) && $sectionQuestions[$area['id']] > 0)
+                    @php $hasContribution = true; @endphp
+                    <div class="col-md-6">
+                        <div class="card border-{{ $area['valid'] ? 'success' : 'warning' }}">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1">{{ $area['name'] }}</h6>
+                                        <small class="text-muted">{{ $area['percentage'] }}% of exam</small>
+                                    </div>
+                                    <span class="badge bg-primary">
+                                        {{ $sectionQuestions[$area['id']] ?? 0 }} questions here
+                                    </span>
+                                </div>
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar bg-{{ $area['valid'] ? 'success' : 'warning' }}" 
+                                         style="width: {{ min(($area['current'] / max($area['required'], 1)) * 100, 100) }}%;">
+                                        {{ $area['current'] }}/{{ $area['required'] }}
+                                    </div>
+                                </div>
+                                @if(!$area['valid'])
+                                    <small class="text-warning">
+                                        <i class="ti ti-alert-circle"></i>
+                                        Exam needs {{ $area['required'] - $area['current'] > 0 ? ($area['required'] - $area['current']) . ' more' : 'to remove ' . ($area['current'] - $area['required']) }}
+                                    </small>
+                                @else
+                                    <small class="text-success">
+                                        <i class="ti ti-circle-check"></i>
+                                        Complete!
+                                    </small>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
+            
+            @if(!$hasContribution)
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <i class="ti ti-alert-triangle me-2"></i>
+                        This section has no questions yet. Add case studies and questions to contribute to the exam standard.
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Suggestions -->
+        @if(!$validation['valid'])
+        <div class="alert alert-warning mt-3 mb-0">
+            <h6 class="alert-heading">
+                <i class="ti ti-bulb me-2"></i>
+                Suggestions to Complete Exam
+            </h6>
+            <ul class="mb-0 small">
+                @foreach($validation['errors'] as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+    </div>
+</div>
+@endif
+
 <!-- Case Studies List -->
 <div class="row">
     <div class="col-12">

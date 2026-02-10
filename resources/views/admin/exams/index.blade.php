@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     <li>
                                                         <form action="{{ route('admin.exams.publish', $exam->id) }}" method="POST" class="d-block" id="publishForm{{ $exam->id }}">
                                                             @csrf
-                                                            <button type="button" class="dropdown-item" onclick="showPublishModal(document.getElementById('publishForm{{ $exam->id }}'))">
+                                                            <button type="button" class="dropdown-item" onclick="showPublishModal(document.getElementById('publishForm{{ $exam->id }}'), {{ $exam->id }})">
                                                                 <i class="ti ti-upload me-2"></i>Publish Exam
                                                             </button>
                                                         </form>
@@ -498,20 +498,213 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showPublishModal(form) {
-        if(typeof showAlert !== 'undefined' && showAlert.confirm) {
-             showAlert.confirm(
-                'Are you sure you want to publish this exam? ensure that the exam has at least one section, one case study, and one question.',
-                'Publish Exam',
-                function() {
-                    form.submit();
-                }
-            );
-        } else {
-            if(confirm('Are you sure you want to publish this exam?')) {
-                form.submit();
-            }
+    function showPublishModal(form, examId) {
+        if(!examId) {
+             // Fallback if no ID provided
+             if(confirm('Are you sure you want to publish this exam?')) form.submit();
+             return;
         }
+        
+        // Store globally
+        window.currentExamId = examId;
+        window.currentPublishForm = form;
+
+        // Show loading state or fetch data
+        // We will open the custom modal
+        const modal = new bootstrap.Modal(document.getElementById('complianceModal'));
+        const modalBody = document.getElementById('complianceModalBody');
+        const publishBtn = document.getElementById('compliancePublishBtn');
+        const loadingSpinner = document.getElementById('complianceLoading');
+        const contentArea = document.getElementById('complianceContent');
+
+        modal.show();
+        
+        // Show loading
+        loadingSpinner.style.display = 'block';
+        contentArea.style.display = 'none';
+        publishBtn.disabled = true;
+        publishBtn.className = 'btn btn-secondary'; // Reset class
+
+        // Fetch Compliance Data
+        fetchComplianceData(examId);
+    }
+    
+    function fetchComplianceData(examId) {
+        const loadingSpinner = document.getElementById('complianceLoading');
+        const contentArea = document.getElementById('complianceContent');
+        const publishBtn = document.getElementById('compliancePublishBtn');
+        
+        fetch(`/admin/exams/${examId}/validate-compliance`)
+            .then(response => response.json())
+            .then(data => {
+                loadingSpinner.style.display = 'none';
+                contentArea.style.display = 'block';
+                
+                if(data.no_standard) {
+                    // No standard assigned - allow publish immediately
+                    document.getElementById('complianceStatusAlert').className = 'alert alert-info';
+                    document.getElementById('complianceStatusIcon').className = 'ti ti-info-circle me-2 fs-4';
+                    document.getElementById('complianceStatusTitle').innerText = 'Ready to Publish';
+                    document.getElementById('complianceStatusText').innerText = 'This exam does not have a specific standard assigned. Basic structure checks will be performed upon publishing.';
+                    document.getElementById('complianceTableContainer').style.display = 'none';
+                    
+                    publishBtn.disabled = false;
+                    publishBtn.className = 'btn btn-success';
+                    publishBtn.innerHTML = '<i class="ti ti-upload me-1"></i> Confirm Publish';
+                } else if(data.success) {
+                    const comp = data.compliance;
+                    const isValid = comp.valid;
+                    
+                    // Update Alert Header
+                    const alertDiv = document.getElementById('complianceStatusAlert');
+                    const icon = document.getElementById('complianceStatusIcon');
+                    const title = document.getElementById('complianceStatusTitle');
+                    const text = document.getElementById('complianceStatusText');
+                    
+                    if(isValid) {
+                        alertDiv.className = 'alert alert-success d-flex align-items-center mb-4';
+                        icon.className = 'ti ti-circle-check me-2 fs-4';
+                        title.innerText = 'Compliance Verified';
+                        text.innerText = 'This exam meets all standard requirements and is ready to be published.';
+                        publishBtn.disabled = false;
+                        publishBtn.className = 'btn btn-success';
+                        publishBtn.innerHTML = '<i class="ti ti-upload me-1"></i> Publish Exam';
+                    } else {
+                        alertDiv.className = 'alert alert-danger d-flex align-items-center mb-4';
+                        icon.className = 'ti ti-alert-circle me-2 fs-4';
+                        title.innerText = 'Compliance Failed';
+                        text.innerText = 'This exam does not meet the standard requirements. Please address the issues below before publishing.';
+                        publishBtn.disabled = true;
+                        publishBtn.className = 'btn btn-secondary';
+                        publishBtn.innerHTML = '<i class="ti ti-lock me-1"></i> Cannot Publish';
+                    }
+                    
+                    // Build Table
+                    document.getElementById('complianceTableContainer').style.display = 'block';
+                    const tbody = document.getElementById('complianceTableBody');
+                    tbody.innerHTML = '';
+                    
+                    if(comp.content_areas && comp.content_areas.length > 0) {
+                        
+                        // Add Total Row
+                        const totalTr = document.createElement('tr');
+                        totalTr.innerHTML = `
+                            <td colspan="4" class="bg-primary-subtle text-primary border-bottom border-primary px-3 py-2 fw-bold">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span><i class="ti ti-chart-bar me-1"></i> Total Active Questions in Exam: ${data.compliance.total_questions || 0}</span>
+                                    ${data.compliance.uncategorized_count > 0 ? `<span class="badge bg-danger"><i class="ti ti-alert-triangle me-1"></i> ${data.compliance.uncategorized_count} Uncategorized</span>` : ''}
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(totalTr);
+
+                        // Warning for Uncategorized
+                        if(data.compliance.uncategorized_count > 0) {
+                             const uncategorizedTr = document.createElement('tr');
+                             uncategorizedTr.innerHTML = `
+                                <td colspan="4" class="bg-warning-subtle text-warning-emphasis px-3 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="ti ti-alert-triangle me-2"></i> <strong>Warning:</strong> ${data.compliance.uncategorized_count} questions are not assigned to any Content Area.
+                                        </div>
+                                        <button class="btn btn-sm btn-warning text-dark fw-bold" onclick="autoFixCompliance(window.currentExamId)">
+                                            <i class="ti ti-wand me-1"></i> Auto-Assign Questions
+                                        </button>
+                                    </div>
+                                </td>
+                             `;
+                             tbody.appendChild(uncategorizedTr);
+                        }
+
+                        // Group Items by Category
+                        const grouped = {};
+                        comp.content_areas.forEach(item => {
+                             const cat = item.category || 'Other';
+                             if(!grouped[cat]) grouped[cat] = [];
+                             grouped[cat].push(item);
+                        });
+
+                        // Render Groups
+                        Object.keys(grouped).forEach(category => {
+                             // Category Header
+                             const headerTr = document.createElement('tr');
+                             headerTr.innerHTML = `<td colspan="4" class="bg-light fw-bold text-uppercase small px-3 py-2 text-primary border-bottom border-top">${category}</td>`;
+                             tbody.appendChild(headerTr);
+
+                            // Render Items in Category
+                             grouped[category].forEach(area => {
+                                const tr = document.createElement('tr');
+                                const required = area.required !== undefined ? area.required : 'N/A';
+                                const percentage = area.percentage !== undefined ? area.percentage : 0;
+                                const current = area.current !== undefined ? area.current : 0;
+                                const areaPassed = area.valid; // Use the valid flag directly
+                                
+                                tr.innerHTML = `
+                                    <td class="ps-4 border-start border-3 border-light text-wrap" style="max-width: 300px;">
+                                        <span class="fw-bold text-dark">${area.name || 'Unknown Area'}</span>
+                                    </td>
+                                    <td>
+                                        <div class="small text-muted">Required: <span class="fw-bold">${required}</span></div>
+                                        <div class="small text-muted">(${percentage}%)</div>
+                                    </td>
+                                    <td>
+                                        <div class="h6 mb-0 ${areaPassed ? 'text-success' : 'text-danger'} fw-bold">${current}</div>
+                                    </td>
+                                    <td class="text-end">
+                                        ${areaPassed 
+                                            ? '<span class="badge bg-light-success text-success border border-success"><i class="ti ti-check me-1"></i> Pass</span>' 
+                                            : '<span class="badge bg-light-danger text-danger border border-danger"><i class="ti ti-x me-1"></i> Fail</span>'}
+                                    </td>
+                                `;
+                                tbody.appendChild(tr);
+                             });
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingSpinner.style.display = 'none';
+                contentArea.style.display = 'block';
+                contentArea.innerHTML = '<div class="alert alert-danger">Error fetching compliance data. Please try again.</div>';
+            });
+    }
+
+    function autoFixCompliance(examId) {
+        if(!examId) return;
+        if(!confirm('This action will automatically distribute uncategorized questions to content areas that are missing questions to meet compliance requirements. This cannot be undone. Do you want to proceed?')) return;
+
+        const loadingSpinner = document.getElementById('complianceLoading');
+        const contentArea = document.getElementById('complianceContent');
+        
+        loadingSpinner.style.display = 'block';
+        contentArea.style.display = 'none';
+        
+        fetch(`/admin/exams/${examId}/auto-fix-compliance`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                // Refresh data
+                fetchComplianceData(examId);
+                // Also show toast or alert?
+            } else {
+                alert('Action Failed: ' + (data.message || 'Unknown Error'));
+                loadingSpinner.style.display = 'none';
+                contentArea.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Network Error');
+            loadingSpinner.style.display = 'none';
+            contentArea.style.display = 'block';
+        });
     }
 </script>
 
@@ -647,4 +840,62 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Compliance Check Modal -->
+<div class="modal fade" id="complianceModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold">
+                    <i class="ti ti-clipboard-check me-2 text-primary"></i>Standard Compliance Check
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="complianceModalBody">
+                <!-- Loading State -->
+                <div id="complianceLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="text-muted">Validating Exam Standard compliance...</p>
+                </div>
+
+                <!-- Content Area -->
+                <div id="complianceContent" style="display:none;">
+                    <!-- Status Alert -->
+                    <div id="complianceStatusAlert" class="alert alert-success d-flex align-items-center mb-4">
+                        <i id="complianceStatusIcon" class="ti ti-circle-check me-2 fs-4"></i>
+                        <div>
+                            <h6 class="alert-heading fw-bold mb-1" id="complianceStatusTitle">Compliance Verified</h6>
+                            <p class="mb-0 small" id="complianceStatusText">This exam meets all standard requirements.</p>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown Table -->
+                    <div id="complianceTableContainer">
+                        <h6 class="fw-bold mb-3 text-muted text-uppercase small ls-1">Content Area Breakdown</h6>
+                        <div class="table-responsive rounded border">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th style="width: 40%;">Content Area</th>
+                                        <th style="width: 25%;">Allocation</th>
+                                        <th style="width: 20%;">Current Count</th>
+                                        <th style="width: 15%;" class="text-end">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="complianceTableBody">
+                                    <!-- Dynamic Content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" id="compliancePublishBtn" disabled onclick="if(window.currentPublishForm) window.currentPublishForm.submit()">
+                    <i class="ti ti-lock me-1"></i> Cannot Publish
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

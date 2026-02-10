@@ -37,6 +37,52 @@
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
+                        <!-- Strategic Insight Widget -->
+                        <div class="col-12 mb-3" style="display:none;" x-show="selectedExamId && compliance">
+                             <div class="alert alert-info bg-info-subtle border-info">
+                                <h6 class="alert-heading fw-bold mb-2 text-info">
+                                    <i class="ti ti-bulb me-1"></i> Strategic Insight & Question Quota
+                                </h6>
+                                <p class="small mb-2 text-dark">
+                                    <strong>Exam Progress:</strong> <span x-text="compliance?.total_current ?? 0"></span> / <span x-text="compliance?.total_required ?? 0"></span> Questions
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-7">
+                                         <h6 class="small fw-bold text-muted mb-1">Standard Requirements (Overall):</h6>
+                                         <ul class="list-group list-group-flush bg-transparent small mb-0">
+                                            <template x-if="compliance && compliance.content_areas">
+                                                <template x-for="area in compliance.content_areas" :key="area.id">
+                                                    <li class="list-group-item bg-transparent px-0 py-1 d-flex justify-content-between align-items-center border-bottom-0">
+                                                        <span x-text="area.name"></span>
+                                                        <span class="badge border" :class="area.current >= area.required ? 'bg-success-subtle text-success border-success' : 'bg-warning-subtle text-warning border-warning'"
+                                                              x-text="area.current + ' / ' + area.required + (area.current >= area.required ? ' (Completed)' : ' (Need ' + (area.required - area.current) + ')')"></span>
+                                                    </li>
+                                                </template>
+                                            </template>
+                                         </ul>
+                                    </div>
+                                    <div class="col-md-5 border-start">
+                                         <h6 class="small fw-bold text-muted mb-1">Current Section Status:</h6>
+                                         <div x-show="selectedSectionId" class="mt-2">
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <i class="ti ti-chart-bar me-2 fs-4 text-primary"></i>
+                                                 <div>
+                                                     <div class="fs-4 fw-bold text-primary" x-text="(sections.find(s => s.id == selectedSectionId)?.questions_count || 0) + ' Questions'"></div>
+                                                     <div class="small text-muted">Currently in this section</div>
+                                                 </div>
+                                             </div>
+                                             <p class="small text-muted fst-italic mb-0 line-height-sm">
+                                                 Tip: Usually, a Case Study has 3-5 questions. Check the 'Standard Requirements' to see which content area needs more questions and create scenarios accordingly.
+                                             </p>
+                                         </div>
+                                         <div x-show="!selectedSectionId" class="text-muted small fst-italic mt-2">
+                                             Select a section to see specific counts.
+                                         </div>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Select Exam <span class="text-danger">*</span></label>
                             <select name="exam_id" id="examSelect" class="form-select" x-model="selectedExamId" @change="fetchSections()" required {{ request('exam_id') ? 'style=pointer-events:none;background-color:#e9ecef;' : '' }}>
@@ -166,6 +212,7 @@
             selectedExamId: '{{ request("exam_id") ?? "" }}',
             selectedSectionId: '{{ request("section_id") ?? "" }}',
             sections: [],
+            compliance: null,
             existingCaseStudies: @json($existingCaseStudies ?? []),
             deletedCaseStudyIds: [],
             caseStudies: [
@@ -361,11 +408,20 @@
                 
                 try {
                     const response = await fetch(`/admin/questions-ajax/case-studies/${this.selectedExamId}`);
-                    this.sections = await response.json();
+                    const data = await response.json();
+                    
+                    if(Array.isArray(data)) {
+                        this.sections = data;
+                        this.compliance = null;
+                    } else {
+                        this.sections = data.sections || [];
+                        this.compliance = data.compliance;
+                    }
                     
                     if(this.selectedSectionId) {
                          this.$nextTick(() => {
-                             document.getElementById('sectionSelect').value = this.selectedSectionId;
+                             const el = document.getElementById('sectionSelect');
+                             if(el) el.value = this.selectedSectionId;
                              this.fetchExistingCaseStudies(); 
                          });
                     }

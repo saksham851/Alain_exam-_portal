@@ -226,10 +226,9 @@ class ExamController extends Controller
             $attempt->update([
                 'ended_at' => now(),
                 'status' => 'submitted',
-                'ig_score' => $result['ig_score'],
-                'dm_score' => $result['dm_score'],
+                'category_breakdown' => $result['category_breakdown'],
                 'total_score' => $result['total_score'],
-                'is_passed' => $result['is_passed'],
+                'is_passed' => $result['is_passed'] ? 1 : 0,
             ]);
         });
         
@@ -240,9 +239,9 @@ class ExamController extends Controller
                 "name" => $user->first_name . ' ' . $user->last_name,
                 "email" => $user->email,
                 "phone" => $user->phone ?? "",
-                "ig_score" => $attempt->ig_score,
-                "dm_score" => $attempt->dm_score,
                 "total_score" => $attempt->total_score,
+                "is_passed" => $attempt->is_passed,
+                "breakdown" => $attempt->category_breakdown,
                 "attempts" => $studentExam->attempts_used,
                 "status" => "completed",
                 "exam_name" => $studentExam->exam->name,

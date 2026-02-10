@@ -81,7 +81,7 @@ class CaseStudyBankController extends Controller
      */
     public function create(Request $request)
     {
-        $exams = Exam::where('status', 1)->orderBy('name')->get();
+        $exams = Exam::where('status', 1)->with('examStandard.categories.contentAreas')->orderBy('name')->get();
         
         $existingCaseStudies = collect();
         if ($request->has('section_id')) {
@@ -275,6 +275,10 @@ public function store(Request $request)
     public function getSectionsByExam($examId)
     {
         $sections = Section::where('exam_id', $examId)
+            ->where('status', 1)
+            ->withCount(['questions' => function($q) {
+                $q->where('status', 1);
+            }])
             ->orderBy('title')
             ->get(['id', 'title']);
 

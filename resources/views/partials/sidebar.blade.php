@@ -31,6 +31,7 @@
         @php
             $isExamGroupActive = request()->routeIs('admin.exams.*') || 
                                request()->routeIs('admin.exam-categories.*') || 
+                               request()->routeIs('admin.exam-standards.*') || 
                                request()->routeIs('admin.sections.*') || 
                                request()->routeIs('admin.case-studies-bank.*') || 
                                request()->routeIs('admin.questions.*') || 
@@ -46,6 +47,9 @@
             <ul class="pc-submenu"@if($isExamGroupActive) style="display: block;"@endif>
                 <li class="pc-item {{ request()->routeIs('admin.exam-categories.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.exam-categories.index') }}" class="pc-link">Exam Categories</a>
+                </li>
+                <li class="pc-item {{ request()->routeIs('admin.exam-standards.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.exam-standards.index') }}" class="pc-link">Exam Standards</a>
                 </li>
                 <li class="pc-item {{ request()->routeIs('admin.exams.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.exams.index') }}" class="pc-link">All Exams</a>

@@ -96,7 +96,7 @@ class SectionController extends Controller
     public function create(Request $request)
     {
         $section = null;
-        $exams = Exam::where('status', 1)->get();
+        $exams = Exam::where('status', 1)->with(['examStandard.categories.contentAreas', 'sections'])->get();
         
         $existingSections = collect();
         if ($request->has('exam_id')) {
@@ -139,6 +139,7 @@ class SectionController extends Controller
             }),
         ],
         'exam_id' => 'required|exists:exams,id',
+        'exam_standard_category_id' => 'nullable|exists:exam_standard_categories,id',
         'content' => 'nullable|string',
     ], [
         'title.unique' => 'A section with this name already exists in the selected exam.',
@@ -147,6 +148,7 @@ class SectionController extends Controller
     // Create main section
     $section = Section::create([
         'exam_id' => $request->exam_id,
+        'exam_standard_category_id' => $request->exam_standard_category_id,
         'title' => $request->title,
         'content' => $request->content,
         'order_no' => Section::where('exam_id', $request->exam_id)->max('order_no') + 1,
@@ -194,6 +196,7 @@ class SectionController extends Controller
             })->ignore($id),
         ],
         'exam_id' => 'required|exists:exams,id',
+        'exam_standard_category_id' => 'nullable|exists:exam_standard_categories,id',
         'content' => 'nullable|string',
     ], [
         'title.unique' => 'A section with this name already exists in the selected exam.',
@@ -205,6 +208,7 @@ class SectionController extends Controller
     // Update main section
     $section->update([
         'exam_id' => $request->exam_id,
+        'exam_standard_category_id' => $request->exam_standard_category_id,
         'title' => $request->title,
         'content' => $request->content,
     ]);
@@ -321,12 +325,60 @@ class SectionController extends Controller
     // AJAX: Get sections for an exam
     public function getSections($examId)
     {
-        $sections = Section::where('exam_id', $examId)
-            ->where('status', 1)
-            ->orderBy('title')
-            ->get(['id', 'title']);
-        
-        return response()->json($sections);
+        try {
+            $exam = Exam::with(['examStandard.categories.contentAreas'])->find($examId);
+            
+            if (!$exam) {
+                 return response()->json([
+                     'success' => false,
+                     'sections' => [], 
+                     'exam' => null, 
+                     'compliance' => null
+                 ]);
+            }
+
+            $sections = Section::where('exam_id', $examId)
+                ->where('status', 1)
+                ->orderBy('order_no')
+                ->get(['id', 'title', 'exam_standard_category_id', 'status']);
+            
+            $compliance = $exam->validateStandardCompliance();
+
+            $formattedSections = $sections->map(function($s) use ($exam) {
+                // Determine Category Name
+                $catName = '';
+                if ($exam->examStandard && $s->exam_standard_category_id) {
+                    $cat = $exam->examStandard->categories->where('id', $s->exam_standard_category_id)->first();
+                    if ($cat) $catName = $cat->name;
+                }
+                
+                return [
+                    'id' => $s->id,
+                    'title' => $s->title,
+                    'category_name' => $catName,
+                    'exam_is_active' => (int)$exam->is_active,
+                    'exam_standard_category_id' => $s->exam_standard_category_id
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'sections' => $formattedSections,
+                'exam' => [
+                    'id' => $exam->id,
+                    'name' => $exam->name,
+                    'is_active' => (int)$exam->is_active,
+                    'total_questions' => $exam->total_questions
+                ],
+                'compliance' => $compliance
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'sections' => []
+            ], 500);
+        }
     }
 
     // CLONE SECTION
@@ -343,6 +395,29 @@ class SectionController extends Controller
         if ($targetExam->is_active == 1) {
             return redirect()->back()->with('error', 'Cannot clone section into an active exam. Please deactivate the target exam first.');
         }
+
+        // --- CHECK CAPACITY START ---
+        $questionsToAdd = 0;
+        foreach ($request->source_section_ids as $sectionId) {
+             $sourceSection = Section::find($sectionId);
+             if($sourceSection) {
+                 // Count active questions in this section's case studies
+                 $questionsToAdd += \App\Models\Question::whereHas('caseStudy', function($q) use ($sectionId) {
+                     $q->where('section_id', $sectionId);
+                 })->where('status', 1)->count();
+             }
+        }
+
+        if ($questionsToAdd > 0 && $targetExam->total_questions) {
+            $currentCount = \App\Models\Question::whereHas('caseStudy.section', function($q) use ($targetExam) {
+                $q->where('exam_id', $targetExam->id);
+            })->where('status', 1)->count();
+
+            if (($currentCount + $questionsToAdd) > $targetExam->total_questions) {
+                 return redirect()->back()->with('error', "Cannot clone sections. It would add {$questionsToAdd} questions, exceeding the exam limit of {$targetExam->total_questions} (Current: {$currentCount}).");
+            }
+        }
+        // --- CHECK CAPACITY END ---
 
         DB::beginTransaction();
         try {
