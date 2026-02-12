@@ -187,17 +187,20 @@
                                         </template>
                                      </div>
 
-                                    <!-- Max Points Field -->
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label">Max Points</label>
-                                        <input type="number" 
-                                               :name="'existing_questions['+exQ.id+'][max_question_points]'"
-                                               class="form-control" 
-                                               min="1" 
-                                               max="3"
-                                               x-model="exQ.max_question_points"
-                                               @change="updateQuestionField(exQ.id, 'max_question_points', $event.target.value)">
-                                        <small class="text-muted">Max 3 points allowed per question.</small>
+                                    <!-- Max Points Field (0 to 3) -->
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold"><i class="ti ti-star me-1 text-warning"></i> Question Points (0-3)</label>
+                                        <div class="input-group">
+                                            <input type="number" 
+                                                   :name="'existing_questions['+exQ.id+'][max_question_points]'"
+                                                   class="form-control" 
+                                                   min="0" 
+                                                   max="3"
+                                                   step="1"
+                                                   x-model="exQ.max_question_points">
+                                            <span class="input-group-text">pts</span>
+                                        </div>
+                                        <small class="text-muted">Weight for this question.</small>
                                     </div>
                                 </div>
 
@@ -360,16 +363,20 @@
                                 </template>
                             </div>
 
-                            <!-- Max Points -->
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label">Max Points</label>
-                                <input type="number" 
-                                       :name="isEdit ? 'max_question_points' : 'questions['+qIndex+'][max_question_points]'"
-                                       class="form-control" 
-                                       min="1" 
-                                       max="3"
-                                       x-model="questionItem.max_question_points">
-                                <small class="text-muted">Max 3 points allowed per question.</small>
+                            <!-- Max Points (0 to 3) -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold"><i class="ti ti-star me-1 text-warning"></i> Question Points (0-3)</label>
+                                <div class="input-group">
+                                    <input type="number" 
+                                           :name="isEdit ? 'max_question_points' : 'questions['+qIndex+'][max_question_points]'"
+                                           class="form-control" 
+                                           min="0" 
+                                           max="3"
+                                           step="1"
+                                           x-model="questionItem.max_question_points">
+                                    <span class="input-group-text">pts</span>
+                                </div>
+                                <small class="text-muted">Weight for this question.</small>
                             </div>
                         </div>
 

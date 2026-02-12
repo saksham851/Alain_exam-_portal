@@ -34,8 +34,8 @@
                         <thead>
                             <tr>
                                 <th>Standard Name</th>
-                                <th>Standard Category 1</th>
-                                <th>Standard Category 2</th>
+                                <th>Score Category 1</th>
+                                <th>Score Category 2</th>
                                 <th>Exams Using</th>
                                 <th class="text-end" style="width: 100px;">Actions</th>
                             </tr>

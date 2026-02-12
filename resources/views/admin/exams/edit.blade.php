@@ -31,60 +31,83 @@
                         <small class="text-muted">Real-time validation against the assigned standard</small>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle" type="button" data-bs-toggle="collapse" data-bs-target="#progressDetails" aria-expanded="true">
+                <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#complianceTrackerBody" aria-expanded="false">
                     <i class="ti ti-chevron-down"></i>
                 </button>
             </div>
-            <div class="card-body pt-0">
-                @php
-                    $validation = $exam->validateStandardCompliance();
-                    $totalQuestions = $validation['total_questions'];
-                    $expectedTotal = $exam->total_questions ?? 0;
-                    $progressPercent = $expectedTotal > 0 ? round(($totalQuestions / $expectedTotal) * 100) : 0;
-                    $isValidStatus = $validation['valid'];
-                @endphp
+            <div class="collapse" id="complianceTrackerBody">
+                <div class="card-body pt-0">
+                    @php
+                        $validation = $exam->validateStandardCompliance();
+                        $totalQuestions = $validation['total_questions'];
+                        $expectedTotal = $exam->total_questions ?? 0;
+                        $progressPercent = $expectedTotal > 0 ? round(($totalQuestions / $expectedTotal) * 100) : 0;
+                        $isValidStatus = $validation['valid'];
+                    @endphp
 
-                <!-- Overall Progress -->
-                <div class="bg-light-subtle rounded-3 p-3 mb-4 border border-dashed border-primary-subtle">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-semibold text-dark">Overall Exam Capacity</span>
-                                <span class="badge {{ $isValidStatus ? 'bg-success' : 'bg-warning' }} rounded-pill px-3">
-                                    {{ $totalQuestions }} / {{ $expectedTotal }} Questions ({{ $progressPercent }}%)
-                                </span>
-                            </div>
-                            <div class="progress rounded-pill overflow-hidden shadow-none mb-2" style="height: 12px; background: rgba(0,0,0,0.05);">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated {{ $isValidStatus ? 'bg-success' : 'bg-warning' }}" 
-                                     role="progressbar" 
-                                     style="width: {{ min($progressPercent, 100) }}%;" 
-                                     aria-valuenow="{{ $progressPercent }}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100">
+                    <!-- Overall Progress -->
+                    <div class="bg-light-subtle rounded-3 p-3 mb-4 border border-dashed border-primary-subtle">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-semibold text-dark">Overall Exam Capacity</span>
+                                    <span class="badge {{ $isValidStatus ? 'bg-success' : 'bg-warning' }} rounded-pill px-3">
+                                        {{ $totalQuestions }} / {{ $expectedTotal }} Points ({{ $progressPercent }}%)
+                                    </span>
+                                </div>
+                                <div class="progress rounded-pill overflow-hidden shadow-none mb-2" style="height: 12px; background: rgba(0,0,0,0.05);">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated {{ $isValidStatus ? 'bg-success' : 'bg-warning' }}" 
+                                         role="progressbar" 
+                                         style="width: {{ min($progressPercent, 100) }}%;" 
+                                         aria-valuenow="{{ $progressPercent }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    @if(!$isValidStatus)
+                                        <i class="ti ti-alert-triangle text-warning me-2 fs-5"></i>
+                                        <span class="small text-warning">
+                                            {{ $expectedTotal - $totalQuestions > 0 ? 'Action required: Add ' . ($expectedTotal - $totalQuestions) . ' more points' : 'Action required: Remove ' . ($totalQuestions - $expectedTotal) . ' points' }}
+                                        </span>
+                                    @else
+                                        <i class="ti ti-circle-check text-success me-2 fs-5"></i>
+                                        <span class="small text-success fw-medium">All requirements met! This exam is ready to be published.</span>
+                                    @endif
                                 </div>
                             </div>
-                            <div class="d-flex align-items-center">
-                                @if(!$isValidStatus)
-                                    <i class="ti ti-alert-triangle text-warning me-2 fs-5"></i>
-                                    <span class="small text-warning">
-                                        {{ $expectedTotal - $totalQuestions > 0 ? 'Action required: Add ' . ($expectedTotal - $totalQuestions) . ' more questions' : 'Action required: Remove ' . ($totalQuestions - $expectedTotal) . ' questions' }}
-                                    </span>
-                                @else
-                                    <i class="ti ti-circle-check text-success me-2 fs-5"></i>
-                                    <span class="small text-success fw-medium">All requirements met! This exam is ready to be published.</span>
-                                @endif
+                            <div class="col-auto">
+                                <a href="{{ route('admin.questions.index', ['exam_id' => $exam->id]) }}" class="btn btn-sm btn-primary px-3 rounded-pill">
+                                    <i class="ti ti-settings me-1"></i> Manage Questions
+                                </a>
                             </div>
                         </div>
-                        <div class="col-auto">
-                            <a href="{{ route('admin.questions.index', ['exam_id' => $exam->id]) }}" class="btn btn-sm btn-primary px-3 rounded-pill">
-                                <i class="ti ti-settings me-1"></i> Manage Questions
-                            </a>
-                        </div>
                     </div>
-                </div>
 
-                <!-- Detailed Breakdown (Collapsible) -->
-                <div class="collapse show" id="progressDetails">
+                    <!-- Compliance Guidance (New) -->
+                    @if(!$isValidStatus && !empty($validation['compliance_guidance']))
+                    <div class="mt-2 mb-4 p-3 bg-light-warning border border-warning-subtle rounded-3">
+                        <h6 class="text-warning-emphasis fw-bold mb-2">
+                            <i class="ti ti-bulb me-1"></i> Question Quantity Guide (To Achieve Compliance)
+                        </h6>
+                        <ul class="list-unstyled mb-0 vstack gap-2">
+                            @foreach($validation['compliance_guidance'] as $guide)
+                            <li class="small d-flex align-items-center">
+                                <span class="badge bg-warning text-dark me-2">{{ $guide['count'] }} Qs</span>
+                                <span>
+                                    Add questions with: 
+                                    <strong class="text-primary">{{ $guide['cat1_area'] ?? 'Any Cat 1 Area' }}</strong> 
+                                    + 
+                                    <strong class="text-success">{{ $guide['cat2_area'] ?? 'Any Cat 2 Area' }}</strong>
+                                </span>
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+
+                    <!-- Detailed Breakdown Content -->
+                    <div id="progressDetails">
                     <div class="row">
                         @php
                             $groupedAreas = collect($validation['content_areas'])->groupBy('category');
@@ -111,10 +134,10 @@
                                                  style="width: {{ $area['required'] > 0 ? min(($area['current'] / $area['required']) * 100, 100) : 0 }}%;"></div>
                                         </div>
                                         <div class="d-flex justify-content-between mt-1">
-                                            <small class="text-muted opacity-75" style="font-size: 10px;">{{ $area['percentage'] }}% requirement</small>
+                                            <small class="text-muted opacity-75" style="font-size: 10px;">{{ $area['required'] }} points requirement</small>
                                             @if(!$area['valid'])
                                                 <small class="text-warning fw-medium" style="font-size: 10px;">
-                                                    <i class="ti ti-arrow-move-right"></i> {{ $area['required'] - $area['current'] > 0 ? 'Need ' . ($area['required'] - $area['current']) : 'Remove ' . ($area['current'] - $area['required']) }}
+                                                    <i class="ti ti-arrow-move-right"></i> {{ $area['required'] - $area['current'] > 0 ? 'Need ' . ($area['required'] - $area['current']) . ' pts' : 'Exceeds by ' . ($area['current'] - $area['required']) . ' pts' }}
                                                 </small>
                                             @endif
                                         </div>
@@ -130,11 +153,12 @@
         </div>
     </div>
 </div>
+</div>
 @endif
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card">
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px;">
             <div class="card-header bg-white border-bottom-0 py-3 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary-subtle p-2 rounded-3 me-3">
@@ -349,13 +373,13 @@
 
                                 <div class="row g-4" id="allPassingScoresRow">
                                     <div class="col-md-4">
-                                        <div class="p-3 border rounded-3 bg-white h-100 shadow-sm border-light-subtle">
-                                            <label class="form-label fw-bold text-muted small text-uppercase">Overall Passing Score (%)</label>
+                                        <div class="p-3 border rounded-3 bg-white h-100 shadow-sm border-light-subtle d-flex flex-column justify-content-between">
+                                            <label class="form-label fw-bold text-muted small text-uppercase">Overall Passing Score (points)</label>
                                             <div class="input-group">
                                                 <input type="number" name="passing_score_overall" class="form-control border-end-0" 
                                                        value="{{ old('passing_score_overall', optional($exam)->passing_score_overall ?? 65) }}" 
-                                                       min="0" max="100">
-                                                <span class="input-group-text bg-white border-start-0 text-muted">%</span>
+                                                       min="0">
+                                                <span class="input-group-text bg-white border-start-0 text-muted">pts</span>
                                             </div>
                                             @error('passing_score_overall') <small class="text-danger">{{ $message }}</small> @enderror
                                         </div>
@@ -405,13 +429,13 @@
                                             const col = document.createElement('div');
                                             col.className = 'col-md-4 dynamic-card';
                                             col.innerHTML = `
-                                                <div class="p-3 border rounded-3 bg-white h-100 shadow-sm border-light-subtle">
-                                                    <label class="form-label fw-bold text-muted small text-uppercase">${cat.name} Passing (%)</label>
+                                                <div class="p-3 border rounded-3 bg-white h-100 shadow-sm border-light-subtle d-flex flex-column justify-content-between">
+                                                    <label class="form-label fw-bold text-muted small text-uppercase">${cat.name} Passing (points)</label>
                                                     <div class="input-group">
                                                         <input type="number" name="passing_scores[${cat.id}]" class="form-control border-end-0" 
                                                             value="${value}" 
-                                                            min="0" max="100">
-                                                        <span class="input-group-text bg-white border-start-0 text-muted">%</span>
+                                                            min="0">
+                                                        <span class="input-group-text bg-white border-start-0 text-muted">pts</span>
                                                     </div>
                                                 </div>
                                             `;

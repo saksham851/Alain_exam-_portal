@@ -59,20 +59,12 @@
                                 @endif
                             </div>
 
-                            <!-- IG Score -->
-                            <div class="col-md-1 text-center">
+                            <!-- Score Card -->
+                            <div class="col-md-2 text-center">
                                 <h5 class="mb-0 fw-bold text-dark">
-                                    {{ round($attempt->ig_score ?? 0) }}%
+                                    {{ round($attempt->total_score) }}
                                 </h5>
-                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">IG Score</small>
-                            </div>
-
-                            <!-- DM Score -->
-                            <div class="col-md-1 text-center">
-                                <h5 class="mb-0 fw-bold text-dark">
-                                    {{ round($attempt->dm_score ?? 0) }}%
-                                </h5>
-                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">DM Score</small>
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Total Points</small>
                             </div>
 
                             <!-- Action -->

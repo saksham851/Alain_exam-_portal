@@ -112,7 +112,7 @@
 
         card.innerHTML = `
             <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                <h5 class="mb-0">Standard Category <span class="category-number">${index + 1}</span></h5>
+                <h5 class="mb-0">Score Category <span class="category-number">${index + 1}</span></h5>
                 ${index > 0 ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeCategory(this)"><i class="ti ti-trash"></i></button>` : ''}
             </div>
             <div class="card-body">
@@ -130,7 +130,7 @@
                 </button>
 
                 <div class="mt-3">
-                     <strong>Total: <span class="total-percentage text-danger">0</span>%</strong>
+                     <strong>Total Points: <span class="total-points text-primary">0</span></strong>
                      <span class="status-badge ms-2"></span>
                 </div>
             </div>
@@ -158,24 +158,16 @@
         const maxPoints = data ? (data.max_points || 0) : 0;
         
         row.innerHTML = `
-            <div class="col-md-5">
+            <div class="col-md-7">
                 <input type="text" name="categories[${catIndex}][areas][${areaIndex}][name]" 
                        class="form-control" placeholder="Area Name" value="${name}" required>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                  <div class="input-group">
                     <span class="input-group-text">Pts</span>
                     <input type="number" name="categories[${catIndex}][areas][${areaIndex}][max_points]" 
                            class="form-control max-points-input" placeholder="Max" min="0" 
-                           value="${maxPoints}" required>
-                 </div>
-            </div>
-            <div class="col-md-3">
-                 <div class="input-group">
-                    <span class="input-group-text">%</span>
-                    <input type="number" name="categories[${catIndex}][areas][${areaIndex}][percentage]" 
-                           class="form-control percentage-input" placeholder="%" min="0" max="100" 
-                           value="${percentage}">
+                           value="${maxPoints}" required oninput="updateTotal(${catIndex})">
                  </div>
             </div>
             <div class="col-md-1">
@@ -213,7 +205,6 @@
         Array.from(container.children).forEach((row, idx) => {
             row.querySelector('input[placeholder="Area Name"]').name = `categories[${catIndex}][areas][${idx}][name]`;
             row.querySelector('input.max-points-input').name = `categories[${catIndex}][areas][${idx}][max_points]`;
-            row.querySelector('input.percentage-input').name = `categories[${catIndex}][areas][${idx}][percentage]`;
         });
     }
 
@@ -242,17 +233,15 @@
     }
 
     function updateTotal(catIndex) {
-        // Just purely cosmetic sum now, no validation enforcement
         const container = document.getElementById(`areas-${catIndex}`);
-        let totalPct = 0;
-        container.querySelectorAll('.percentage-input').forEach(inp => {
-            totalPct += parseInt(inp.value) || 0;
+        let total = 0;
+        container.querySelectorAll('.max-points-input').forEach(inp => {
+            total += parseInt(inp.value) || 0;
         });
         
         const card = container.closest('.card-body');
-        const totalSpan = card.querySelector('.total-percentage');
-        // Optional status Update
-        totalSpan.textContent = totalPct;
+        const totalSpan = card.querySelector('.total-points');
+        totalSpan.textContent = total;
     }
 
     document.getElementById('examStandardForm').addEventListener('submit', function(e) {

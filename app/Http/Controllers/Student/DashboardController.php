@@ -54,8 +54,6 @@ class DashboardController extends Controller
                     'date' => $attempt->ended_at,
                     'duration' => $attempt->formatted_duration,
                     'score' => round($attempt->total_score),
-                    'ig_score' => round($attempt->ig_score ?? 0),
-                    'dm_score' => round($attempt->dm_score ?? 0),
                     'status' => $attempt->is_passed ? 'Pass' : 'Fail',
                 ];
             });

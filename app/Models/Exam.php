@@ -185,9 +185,53 @@ class Exam extends Model
             }
         }
 
+        // MISSING ANALYSIS: Find pairs of missing points
+        $guidance = [];
+        $cat1 = $standard->categories->where('category_number', 1)->first();
+        $cat2 = $standard->categories->where('category_number', 2)->first();
+
+        if ($cat1 && $cat2) {
+            $cat1Gaps = collect($contentAreasData)->where('category', $cat1->name)->filter(fn($a) => $a['required'] > $a['current'])->values();
+            $cat2Gaps = collect($contentAreasData)->where('category', $cat2->name)->filter(fn($a) => $a['required'] > $a['current'])->values();
+            
+            $tempCat1Gaps = $cat1Gaps->map(fn($a) => ['id' => $a['id'], 'name' => $a['name'], 'need' => $a['required'] - $a['current']])->toArray();
+            $tempCat2Gaps = $cat2Gaps->map(fn($a) => ['id' => $a['id'], 'name' => $a['name'], 'need' => $a['required'] - $a['current']])->toArray();
+
+            $i = 0; $j = 0;
+            while ($i < count($tempCat1Gaps) && $j < count($tempCat2Gaps)) {
+                $take = min($tempCat1Gaps[$i]['need'], $tempCat2Gaps[$j]['need']);
+                if ($take > 0) {
+                    $guidance[] = [
+                        'count' => $take,
+                        'cat1_area' => $tempCat1Gaps[$i]['name'],
+                        'cat2_area' => $tempCat2Gaps[$j]['name']
+                    ];
+                    $tempCat1Gaps[$i]['need'] -= $take;
+                    $tempCat2Gaps[$j]['need'] -= $take;
+                }
+                if ($tempCat1Gaps[$i]['need'] <= 0) $i++;
+                if (isset($tempCat2Gaps[$j]) && $tempCat2Gaps[$j]['need'] <= 0) $j++;
+            }
+
+            // Remaining Gaps (if any category needs more than the other)
+            while ($i < count($tempCat1Gaps)) {
+                if ($tempCat1Gaps[$i]['need'] > 0) {
+                    $guidance[] = ['count' => $tempCat1Gaps[$i]['need'], 'cat1_area' => $tempCat1Gaps[$i]['name'], 'cat2_area' => null];
+                }
+                $i++;
+            }
+            while ($j < count($tempCat2Gaps)) {
+                if ($tempCat2Gaps[$j]['need'] > 0) {
+                    $guidance[] = ['count' => $tempCat2Gaps[$j]['need'], 'cat1_area' => null, 'cat2_area' => $tempCat2Gaps[$j]['name']];
+                }
+                $j++;
+            }
+        }
+
         return [
             'valid' => empty($errors),
             'errors' => $errors,
+            'compliance_guidance' => $guidance,
             'content_areas' => $contentAreasData,
             'sections' => $examSections->map(fn($s) => ['id' => $s->id, 'name' => $s->title]),
             'categories' => $standard->categories->map(fn($cat) => [

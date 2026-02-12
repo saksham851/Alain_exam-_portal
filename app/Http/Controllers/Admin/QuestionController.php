@@ -162,7 +162,7 @@ class QuestionController extends Controller
             'existing_questions' => 'nullable|array',
             'existing_questions.*.question_text' => 'required|string',
             'existing_questions.*.question_type' => 'required|in:single,multiple',
-            'existing_questions.*.max_question_points' => 'nullable|integer|min:1|max:3',
+            'existing_questions.*.max_question_points' => 'nullable|integer|min:0|max:3',
             'existing_questions.*.tags' => 'nullable|array',
             'existing_questions.*.tags.*.score_category_id' => 'required_with:existing_questions.*.tags|exists:score_categories,id',
             'existing_questions.*.tags.*.content_area_id' => 'required_with:existing_questions.*.tags|exists:content_areas,id',
@@ -171,7 +171,7 @@ class QuestionController extends Controller
             'questions' => 'nullable|array',
             'questions.*.question_text' => 'required_with:questions|string',
             'questions.*.question_type' => 'required_with:questions|in:single,multiple',
-            'questions.*.max_question_points' => 'required_with:questions|integer|min:1|max:3',
+            'questions.*.max_question_points' => 'required_with:questions|integer|min:0|max:3',
             'questions.*.tags' => 'nullable|array',
             'questions.*.tags.*.score_category_id' => 'required_with:questions.*.tags|exists:score_categories,id',
             'questions.*.tags.*.content_area_id' => 'required_with:questions.*.tags|exists:content_areas,id',
@@ -365,7 +365,7 @@ class QuestionController extends Controller
             'sub_case_id' => 'required|exists:case_studies,id',
             'question_text' => 'required|string',
             'question_type' => 'required|in:single,multiple',
-            'max_question_points' => 'required|integer|min:1|max:3',
+            'max_question_points' => 'required|integer|min:0|max:3',
             'tags' => 'nullable|array',
             'tags.*.score_category_id' => 'required_with:tags|exists:score_categories,id',
             'tags.*.content_area_id' => 'required_with:tags|exists:content_areas,id',
@@ -395,7 +395,7 @@ class QuestionController extends Controller
             'case_study_id' => $request->sub_case_id,
             'question_text' => trim($request->question_text),
             'question_type' => $request->question_type,
-            'max_question_points' => $request->max_question_points,
+            'max_question_points' => $request->max_question_points ?? 1,
         ]);
 
         // Sync Tags
@@ -731,8 +731,8 @@ class QuestionController extends Controller
         }
 
         if ($field === 'max_question_points') {
-            if (!is_numeric($value) || $value < 1) {
-                return response()->json(['success' => false, 'message' => 'Points must be at least 1.']);
+            if (!is_numeric($value) || $value < 0 || $value > 3) {
+                return response()->json(['success' => false, 'message' => 'Points must be between 0 and 3.']);
             }
         }
 

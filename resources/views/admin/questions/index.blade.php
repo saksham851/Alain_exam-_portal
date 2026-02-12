@@ -262,7 +262,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 25%;">Question</th>
-                                <th style="width: 10%;">Content Area</th>
+                                <th style="width: 10%;">Groups</th>
                                 <th style="width: 15%;">Case Study</th>
                                 <th style="width: 15%;">Source</th>
                                 <th style="width: 10%;">Options</th>
@@ -276,24 +276,34 @@
                                     <div class="fw-bold mb-1">
                                         {{ Str::limit(strip_tags($question->question_text), 80) }}
                                     </div>
-                                    <small class="text-muted">
-                                        <i class="ti ti-file-text"></i> {{ $question->caseStudy->section->title ?? 'N/A' }}
+                                    <small class="text-muted d-flex align-items-center flex-wrap">
+                                        <span class="me-2"><i class="ti ti-file-text"></i> {{ $question->caseStudy->section->title ?? 'N/A' }}</span>
+                                        <span class="badge bg-light-warning text-warning border border-warning-subtle py-0 px-2" style="font-size: 10px;">
+                                            <i class="ti ti-star me-1"></i>{{ $question->max_question_points ?? 1 }} pts
+                                        </span>
                                     </small>
                                 </td>
                                 <td>
-                                    <div class="d-flex flex-column gap-1">
-                                        @forelse($question->tags->take(2) as $tag)
-                                            <span class="badge border border-secondary text-secondary bg-transparent text-start" 
-                                                  title="{{ $tag->scoreCategory->name }} > {{ $tag->contentArea->name }}">
-                                                <small class="fw-bold d-block text-primary">{{ Str::limit($tag->scoreCategory->name, 15) }}</small>
-                                                {{ Str::limit($tag->contentArea->name, 20) }}
-                                            </span>
+                                    <div class="vstack gap-1">
+                                        @forelse($question->tags->groupBy('score_category_id') as $catId => $tags)
+                                            @php $firstTag = $tags->first(); @endphp
+                                            <div class="border rounded p-1 bg-light-subtle shadow-sm" style="border-style: dashed !important; min-width: 120px;">
+                                                <small class="fw-bold d-block text-primary mb-1 border-bottom pb-1" style="font-size: 8px; letter-spacing: 0.5px; text-transform: uppercase;">
+                                                    {{ Str::limit($firstTag->scoreCategory->name, 25) }}
+                                                </small>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    @foreach($tags as $tag)
+                                                        <span class="badge bg-white text-dark border border-light-subtle py-1 px-2" 
+                                                              style="font-size: 9px; font-weight: 500;"
+                                                              title="{{ $tag->contentArea->name }}">
+                                                            {{ Str::limit($tag->contentArea->name, 25) }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         @empty
                                             <span class="text-muted small">-</span>
                                         @endforelse
-                                        @if($question->tags->count() > 2)
-                                            <span class="badge bg-light text-dark small">+{{ $question->tags->count() - 2 }} more</span>
-                                        @endif
                                     </div>
                                 </td>
                                 <td>

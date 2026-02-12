@@ -40,7 +40,6 @@ class ExamStandardController extends Controller
             'categories.*.name' => 'required|string|max:255',
             'categories.*.areas' => 'required|array|min:1',
             'categories.*.areas.*.name' => 'required|string|max:255',
-            'categories.*.areas.*.percentage' => 'nullable|integer|min:0|max:100',
             'categories.*.areas.*.max_points' => 'required|integer|min:0',
         ]);
 
@@ -64,7 +63,6 @@ class ExamStandardController extends Controller
                     ContentArea::create([
                         'score_category_id' => $category->id,
                         'name' => $areaData['name'],
-                        'percentage' => $areaData['percentage'] ?? 0,
                         'max_points' => $areaData['max_points'] ?? 0,
                         'order_no' => $aIndex + 1,
                     ]);
@@ -109,7 +107,6 @@ class ExamStandardController extends Controller
             'categories.*.name' => 'required|string|max:255',
             'categories.*.areas' => 'required|array|min:1',
             'categories.*.areas.*.name' => 'required|string|max:255',
-            'categories.*.areas.*.percentage' => 'nullable|integer|min:0|max:100',
             'categories.*.areas.*.max_points' => 'required|integer|min:0',
         ]);
 
@@ -147,7 +144,6 @@ class ExamStandardController extends Controller
                     ContentArea::create([
                         'score_category_id' => $category->id,
                         'name' => $areaData['name'],
-                        'percentage' => $areaData['percentage'] ?? 0,
                         'max_points' => $areaData['max_points'] ?? 0,
                         'order_no' => $aIndex + 1,
                     ]);

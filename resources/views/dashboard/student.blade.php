@@ -81,8 +81,8 @@
         <div class="card h-100">
             <div class="card-body pt-3 px-3 pb-2">
                 <h6 class="mb-2 f-w-400 text-muted">Average Score</h6>
-                <h4 class="mb-2">{{ $stats['average_score'] }}% <span class="badge bg-light-warning border border-warning"><i class="ti ti-chart-bar"></i></span></h4>
-                <p class="mb-0 text-muted text-sm">Across all attempts</p>
+                <h4 class="mb-2">{{ $stats['average_score'] }} <span class="badge bg-light-warning border border-warning"><i class="ti ti-chart-bar"></i></span></h4>
+                <p class="mb-0 text-muted text-sm">Across all attempts (points)</p>
             </div>
         </div>
     </div>
@@ -201,9 +201,9 @@
                         <thead>
                             <tr>
                                 <th>EXAM</th>
+                                <th>DATE</th>
                                 <th>DURATION</th>
-                                <th>IG</th>
-                                <th>DM</th>
+                                <th>SCORE</th>
                                 <th class="text-end">STATUS</th>
                             </tr>
                         </thead>
@@ -212,17 +212,17 @@
                             <tr>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="fw-semibold text-truncate" style="max-width: 100px;" title="{{ $attempt->exam_title }}">{{ $attempt->exam_title }}</span>
+                                        <span class="fw-semibold text-truncate" style="max-width: 150px;" title="{{ $attempt->exam_title }}">{{ $attempt->exam_title }}</span>
                                     </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">{{ $attempt->date ? $attempt->date->format('M d, Y') : 'N/A' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-muted small">{{ $attempt->duration }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-muted small">{{ $attempt->ig_score }}%</span>
-                                </td>
-                                <td>
-                                    <span class="text-muted small">{{ $attempt->dm_score }}%</span>
+                                    <span class="fw-bold">{{ $attempt->score }}</span> <small class="text-muted">pts</small>
                                 </td>
                                 <td class="text-end">
                                     @if($attempt->status == 'Pass')

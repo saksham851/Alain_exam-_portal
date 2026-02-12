@@ -51,11 +51,12 @@
             </div>
         </div>
 
-        <!-- Category 1 -->
+        <!-- Categories -->
+        @foreach($standard->categories as $category)
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">{{ $standard->category1->name }}</h5>
-                <small class="text-muted">Standard Category 1</small>
+                <h5 class="mb-0">{{ $category->name }}</h5>
+                <small class="text-muted">Score Category {{ $category->category_number }}</small>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -63,22 +64,22 @@
                         <thead>
                             <tr>
                                 <th>Content Area</th>
-                                <th class="text-center">Percentage</th>
+                                <th class="text-center">Required Points</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($standard->category1->contentAreas as $area)
+                            @foreach($category->contentAreas as $area)
                             <tr>
                                 <td>{{ $area->name }}</td>
                                 <td class="text-center">
-                                    <span class="badge bg-light-primary text-primary">{{ $area->percentage }}%</span>
+                                    <span class="badge bg-light-primary text-primary">{{ $area->max_points }} pts</span>
                                 </td>
                             </tr>
                             @endforeach
                             <tr class="table-active">
-                                <td><strong>Total</strong></td>
+                                <td><strong>Total Points</strong></td>
                                 <td class="text-center">
-                                    <strong>{{ $standard->category1->contentAreas->sum('percentage') }}%</strong>
+                                    <strong>{{ $category->contentAreas->sum('max_points') }} pts</strong>
                                 </td>
                             </tr>
                         </tbody>
@@ -86,42 +87,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Category 2 -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">{{ $standard->category2->name }}</h5>
-                <small class="text-muted">Standard Category 2</small>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Content Area</th>
-                                <th class="text-center">Percentage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($standard->category2->contentAreas as $area)
-                            <tr>
-                                <td>{{ $area->name }}</td>
-                                <td class="text-center">
-                                    <span class="badge bg-light-success text-success">{{ $area->percentage }}%</span>
-                                </td>
-                            </tr>
-                            @endforeach
-                            <tr class="table-active">
-                                <td><strong>Total</strong></td>
-                                <td class="text-center">
-                                    <strong>{{ $standard->category2->contentAreas->sum('percentage') }}%</strong>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        @endforeach
 
         <!-- Exams Using This Standard -->
         @if($standard->exams->count() > 0)
@@ -149,9 +115,7 @@
                                 <td>{{ $exam->category->name ?? 'N/A' }}</td>
                                 <td>
                                     <small>
-                                        Overall: {{ $exam->passing_score_overall }}% | 
-                                        Cat1: {{ $exam->passing_score_category_1 }}% | 
-                                        Cat2: {{ $exam->passing_score_category_2 }}%
+                                        Overall: {{ $exam->passing_score_overall }} pts
                                     </small>
                                 </td>
                                 <td>

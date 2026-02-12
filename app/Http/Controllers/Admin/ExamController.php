@@ -178,8 +178,8 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'exam_standard_id' => 'nullable|exists:exam_standards,id',
-            'passing_score_overall' => 'nullable|integer|min:0|max:100',
-            'passing_scores.*' => 'nullable|integer|min:0|max:100',
+            'passing_score_overall' => 'nullable|integer|min:0',
+            'passing_scores.*' => 'nullable|integer|min:0',
             'total_questions' => 'nullable|integer|min:0',
         ], [
             'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
@@ -291,8 +291,8 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'exam_standard_id' => 'nullable|exists:exam_standards,id',
-            'passing_score_overall' => 'nullable|integer|min:0|max:100',
-            'passing_scores.*' => 'nullable|integer|min:0|max:100',
+            'passing_score_overall' => 'nullable|integer|min:0',
+            'passing_scores.*' => 'nullable|integer|min:0',
             'total_questions' => 'nullable|integer|min:0',
         ], [
             'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',

@@ -61,12 +61,14 @@
                                 @if($attempt->category_breakdown)
                                     @foreach($attempt->category_breakdown as $catId => $data)
                                         <td style="border-bottom: 1px solid #000; {{ !$loop->last ? 'border-right: 1px solid #000;' : '' }} text-align: center; padding: 15px;">
-                                            <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($data['percentage'] ?? 0) }}%</span>
+                                            <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ $data['earned_points'] ?? 0 }}</span>
+                                            <small class="text-muted">points</small>
                                         </td>
                                     @endforeach
                                 @else
                                     <td style="border-bottom: 1px solid #000; text-align: center; padding: 15px;">
-                                        <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($attempt->total_score) }}%</span>
+                                        <span style="font-size: 3.5rem; line-height: 1; display: block; color: #000;">{{ round($attempt->total_score) }}</span>
+                                        <small class="text-muted">points</small>
                                     </td>
                                 @endif
                             </tr>
@@ -93,15 +95,9 @@
                                                 <div style="font-size: 0.85rem; margin-bottom: 2px; background: #fff9db; padding: 0 5px;">Passing Score:</div>
                                                 <div style="padding: 2px 10px; font-weight: 600; font-size: 0.95rem; background: #fff9db;">
                                                     @php
-                                                        // Calculate passing score points from % threshold if stored, or infer
-                                                        // We don't store passing SCORE in points in breakdown, only percentage passed or not?
-                                                        // Actually ExamScoringService didn't save the passing POINTS threshold, only checked it.
-                                                        // Let's assume standard passing % (e.g. 65%) of Max Points
-                                                        $passingPercent = 65; // Default or fetch if available
-                                                        // TODO: Update Service to store passing_threshold_points in breakdown for accuracy
-                                                        $passingPoints = round(($data['max_points'] * $passingPercent) / 100);
+                                                        $passingPoints = $data['threshold_points'] ?? 65;
                                                     @endphp
-                                                    {{ $passingPoints }} (Set By Admin)
+                                                    {{ $passingPoints }} (Points)
                                                 </div>
                                             </div>
 
@@ -138,7 +134,8 @@
                         <tbody>
                             <tr>
                                 <td style="text-align: center; padding: 20px; border-bottom: 1px solid #000;">
-                                     <span style="padding: 5px 25px; font-size: 3rem; font-weight: 500; display: inline-block;">{{ round($attempt->total_score) }}%</span>
+                                     <span style="padding: 5px 25px; font-size: 3rem; font-weight: 500; display: inline-block;">{{ round($attempt->total_score) }}</span>
+                                     <div class="text-muted small">Total Points Earned</div>
                                 </td>
                             </tr>
                             <tr style="background-color: {{ $attempt->is_passed ? '#bcdfa1' : '#f8b4b4' }};">
@@ -151,6 +148,42 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Content Area Breakdown Table -->
+                @if($attempt->content_area_breakdown && count($attempt->content_area_breakdown) > 0)
+                <div class="mt-5">
+                    <h4 style="font-weight: 700; margin-bottom: 1rem; text-transform: uppercase; font-size: 1.1rem; border-bottom: 2px solid #000; padding-bottom: 5px;">Content Area Breakdown</h4>
+                    <div class="table-responsive">
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #eee;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Content Area</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd; width: 100px;">Points</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd; width: 100px;">Total Possible</th>
+                                    <th style="padding: 12px; text-align: center; border: 1px solid #ddd; width: 120px;">Score %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($attempt->content_area_breakdown as $area)
+                                    @if($area['max_points'] > 0)
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #eee;">{{ $area['name'] }}</td>
+                                        <td style="padding: 10px; border: 1px solid #eee; text-align: center; font-weight: 600;">{{ $area['earned_points'] }}</td>
+                                        <td style="padding: 10px; border: 1px solid #eee; text-align: center;">{{ $area['max_points'] }}</td>
+                                        <td style="padding: 10px; border: 1px solid #eee; text-align: center;">
+                                            <div class="progress" style="height: 10px; width: 100%; background-color: #eee; border-radius: 5px; overflow: hidden;">
+                                                <div class="progress-bar" style="width: {{ $area['percentage'] }}%; height: 100%; background-color: #0d6efd;"></div>
+                                            </div>
+                                            <small style="font-weight: 600;">{{ $area['percentage'] }}%</small>
+                                        </td>
+                                    </tr>
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
 
             </div>
         </div>

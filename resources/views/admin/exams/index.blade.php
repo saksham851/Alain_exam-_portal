@@ -579,6 +579,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         publishBtn.innerHTML = '<i class="ti ti-lock me-1"></i> Cannot Publish';
                     }
                     
+                    // Render Guidance if fails
+                    const guideContainer = document.getElementById('complianceGuidanceContainer');
+                    const guideList = document.getElementById('complianceGuidanceList');
+                    guideList.innerHTML = '';
+                    
+                    if(!isValid && data.compliance.compliance_guidance && data.compliance.compliance_guidance.length > 0) {
+                        guideContainer.style.display = 'block';
+                        data.compliance.compliance_guidance.forEach(guide => {
+                            const div = document.createElement('div');
+                            div.className = 'small d-flex align-items-center mb-1';
+                            div.innerHTML = `
+                                <span class="badge bg-warning text-dark me-2">${guide.count} Qs</span>
+                                <span>Add questions with: 
+                                    <strong class="text-primary">${guide.cat1_area || 'Any Cat 1 Area'}</strong> + 
+                                    <strong class="text-success">${guide.cat2_area || 'Any Cat 2 Area'}</strong>
+                                </span>
+                            `;
+                            guideList.appendChild(div);
+                        });
+                    } else {
+                        guideContainer.style.display = 'none';
+                    }
+                    
                     // Build Table
                     document.getElementById('complianceTableContainer').style.display = 'block';
                     const tbody = document.getElementById('complianceTableBody');
@@ -591,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         totalTr.innerHTML = `
                             <td colspan="4" class="bg-primary-subtle text-primary border-bottom border-primary px-3 py-2 fw-bold">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span><i class="ti ti-chart-bar me-1"></i> Total Active Questions in Exam: ${data.compliance.total_questions || 0}</span>
+                                    <span><i class="ti ti-chart-bar me-1"></i> Total Points in Exam: ${data.compliance.total_questions || 0}</span>
                                     ${data.compliance.uncategorized_count > 0 ? `<span class="badge bg-danger"><i class="ti ti-alert-triangle me-1"></i> ${data.compliance.uncategorized_count} Uncategorized</span>` : ''}
                                 </div>
                             </td>
@@ -644,11 +667,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <span class="fw-bold text-dark">${area.name || 'Unknown Area'}</span>
                                     </td>
                                     <td>
-                                        <div class="small text-muted">Required: <span class="fw-bold">${required}</span></div>
-                                        <div class="small text-muted">(${percentage}%)</div>
+                                        <div class="small text-muted">Required: <span class="fw-bold">${required} pts</span></div>
                                     </td>
                                     <td>
-                                        <div class="h6 mb-0 ${areaPassed ? 'text-success' : 'text-danger'} fw-bold">${current}</div>
+                                        <div class="h6 mb-0 ${areaPassed ? 'text-success' : 'text-danger'} fw-bold">${current} pts</div>
                                     </td>
                                     <td class="text-end">
                                         ${areaPassed 
@@ -868,6 +890,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
 
+                    <!-- Question Quantity Guide -->
+                    <div id="complianceGuidanceContainer" class="mb-4 p-3 bg-light-warning border border-warning-subtle rounded-3" style="display:none;">
+                        <h6 class="text-warning-emphasis fw-bold mb-2">
+                            <i class="ti ti-bulb me-1"></i> Question Quantity Guide (To Achieve Compliance)
+                        </h6>
+                        <div id="complianceGuidanceList" class="vstack gap-2"></div>
+                    </div>
+
                     <!-- Breakdown Table -->
                     <div id="complianceTableContainer">
                         <h6 class="fw-bold mb-3 text-muted text-uppercase small ls-1">Content Area Breakdown</h6>
@@ -876,8 +906,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <thead class="bg-light">
                                     <tr>
                                         <th style="width: 40%;">Content Area</th>
-                                        <th style="width: 25%;">Allocation</th>
-                                        <th style="width: 20%;">Current Count</th>
+                                        <th style="width: 25%;">Points Required</th>
+                                        <th style="width: 20%;">Current Points</th>
                                         <th style="width: 15%;" class="text-end">Status</th>
                                     </tr>
                                 </thead>

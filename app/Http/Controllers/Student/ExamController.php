@@ -227,6 +227,7 @@ class ExamController extends Controller
                 'ended_at' => now(),
                 'status' => 'submitted',
                 'category_breakdown' => $result['category_breakdown'],
+                'content_area_breakdown' => $result['content_area_breakdown'] ?? null,
                 'total_score' => $result['total_score'],
                 'is_passed' => $result['is_passed'] ? 1 : 0,
             ]);

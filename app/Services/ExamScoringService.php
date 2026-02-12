@@ -29,27 +29,40 @@ class ExamScoringService
             'is_passed' => false,
         ];
 
-        // Dynamic Categories: [category_id => ['name' => '', 'max' => 0, 'earned' => 0, 'passed' => bool]]
+        // Dynamic Categories and Content Areas
         $categoryStats = [];
+        $contentAreaStats = [];
         $passingThresholds = [];
 
-        // 1. Initialize Categories from Standard
+        // 1. Initialize Categories and Content Areas from Standard
         if ($exam->examStandard && $exam->examStandard->categories) {
             foreach ($exam->examStandard->categories as $cat) {
                 $categoryStats[$cat->id] = [
                     'id' => $cat->id,
-                    'name' => $cat->name, // e.g. "Counselor Work Behavior Areas"
+                    'name' => $cat->name,
                     'max_points' => 0,
                     'earned_points' => 0,
                     'percentage' => 0,
                 ];
 
-                // Get passing requirement for this category (or default 65)
+                // Get passing requirement for this category
                 $threshold = $exam->categoryPassingScores->where('exam_standard_category_id', $cat->id)->first();
                 $passingThresholds[$cat->id] = $threshold ? $threshold->passing_score : ($exam->passing_score_overall ?? 65);
+
+                // Initialize Content Areas
+                foreach ($cat->contentAreas as $area) {
+                    $contentAreaStats[$area->id] = [
+                        'id' => $area->id,
+                        'name' => $area->name,
+                        'category_id' => $cat->id,
+                        'max_points' => 0,
+                        'earned_points' => 0,
+                        'percentage' => 0,
+                    ];
+                }
             }
         } else {
-            // Fallback for exams with no standard: Create a "General" category
+            // Fallback for exams with no standard
             $categoryStats['general'] = [
                 'id' => 'general',
                 'name' => 'General Knowledge',
@@ -61,55 +74,53 @@ class ExamScoringService
         }
 
         // 2. Process all answers
-        // Eager load: question tags (to find category), question options (to check correctness)
         $answers = $attempt->answers()->with(['question.tags', 'question.options'])->get();
 
         foreach ($answers as $answer) {
             $question = $answer->question;
             $overallStats['total_questions']++;
 
-            // Calculate points earned for this single question
-            // Logic: (Correctness Multiplier 0 or 1) * (Max Question Points)
             $correctnessMultiplier = $this->calculateCorrectness($answer, $question);
             $questionMaxPoints = $question->max_question_points ?? 1;
-            
-            // Allow for logic where question might just have points = 1 if not set
             if ($questionMaxPoints < 1) $questionMaxPoints = 1;
 
             $pointsEarned = $correctnessMultiplier * $questionMaxPoints;
 
-            // Update Answer Record
             $answer->update([
                 'is_correct' => $correctnessMultiplier > 0 ? 1 : 0,
-                'score' => $pointsEarned // We might need to add a generic 'score' column if ig_score/dm_score are deprecated, but for now we can sum them or utilize existing columns if needed. 
-                // However, the prompt implies a shift. Let's assume we leverage the existing structure as best as possible or just calculate here.
-                // NOTE: Detailed per-question score storage might require schema update if strict tracking needed.
-                // for now, we just update is_correct.
+                'score' => $pointsEarned
             ]);
             
-            // 3. Distribute to Categories
+            // 3. Distribute to Categories and Content Areas
             if ($exam->examStandard) {
-                // Find which categories this question belongs to via Tags
-                // A question might handle multiple Content Areas, hence multiple Categories.
-                // We add the points to EACH category it hits.
                 $hitCategories = [];
+                $hitContentAreas = [];
+                
                 if ($question->tags) {
                     foreach ($question->tags as $tag) {
+                        // Mark Category Hit
                         if (isset($categoryStats[$tag->score_category_id])) {
                             $hitCategories[$tag->score_category_id] = true;
+                        }
+                        // Mark Content Area Hit
+                        if (isset($contentAreaStats[$tag->content_area_id])) {
+                            $hitContentAreas[$tag->content_area_id] = true;
                         }
                     }
                 }
                 
-                // If question has no tags but exam has standard, where does it go?
-                // It falls into a "Uncategorized" bucket or we skip category stats for it.
-                // Validated exams shouldn't have this.
+                // Add points to EACH hit category
                 foreach (array_keys($hitCategories) as $catId) {
                     $categoryStats[$catId]['max_points'] += $questionMaxPoints;
                     $categoryStats[$catId]['earned_points'] += $pointsEarned;
                 }
+
+                // Add points to EACH hit content area
+                foreach (array_keys($hitContentAreas) as $areaId) {
+                    $contentAreaStats[$areaId]['max_points'] += $questionMaxPoints;
+                    $contentAreaStats[$areaId]['earned_points'] += $pointsEarned;
+                }
             } else {
-                // No standard -> General Category
                 $categoryStats['general']['max_points'] += $questionMaxPoints;
                 $categoryStats['general']['earned_points'] += $pointsEarned;
             }
@@ -129,12 +140,21 @@ class ExamScoringService
                 $stat['percentage'] = 0;
             }
 
-            // Check Category Pass/Fail
+            // Check Category Pass/Fail (Threshold is now points)
             $threshold = $passingThresholds[$catId] ?? 65;
-            $stat['passed'] = $stat['percentage'] >= $threshold;
+            $stat['threshold_points'] = $threshold; // Store for UI
+            $stat['passed'] = $stat['earned_points'] >= $threshold;
             
             if (!$stat['passed']) {
                 $allCategoriesPassed = false;
+            }
+        }
+
+        foreach ($contentAreaStats as $areaId => &$stat) {
+            if ($stat['max_points'] > 0) {
+                $stat['percentage'] = round(($stat['earned_points'] / $stat['max_points']) * 100, 2);
+            } else {
+                $stat['percentage'] = 0;
             }
         }
 
@@ -144,25 +164,20 @@ class ExamScoringService
         }
 
         // Final Exam Pass Logic
-        // Rule: Must pass Overall Threshold AND (Optionally) All Categories?
-        // Usually, simplified: Overall Score >= Overall Passing Score
-        // OR: Must pass every domain.
-        // User's previous request implied "65% in BOTH groups", so likely "All Categories Must Pass".
-        // Let's stick to "All Categories Must Pass" if categories exist, plus overall check.
+        // Rule: Overall Points Earned >= Overall Passing Score (points)
+        $overallThresholdPoints = $exam->passing_score_overall ?? 65;
         
-        $overallThreshold = $exam->passing_score_overall ?? 65;
-        $overallPassed = $overallStats['percentage'] >= $overallThreshold;
-
-        // Final verdict: Strict (All Categories + Overall) or Just Overall?
-        // Given "Points ka khel" (Game of points), usually domain passing is required.
+        $overallPassed = $overallStats['earned_points'] >= $overallThresholdPoints;
         $finalPassed = $allCategoriesPassed && $overallPassed;
 
         return [
-            'total_score' => $overallStats['percentage'], // Overall %
+            'total_score' => $overallStats['earned_points'], // Primary score is now Points
             'earned_points' => $overallStats['earned_points'],
             'max_points' => $overallStats['max_points'],
+            'percentage' => $overallStats['percentage'],
             'is_passed' => $finalPassed,
-            'category_breakdown' => $categoryStats, // Full breakdown for UI
+            'category_breakdown' => $categoryStats, 
+            'content_area_breakdown' => $contentAreaStats,
         ];
     }
 

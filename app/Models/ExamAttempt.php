@@ -14,6 +14,7 @@ class ExamAttempt extends Model
         'time_remaining',
         'total_score',
         'category_breakdown',
+        'content_area_breakdown',
         'is_passed',
         'tab_switch_count',
     ];
@@ -24,6 +25,7 @@ class ExamAttempt extends Model
         'is_passed' => 'boolean',
         'total_score' => 'float',
         'category_breakdown' => 'array',
+        'content_area_breakdown' => 'array',
     ];
 
     public function studentExam()
