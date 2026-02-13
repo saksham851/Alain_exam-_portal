@@ -24,6 +24,17 @@
     <div class="col-md-12">
         <form action="{{ route('admin.exam-standards.store') }}" method="POST" id="examStandardForm">
             @csrf
+
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
             
             <!-- Basic Information -->
             <div class="card">
@@ -96,36 +107,42 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         // Render initial categories
-        initialCategories.forEach(cat => addCategory(cat));
+        if (initialCategories && initialCategories.length > 0) {
+            initialCategories.forEach(cat => addCategory(cat));
+        } else {
+            addCategory();
+        }
     });
 
     function addCategory(data = null) {
         const index = categoryCount;
         const container = document.getElementById('categoriesContainer');
+        if (!container) return;
+
         const card = document.createElement('div');
         card.className = 'card category-card mb-4';
         card.dataset.index = index;
 
         // Default Values
         const catName = data ? data.name : '';
-        const areas = data && data.areas ? data.areas : [{name:'', percentage:''}];
+        const areas = (data && data.areas && data.areas.length > 0) ? data.areas : [{name:'', max_points: 0}];
 
         card.innerHTML = `
             <div class="card-header d-flex justify-content-between align-items-center bg-light">
                 <h5 class="mb-0">Score Category <span class="category-number">${index + 1}</span></h5>
-                ${index > 0 ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeCategory(this)"><i class="ti ti-trash"></i></button>` : ''}
+                ${index > 0 ? `<button type="button" class="btn btn-danger btn-sm remove-category-btn" onclick="removeCategory(this)"><i class="ti ti-trash"></i></button>` : ''}
             </div>
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">Enter Category Name <span class="text-danger">*</span></label>
-                    <input type="text" name="categories[${index}][name]" class="form-control" 
+                    <input type="text" name="categories[${index}][name]" class="form-control category-name-input" 
                            placeholder="Enter Category Name" value="${catName}" required>
                 </div>
                 
                 <label class="form-label">Content Areas <span class="text-danger">*</span></label>
                 <div class="areas-container" id="areas-${index}"></div>
                 
-                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addArea(${index})">
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-area-btn" onclick="addArea(${index})">
                     <i class="ti ti-plus"></i> Add Content Area
                 </button>
 
@@ -147,20 +164,19 @@
 
     function addArea(catIndex, data = null) {
         const container = document.getElementById(`areas-${catIndex}`);
+        if (!container) return;
+
         const areaIndex = container.children.length;
         
         const name = data ? data.name : '';
-        const percentage = data ? data.percentage : '';
+        const maxPoints = data ? (data.max_points !== undefined ? data.max_points : 0) : 0;
 
         const row = document.createElement('div');
         row.className = 'row area-row mb-2 align-items-center';
-        // Add Max Points Field
-        const maxPoints = data ? (data.max_points || 0) : 0;
-        
         row.innerHTML = `
             <div class="col-md-7">
                 <input type="text" name="categories[${catIndex}][areas][${areaIndex}][name]" 
-                       class="form-control" placeholder="Area Name" value="${name}" required>
+                       class="form-control area-name-input" placeholder="Area Name" value="${name}" required>
             </div>
             <div class="col-md-4">
                  <div class="input-group">
@@ -171,7 +187,7 @@
                  </div>
             </div>
             <div class="col-md-1">
-                 <button type="button" class="btn btn-danger w-100" onclick="removeArea(this, ${catIndex})">
+                 <button type="button" class="btn btn-danger w-100 remove-area-btn" onclick="removeArea(this, ${catIndex})">
                     <i class="ti ti-trash"></i>
                 </button>
             </div>
@@ -181,12 +197,17 @@
     }
 
     function removeCategory(btn) {
-        btn.closest('.category-card').remove();
-        updateCategoryNumbers();
+        const card = btn.closest('.category-card');
+        if (card) {
+            card.remove();
+            updateCategoryNumbers();
+        }
     }
 
     function removeArea(btn, catIndex) {
         const container = btn.closest('.areas-container');
+        if (!container) return;
+
         if(container.children.length <= 1) {
             Swal.fire({
                 icon: 'warning',
@@ -202,47 +223,65 @@
 
     function reindexAreas(catIndex) {
         const container = document.getElementById(`areas-${catIndex}`);
+        if (!container) return;
+
         Array.from(container.children).forEach((row, idx) => {
-            row.querySelector('input[placeholder="Area Name"]').name = `categories[${catIndex}][areas][${idx}][name]`;
-            row.querySelector('input.max-points-input').name = `categories[${catIndex}][areas][${idx}][max_points]`;
+            const nameInput = row.querySelector('.area-name-input');
+            const pointsInput = row.querySelector('.max-points-input');
+            const removeBtn = row.querySelector('.remove-area-btn');
+
+            if (nameInput) nameInput.name = `categories[${catIndex}][areas][${idx}][name]`;
+            if (pointsInput) {
+                pointsInput.name = `categories[${catIndex}][areas][${idx}][max_points]`;
+                pointsInput.setAttribute('oninput', `updateTotal(${catIndex})`);
+            }
+            if (removeBtn) removeBtn.setAttribute('onclick', `removeArea(this, ${catIndex})`);
         });
     }
 
     function updateCategoryNumbers() {
         const cards = document.querySelectorAll('.category-card');
         cards.forEach((card, idx) => {
-            card.querySelector('.category-number').textContent = idx + 1;
             const index = idx;
-            const nameInput = card.querySelector('input[placeholder*="Category Name"], input[name*="[name]"]');
+            card.dataset.index = index;
+
+            const numSpan = card.querySelector('.category-number');
+            if (numSpan) numSpan.textContent = index + 1;
+
+            const nameInput = card.querySelector('.category-name-input');
             if(nameInput) nameInput.name = `categories[${index}][name]`;
             
             const areasDiv = card.querySelector('.areas-container');
-            areasDiv.id = `areas-${index}`;
+            if (areasDiv) areasDiv.id = `areas-${index}`;
             
-            const addBtn = card.querySelector('button[onclick*="addArea"]');
-            addBtn.setAttribute('onclick', `addArea(${index})`);
-            
-            // Re-bind events if needed, but onclick handles index dynamically if inline.
-            // But remove buttons have hardcoded index.
-            const areaRemoveBtns = card.querySelectorAll('.area-row button.btn-danger');
-            areaRemoveBtns.forEach(btn => btn.setAttribute('onclick', `removeArea(this, ${index})`));
+            const addBtn = card.querySelector('.add-area-btn');
+            if (addBtn) addBtn.setAttribute('onclick', `addArea(${index})`);
+
+            const removeBtn = card.querySelector('.remove-category-btn');
+            if (removeBtn) removeBtn.setAttribute('onclick', `removeCategory(this)`);
 
             reindexAreas(index);
+            updateTotal(index);
         });
         categoryCount = cards.length;
     }
 
     function updateTotal(catIndex) {
         const container = document.getElementById(`areas-${catIndex}`);
+        if (!container) return;
+
         let total = 0;
         container.querySelectorAll('.max-points-input').forEach(inp => {
             total += parseInt(inp.value) || 0;
         });
         
-        const card = container.closest('.card-body');
-        const totalSpan = card.querySelector('.total-points');
-        totalSpan.textContent = total;
+        const cardBody = container.closest('.card-body');
+        if (cardBody) {
+            const totalSpan = cardBody.querySelector('.total-points');
+            if (totalSpan) totalSpan.textContent = total;
+        }
     }
+
 
     document.getElementById('examStandardForm').addEventListener('submit', function(e) {
         // No strict 100% check anymore
