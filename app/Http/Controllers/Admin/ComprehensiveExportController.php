@@ -16,7 +16,7 @@ class ComprehensiveExportController extends Controller
     public function exportComplete()
     {
         $questions = Question::where('status', 1)
-            ->with(['caseStudy.section.exam', 'options'])
+            ->with(['visit.caseStudy.section.exam', 'options'])
             ->get();
         
         $filename = 'complete_exam_data_' . date('Y-m-d_His') . '.csv';
@@ -36,10 +36,11 @@ class ComprehensiveExportController extends Controller
                 'Section Order',
                 'Case Study Title',
                 'Case Study Order',
+                'Visit Title',
+                'Visit Order',
                 'Question Text',
                 'Question Type',
-                'Internal Governance (IG)?',
-                'Decision Making (DM)?',
+                'Max Points',
                 'Option A',
                 'Option B',
                 'Option C',
@@ -59,16 +60,17 @@ class ComprehensiveExportController extends Controller
                 $isDM = $question->dm_weight > 0 ? 'Yes' : 'No';
                 
                 $row = [
-                    $question->caseStudy->section->exam->name ?? '',
-                    $question->caseStudy->section->exam->duration_minutes ?? '',
-                    $question->caseStudy->section->title ?? '',
-                    $question->caseStudy->section->order_no ?? '',
-                    $question->caseStudy->title ?? '',
-                    $question->caseStudy->order_no ?? '',
+                    $question->visit->caseStudy->section->exam->name ?? '',
+                    $question->visit->caseStudy->section->exam->duration_minutes ?? '',
+                    $question->visit->caseStudy->section->title ?? '',
+                    $question->visit->caseStudy->section->order_no ?? '',
+                    $question->visit->caseStudy->title ?? '',
+                    $question->visit->caseStudy->order_no ?? '',
+                    $question->visit->title ?? '',
+                    $question->visit->order_no ?? '',
                     strip_tags($question->question_text),
                     $questionType,
-                    $isIG,
-                    $isDM,
+                    $question->max_question_points ?? 1,
                 ];
 
                 // Add up to 4 options
@@ -131,7 +133,7 @@ class ComprehensiveExportController extends Controller
                     ]
                 );
 
-                // Get or create Case Study (formerly Sub Case Study)
+                // Get or create Case Study
                 $caseStudy = CaseStudy::firstOrCreate(
                     [
                         'section_id' => $section->id,
@@ -144,38 +146,49 @@ class ComprehensiveExportController extends Controller
                     ]
                 );
 
-                // Get correct answers
-                $correctAnswers = isset($data[14]) ? explode(',', $data[14]) : ['A'];
+                // Get or create Visit
+                $visit = \App\Models\Visit::firstOrCreate(
+                    [
+                        'case_study_id' => $caseStudy->id,
+                        'title' => $data[6] ?: 'Visit 1'
+                    ],
+                    [
+                        'description' => '',
+                        'order_no' => $data[7] ?? 1,
+                        'status' => 1,
+                    ]
+                );
 
                 // Convert user-friendly text to database values
-                $questionType = strtolower(trim($data[7] ?? ''));
+                $questionType = strtolower(trim($data[9] ?? ''));
                 if (strpos($questionType, 'multiple') !== false) {
                     $questionType = 'multiple';
                 } else {
                     $questionType = 'single';
                 }
-                
-                $igWeight = (strtolower(trim($data[8] ?? '')) == 'yes') ? 1 : 0;
-                $dmWeight = (strtolower(trim($data[9] ?? '')) == 'yes') ? 1 : 0;
 
                 // Create Question
                 $question = Question::create([
-                    'case_study_id' => $caseStudy->id,
-                    'question_text' => $data[6],
+                    'visit_id' => $visit->id,
+                    'question_text' => $data[8],
                     'question_type' => $questionType,
-                    'ig_weight' => $igWeight,
-                    'dm_weight' => $dmWeight,
+                    'max_question_points' => $data[10] ?? 1,
                     'status' => 1,
                 ]);
+
+                // Adjust index for options
+                $optionStartIndex = 11;
+                $correctAnswerIndex = 15;
+                $correctAnswers = isset($data[$correctAnswerIndex]) ? explode(',', $data[$correctAnswerIndex]) : ['A'];
 
                 // Create Options (A, B, C, D)
                 $optionKeys = ['A', 'B', 'C', 'D'];
                 for ($i = 0; $i < 4; $i++) {
-                    if (!empty($data[10 + $i])) {
+                    if (!empty($data[$optionStartIndex + $i])) {
                         QuestionOption::create([
                             'question_id' => $question->id,
                             'option_key' => $optionKeys[$i],
-                            'option_text' => $data[10 + $i],
+                            'option_text' => $data[$optionStartIndex + $i],
                             'is_correct' => in_array($optionKeys[$i], $correctAnswers) ? 1 : 0,
                         ]);
                     }
@@ -216,10 +229,11 @@ class ComprehensiveExportController extends Controller
                 'Section Order',
                 'Case Study Title',
                 'Case Study Order',
+                'Visit Title',
+                'Visit Order',
                 'Question Text',
                 'Question Type',
-                'Internal Governance (IG)?',
-                'Decision Making (DM)?',
+                'Max Points',
                 'Option A',
                 'Option B',
                 'Option C',
@@ -235,10 +249,11 @@ class ComprehensiveExportController extends Controller
                 '1',
                 'Basic Concepts',
                 '1',
+                'Visit 1',
+                '1',
                 'What is Laravel?',
                 'Single Choice',
-                'Yes',
-                'No',
+                '1',
                 'A PHP framework',
                 'A database',
                 'A programming language',

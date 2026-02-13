@@ -522,28 +522,38 @@ class ExamController extends Controller
                     'cloned_at' => now(),
                 ]);
 
-                $activeQuestions = $caseStudy->questions->where('status', 1);
-
-                // Clone all active questions in this case study
-                foreach ($activeQuestions as $question) {
-                    $newQuestion = \App\Models\Question::create([
+                // Clone all active visits and their questions
+                foreach ($caseStudy->visits->where('status', 1) as $visit) {
+                    $newVisit = \App\Models\Visit::create([
                         'case_study_id' => $newCaseStudy->id,
-                        'question_text' => $question->question_text,
-                        'question_type' => $question->question_type,
-                        'ig_weight' => $question->ig_weight,
-                        'dm_weight' => $question->dm_weight,
-                        'status' => 1, // Always set to active
-                        'cloned_from_id' => $question->id,
+                        'title' => $visit->title,
+                        'description' => $visit->description,
+                        'order_no' => $visit->order_no,
+                        'status' => 1,
                     ]);
 
-                    // Clone all options for this question
-                    foreach ($question->options as $option) {
-                        \App\Models\QuestionOption::create([
-                            'question_id' => $newQuestion->id,
-                            'option_key' => $option->option_key,
-                            'option_text' => $option->option_text,
-                            'is_correct' => $option->is_correct,
+                    $activeQuestions = $visit->questions->where('status', 1);
+
+                    // Clone all active questions in this visit
+                    foreach ($activeQuestions as $question) {
+                        $newQuestion = \App\Models\Question::create([
+                            'visit_id' => $newVisit->id,
+                            'question_text' => $question->question_text,
+                            'question_type' => $question->question_type,
+                            'max_question_points' => $question->max_question_points,
+                            'status' => 1, // Always set to active
+                            'cloned_from_id' => $question->id,
                         ]);
+
+                        // Clone all options for this question
+                        foreach ($question->options as $option) {
+                            \App\Models\QuestionOption::create([
+                                'question_id' => $newQuestion->id,
+                                'option_key' => $option->option_key,
+                                'option_text' => $option->option_text,
+                                'is_correct' => $option->is_correct,
+                            ]);
+                        }
                     }
                 }
             }
@@ -689,7 +699,7 @@ class ExamController extends Controller
     {
         $exam = Exam::with(['examStandard.categories.contentAreas', 'sections.caseStudies.questions'])->findOrFail($id);
         
-        $totalQuestions = $exam->total_questions ?? $exam->questions()->count();
+        $totalQuestions = $exam->total_questions ?? $exam->getAllQuestions()->count();
         if($totalQuestions == 0) return response()->json(['success' => false, 'message' => 'No questions in exam']);
 
         // 1. Calculate Deficiencies
@@ -720,7 +730,7 @@ class ExamController extends Controller
         // 2. Get Uncategorized Questions
         // We find questions that have NULL content area OR (optional: invalid content area)
         // Simplest: NULL content_area_id
-        $uncategorized = $exam->questions()
+        $uncategorized = $exam->getAllQuestions()
             ->whereNull('content_area_id')
             ->get();
             

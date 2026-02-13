@@ -27,9 +27,14 @@ class CaseStudy extends Model
         return $this->belongsTo(Section::class, 'section_id');
     }
 
+    public function visits()
+    {
+        return $this->hasMany(Visit::class);
+    }
+
     public function questions()
     {
-        return $this->hasMany(Question::class, 'case_study_id');
+        return $this->hasManyThrough(Question::class, Visit::class);
     }
 
     // Clone tracking relationships

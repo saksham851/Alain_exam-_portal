@@ -29,7 +29,7 @@ class DashboardController extends Controller
                     ->count(),
                 
                 'total_questions' => Question::where('status', 1)
-                    ->whereHas('caseStudy.section.exam', function($q) use ($selectedCategoryId) {
+                    ->whereHas('visit.caseStudy.section.exam', function($q) use ($selectedCategoryId) {
                         $q->where('category_id', $selectedCategoryId);
                     })->count(),
                 
@@ -133,8 +133,8 @@ class DashboardController extends Controller
                     
                     // Count questions for each case study
                     foreach ($activeCaseStudies as $caseStudy) {
-                        $questionCount += \App\Models\Question::where('case_study_id', $caseStudy->id)
-                            ->where('status', 1)
+                        $questionCount += $caseStudy->questions()
+                            ->where('questions.status', 1)
                             ->count();
                     }
                 }

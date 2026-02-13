@@ -34,10 +34,10 @@ class DataManagementController extends Controller
                 'exam_name',
                 'section_title',
                 'case_study_title',
+                'visit_title',
                 'question_text',
                 'question_type',
-                'ig_weight',
-                'dm_weight',
+                'max_question_points',
                 'option_1',
                 'option_2',
                 'option_3',
@@ -50,9 +50,9 @@ class DataManagementController extends Controller
                 'Engineering Fundamentals',
                 'Mathematics',
                 'Calculus Basics',
+                'Visit 1',
                 'What is the derivative of x^2?',
                 'single',
-                '1',
                 '1',
                 '2x',
                 'x',
@@ -65,10 +65,10 @@ class DataManagementController extends Controller
             fputcsv($file, [
                 'Engineering Fundamentals',
                 'Physics',
-                '',
+                'Newton\'s Laws',
+                'Visit 1',
                 'What is Newton\'s first law?',
                 'single',
-                '1',
                 '1',
                 'Law of Inertia',
                 'Law of Acceleration',
@@ -143,8 +143,8 @@ class DataManagementController extends Controller
 
             // Validate headers
             $expectedHeaders = [
-                'exam_name', 'section_title', 'case_study_title', 'question_text',
-                'question_type', 'ig_weight', 'dm_weight', 'option_1', 'option_2',
+                'exam_name', 'section_title', 'case_study_title', 'visit_title', 'question_text',
+                'question_type', 'max_question_points', 'option_1', 'option_2',
                 'option_3', 'option_4', 'correct_option'
             ];
 
@@ -172,7 +172,7 @@ class DataManagementController extends Controller
                     // Check Capacity
                     if (!isset($examCounts[$exam->id])) {
                         // Initialize with current DB count
-                        $examCounts[$exam->id] = Question::whereHas('caseStudy.section', function($q) use ($exam) {
+                        $examCounts[$exam->id] = Question::whereHas('visit.caseStudy.section', function($q) use ($exam) {
                             $q->where('exam_id', $exam->id);
                         })->where('status', 1)->count();
                     }
@@ -191,26 +191,37 @@ class DataManagementController extends Controller
                         continue;
                     }
 
-                    // Find or skip case study
-                    $caseStudyId = null;
-                    if (!empty($row[2])) {
-                        $caseStudy = CaseStudy::where('section_id', $section->id)
-                            ->where('title', $row[2])
-                            ->first();
-                        if (!$caseStudy) {
-                            $errors[] = "Row {$rowNumber}: Case Study '{$row[2]}' not found in section '{$row[1]}'.";
-                            continue;
-                        }
-                        $caseStudyId = $caseStudy->id;
+                    // Find or create Case Study
+                    $caseStudyTitle = !empty($row[2]) ? $row[2] : 'Default Case Study';
+                    $caseStudy = CaseStudy::firstOrCreate([
+                        'section_id' => $section->id,
+                        'title' => $caseStudyTitle
+                    ], [
+                        'order_no' => CaseStudy::where('section_id', $section->id)->max('order_no') + 1,
+                        'status' => 1
+                    ]);
+
+                    // Find or create Visit
+                    $visitTitle = !empty($row[3]) ? $row[3] : 'Visit 1';
+                    $visit = \App\Models\Visit::firstOrCreate([
+                        'case_study_id' => $caseStudy->id,
+                        'title' => $visitTitle
+                    ], [
+                        'order_no' => \App\Models\Visit::where('case_study_id', $caseStudy->id)->max('order_no') + 1,
+                        'status' => 1
+                    ]);
+                    
+                    if (!$visit) {
+                        $errors[] = "Row {$rowNumber}: Could not find or create Visit '{$visitTitle}'.";
+                        continue;
                     }
 
                     // Create question
                     $question = Question::create([
-                        'case_study_id' => $caseStudyId,
-                        'question_text' => $row[3],
-                        'question_type' => $row[4],
-                        'ig_weight' => (int)$row[5],
-                        'dm_weight' => (int)$row[6],
+                        'visit_id' => $visit->id,
+                        'question_text' => $row[4],
+                        'question_type' => $row[5],
+                        'max_question_points' => (int)$row[6],
                         'status' => 1,
                     ]);
 

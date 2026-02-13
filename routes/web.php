@@ -160,6 +160,8 @@ Route::middleware(['auth'])->group(function () {
          Route::get('questions-ajax/case-studies/{examId}', [SectionController::class, 'getSections']);
          Route::get('questions-ajax/sub-case-studies/{sectionId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getCaseStudiesBySection']);
          Route::get('questions-ajax/questions/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByCaseStudy']);
+         Route::get('questions-ajax/visits/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getVisits']);
+         Route::get('questions-ajax/questions-by-visit/{visitId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByVisit']);
 
          // Sections
          Route::resource('sections', SectionController::class);

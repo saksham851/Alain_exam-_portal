@@ -46,7 +46,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label class="form-label">Exam <span class="text-danger">*</span></label>
                             <select class="form-select" id="exam_id" name="exam_id" x-model="selectedExamId" @change="loadCaseStudies($event.target.value)" :disabled="isEdit" required>
                                 <option value="">Select Exam</option>
@@ -56,9 +56,9 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label class="form-label">Section <span class="text-danger">*</span></label>
-                            <select class="form-select" id="case_study_id" name="section_id" x-model="selectedCaseStudyId" @change="loadSubCaseStudies($event.target.value)" :disabled="caseStudies.length === 0" required>
+                            <select class="form-select" id="section_id" name="section_id" x-model="selectedCaseStudyId" @change="loadSubCaseStudies($event.target.value)" :disabled="caseStudies.length === 0 || isEdit" required>
                                 <option value="">Select Section</option>
                                 <template x-for="cs in caseStudies" :key="cs.id">
                                     <option :value="cs.id" :selected="String(cs.id) === String(selectedCaseStudyId)"
@@ -68,15 +68,26 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label class="form-label">Case Study <span class="text-danger">*</span></label>
-                            <select class="form-select" name="sub_case_id" id="sub_case_id" x-model="selectedSubCaseId" :disabled="subCaseStudies.length === 0" @change="!isEdit && loadExistingQuestions($event.target.value)" required>
+                            <select class="form-select" name="sub_case_id" id="sub_case_id" x-model="selectedSubCaseId" :disabled="subCaseStudies.length === 0 || isEdit" @change="loadVisits($event.target.value)" required>
                                 <option value="">Select Case Study</option>
                                 <template x-for="scs in subCaseStudies" :key="scs.id">
                                     <option :value="scs.id" :selected="String(scs.id) === String(selectedSubCaseId)" x-text="scs.title"></option>
                                 </template>
                             </select>
                             @error('sub_case_id') <small class="text-danger">{{ $message }}</small> @enderror
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Visit <span class="text-danger">*</span></label>
+                            <select class="form-select" name="visit_id" id="visit_id" x-model="selectedVisitId" :disabled="visits.length === 0" @change="!isEdit && loadExistingQuestions($event.target.value)" required>
+                                <option value="">Select Visit</option>
+                                <template x-for="v in visits" :key="v.id">
+                                    <option :value="v.id" :selected="String(v.id) === String(selectedVisitId)" x-text="v.order_no + '. ' + v.title"></option>
+                                </template>
+                            </select>
+                            @error('visit_id') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
                 </div>
@@ -607,9 +618,10 @@
             'singleCorrect' => $singleCorrect
         ];
 
-        $selectedSubCaseId = $question->case_study_id;
-        $selectedCaseStudyId = $question->caseStudy->section_id;
-        $selectedExamId = $question->caseStudy->section->exam_id;
+        $selectedVisitId = $question->visit_id;
+        $selectedSubCaseId = $question->visit ? $question->visit->case_study_id : null;
+        $selectedCaseStudyId = ($question->visit && $question->visit->caseStudy) ? $question->visit->caseStudy->section_id : null;
+        $selectedExamId = ($question->visit && $question->visit->caseStudy && $question->visit->caseStudy->section) ? $question->visit->caseStudy->section->exam_id : null;
     } else {
         $oldQuestions = old('questions');
         if ($oldQuestions && is_array($oldQuestions)) {
@@ -694,10 +706,12 @@ function questionForm() {
         // Select Options
         caseStudies: [],
         subCaseStudies: [],
+        visits: [],
         allExams: @json($exams),
         selectedExamId: {{ old('exam_id', request('exam_id') ?? ($selectedExamId ?? 'null')) }},
         selectedCaseStudyId: {{ old('section_id', request('section_id') ?? ($selectedCaseStudyId ?? 'null')) }},
         selectedSubCaseId: {{ old('sub_case_id', request('case_study_id') ?? ($selectedSubCaseId ?? 'null')) }},
+        selectedVisitId: {{ old('visit_id', request('visit_id') ?? ($selectedVisitId ?? 'null')) }},
         
         // Exam Standard Data for Tagging
         examStandardCategories: @json($initialStandardCategories), // [{id, name, content_areas: []}]
@@ -722,7 +736,10 @@ function questionForm() {
                 this.loadCaseStudies(this.selectedExamId);
             }
             if(this.selectedSubCaseId) {
-                 this.$nextTick(() => { });
+                 this.$nextTick(() => { this.loadVisits(this.selectedSubCaseId); });
+            }
+            if(this.selectedVisitId) {
+                 this.$nextTick(() => { if (!this.isEdit) this.loadExistingQuestions(this.selectedVisitId); });
             }
             this.$nextTick(() => {
                 if(typeof ClassicEditor !== 'undefined') {
@@ -942,22 +959,37 @@ function questionForm() {
         },
 
         async loadSubCaseStudies(sectionId) {
-             if(!sectionId) return;
+             this.visits = []; this.selectedVisitId = null;
+             if(!sectionId) { this.subCaseStudies = []; return; }
              try {
                 const response = await fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`);
                 this.subCaseStudies = await response.json();
                 if(this.selectedSubCaseId) {
                     this.$nextTick(() => {
-                        if (!this.isEdit) this.loadExistingQuestions(this.selectedSubCaseId);
+                        this.loadVisits(this.selectedSubCaseId);
                     });
                 }
              } catch(e) { console.error(e); }
         },
 
-        async loadExistingQuestions(subCaseId) {
-            if(!subCaseId) { this.existingQuestions = []; return; }
+        async loadVisits(caseStudyId) {
+             this.existingQuestions = [];
+             if(!caseStudyId) { this.visits = []; return; }
+             try {
+                const response = await fetch(`/admin/questions-ajax/visits/${caseStudyId}`);
+                this.visits = await response.json();
+                if(this.selectedVisitId) {
+                    this.$nextTick(() => {
+                        if (!this.isEdit) this.loadExistingQuestions(this.selectedVisitId);
+                    });
+                }
+             } catch(e) { console.error(e); }
+        },
+
+        async loadExistingQuestions(visitId) {
+            if(!visitId) { this.existingQuestions = []; return; }
             try {
-                const response = await fetch(`/admin/questions-ajax/questions/${subCaseId}`);
+                const response = await fetch(`/admin/questions-ajax/questions-by-visit/${visitId}`);
                 let data = await response.json();
                 if (this.isEdit && this.currentQuestionId) data = data.filter(q => q.id != this.currentQuestionId);
 

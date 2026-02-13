@@ -402,14 +402,14 @@ class SectionController extends Controller
              $sourceSection = Section::find($sectionId);
              if($sourceSection) {
                  // Count active questions in this section's case studies
-                 $questionsToAdd += \App\Models\Question::whereHas('caseStudy', function($q) use ($sectionId) {
+                 $questionsToAdd += \App\Models\Question::whereHas('visit.caseStudy', function($q) use ($sectionId) {
                      $q->where('section_id', $sectionId);
                  })->where('status', 1)->count();
              }
         }
 
         if ($questionsToAdd > 0 && $targetExam->total_questions) {
-            $currentCount = \App\Models\Question::whereHas('caseStudy.section', function($q) use ($targetExam) {
+            $currentCount = \App\Models\Question::whereHas('visit.caseStudy.section', function($q) use ($targetExam) {
                 $q->where('exam_id', $targetExam->id);
             })->where('status', 1)->count();
 
@@ -454,25 +454,35 @@ class SectionController extends Controller
                         'cloned_at' => now(),
                     ]);
 
-                    // Clone Questions
-                    foreach ($caseStudy->questions as $question) {
-                        $newQuestion = \App\Models\Question::create([
+                    // Clone Visits and Questions
+                    foreach ($caseStudy->visits as $visit) {
+                        $newVisit = \App\Models\Visit::create([
                             'case_study_id' => $newCaseStudy->id,
-                            'question_text' => $question->question_text,
-                            'question_type' => $question->question_type,
-                            'ig_weight' => $question->ig_weight,
-                            'dm_weight' => $question->dm_weight,
-                            'status' => $question->status,
+                            'title' => $visit->title,
+                            'description' => $visit->description,
+                            'order_no' => $visit->order_no,
+                            'status' => $visit->status,
                         ]);
 
-                        // Clone Options
-                        foreach ($question->options as $option) {
-                            \App\Models\QuestionOption::create([
-                                'question_id' => $newQuestion->id,
-                                'option_key' => $option->option_key,
-                                'option_text' => $option->option_text,
-                                'is_correct' => $option->is_correct,
+                        foreach ($visit->questions as $question) {
+                            $newQuestion = \App\Models\Question::create([
+                                'visit_id' => $newVisit->id,
+                                'question_text' => $question->question_text,
+                                'question_type' => $question->question_type,
+                                'max_question_points' => $question->max_question_points,
+                                'status' => $question->status,
+                                'cloned_from_id' => $question->id,
                             ]);
+
+                            // Clone Options
+                            foreach ($question->options as $option) {
+                                \App\Models\QuestionOption::create([
+                                    'question_id' => $newQuestion->id,
+                                    'option_key' => $option->option_key,
+                                    'option_text' => $option->option_text,
+                                    'is_correct' => $option->is_correct,
+                                ]);
+                            }
                         }
                     }
                 }

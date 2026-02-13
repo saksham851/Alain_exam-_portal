@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Question extends Model
 {
     protected $fillable = [
-        'case_study_id',
+        'visit_id',
         'question_text',
         'question_type',
         'status',
@@ -20,14 +20,20 @@ class Question extends Model
         'max_question_points' => 'integer',
     ];
 
+    public function visit()
+    {
+        return $this->belongsTo(Visit::class);
+    }
+
     public function caseStudy()
     {
-        return $this->belongsTo(CaseStudy::class);
+        // Helper to access parent case study
+        return $this->visit ? $this->visit->caseStudy() : null;
     }
 
     public function section()
     {
-        return $this->caseStudy->section();
+        return $this->visit && $this->visit->caseStudy ? $this->visit->caseStudy->section() : null;
     }
 
     public function options()

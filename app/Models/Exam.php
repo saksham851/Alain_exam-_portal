@@ -70,7 +70,7 @@ class Exam extends Model
     // Custom helper to get all questions in this exam
     public function getAllQuestions()
     {
-        return Question::whereHas('caseStudy.section', function($q) {
+        return Question::whereHas('visit.caseStudy.section', function($q) {
             $q->where('exam_id', $this->id);
         })->where('status', 1);
     }

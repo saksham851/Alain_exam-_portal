@@ -23,32 +23,34 @@ class QuestionController extends Controller
         $status = $request->get('status') === 'inactive' ? 0 : 1;
 
         $query = Question::where('status', $status)
-            ->with(['caseStudy.section.exam.category', 'options', 'clonedFrom.caseStudy.section.exam', 'tags.scoreCategory', 'tags.contentArea']);
+            ->with(['visit.caseStudy.section.exam.category', 'options', 'clonedFrom.visit.caseStudy.section.exam', 'tags.scoreCategory', 'tags.contentArea']);
 
         // Filter by Exam Category (Primary Filter)
         if ($request->filled('exam_category')) {
-            $query->whereHas('caseStudy.section.exam', function($q) use ($request) {
+            $query->whereHas('visit.caseStudy.section.exam', function($q) use ($request) {
                 $q->where('category_id', $request->exam_category);
             });
         }
 
         // Filter by Exam (depends on Exam Category selection)
         if ($request->filled('exam')) {
-            $query->whereHas('caseStudy.section', function($q) use ($request) {
+            $query->whereHas('visit.caseStudy.section', function($q) use ($request) {
                 $q->where('exam_id', $request->exam);
             });
         }
 
         // Filter by Case Study (depends on Exam selection)
         if ($request->filled('case_study')) {
-            $query->where('case_study_id', $request->case_study);
+            $query->whereHas('visit', function($q) use ($request) {
+                $q->where('case_study_id', $request->case_study);
+            });
         }
 
 
 
         // Filter by Certification Type (through Exam)
         if ($request->filled('certification_type')) {
-            $query->whereHas('caseStudy.section.exam', function($q) use ($request) {
+            $query->whereHas('visit.caseStudy.section.exam', function($q) use ($request) {
                 $q->where('certification_type', $request->certification_type);
             });
         }
@@ -59,7 +61,7 @@ class QuestionController extends Controller
         }
 
         // Only show questions that belong to active case studies and active sections
-        $query->whereHas('caseStudy', function($q) {
+        $query->whereHas('visit.caseStudy', function($q) {
             $q->where('status', 1)
               ->whereHas('section', function($sq) {
                   $sq->where('status', 1);
@@ -114,8 +116,8 @@ class QuestionController extends Controller
         $exams = Exam::where('status', 1)->with('examStandard.categories.contentAreas')->get();
         
         $existingQuestions = collect();
-        if ($request->has('case_study_id')) {
-            $existingQuestions = Question::where('case_study_id', $request->case_study_id)
+        if ($request->has('visit_id')) {
+            $existingQuestions = Question::where('visit_id', $request->visit_id)
                 ->where('status', 1)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -138,7 +140,7 @@ class QuestionController extends Controller
             return true; // No limit defined
         }
 
-        $currentCount = Question::whereHas('caseStudy.section', function($q) use ($examId) {
+        $currentCount = Question::whereHas('visit.caseStudy.section', function($q) use ($examId) {
             $q->where('exam_id', $examId);
         })->where('status', 1)->count();
 
@@ -152,13 +154,13 @@ class QuestionController extends Controller
     public function store(Request $request)
     {
         // Check if exam is active
-        $caseStudy = CaseStudy::with('section.exam')->find($request->sub_case_id);
-        if ($caseStudy && $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+        $visit = \App\Models\Visit::with('caseStudy.section.exam')->find($request->visit_id);
+        if ($visit && $visit->caseStudy && $visit->caseStudy->section && $visit->caseStudy->section->exam && $visit->caseStudy->section->exam->is_active == 1) {
             return redirect()->back()->with('error', 'Cannot add question to an active exam. Please deactivate the exam first.');
         }
 
         $request->validate([
-            'sub_case_id' => 'required|exists:case_studies,id',
+            'visit_id' => 'required|exists:visits,id',
             'existing_questions' => 'nullable|array',
             'existing_questions.*.question_text' => 'required|string',
             'existing_questions.*.question_type' => 'required|in:single,multiple',
@@ -190,7 +192,7 @@ class QuestionController extends Controller
         }
         
         if ($newCount > 0) {
-            $capacityCheck = $this->checkExamLimit($caseStudy->section->exam_id, $newCount);
+            $capacityCheck = $this->checkExamLimit($visit->caseStudy->section->exam_id, $newCount);
             if ($capacityCheck !== true) {
                 return redirect()->back()->with('error', $capacityCheck);
             }
@@ -206,7 +208,7 @@ class QuestionController extends Controller
             if ($request->has('existing_questions')) {
                 foreach ($request->existing_questions as $qId => $qData) {
                     $question = Question::find($qId);
-                    if ($question && $question->case_study_id == $request->sub_case_id) {
+                    if ($question && $question->visit_id == $request->visit_id) {
                         
                         // Check for duplicate options
                         if (isset($qData['options']) && $this->hasDuplicateOptions($qData['options'])) {
@@ -215,7 +217,7 @@ class QuestionController extends Controller
                         }
 
                         // Check for duplicate question text in exam
-                        if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $qData['question_text'], $question->id)) {
+                        if ($this->isQuestionDuplicateInExam($visit->caseStudy->section->exam_id, $qData['question_text'], $question->id)) {
                              $strippedText = strip_tags($qData['question_text']);
                              throw new \Exception("Question '{$strippedText}' already exists in this exam.");
                         }
@@ -274,14 +276,14 @@ class QuestionController extends Controller
                     }
 
                     // Check for duplicate question text in exam
-                    if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $qData['question_text'])) {
+                    if ($this->isQuestionDuplicateInExam($visit->caseStudy->section->exam_id, $qData['question_text'])) {
                             $strippedText = strip_tags($qData['question_text']);
                             throw new \Exception("Question '{$strippedText}' already exists in this exam.");
                     }
 
                     // Create question
                     $question = Question::create([
-                        'case_study_id' => $request->sub_case_id,
+                        'visit_id' => $request->visit_id,
                         'question_text' => trim($qData['question_text']),
                         'question_type' => $qData['question_type'],
                         'max_question_points' => $qData['max_question_points'] ?? 1,
@@ -329,9 +331,9 @@ class QuestionController extends Controller
 
             return redirect()->route('admin.questions.index')
                 ->with('question_created_success', true)
-                ->with('selected_exam_id', $caseStudy->section->exam_id)
-                ->with('selected_section_id', $caseStudy->section_id)
-                ->with('selected_case_study_id', $request->sub_case_id)
+                ->with('selected_exam_id', $visit->caseStudy->section->exam_id)
+                ->with('selected_section_id', $visit->caseStudy->section_id)
+                ->with('selected_visit_id', $request->visit_id)
                 ->with('success', $message);
 
         } catch (\Exception $e) {
@@ -342,7 +344,7 @@ class QuestionController extends Controller
 
     public function edit($id)
     {
-        $question = Question::with(['options', 'caseStudy.section.exam.examStandard.categories.contentAreas', 'tags'])->find($id);
+        $question = Question::with(['options', 'visit.caseStudy.section.exam.examStandard.categories.contentAreas', 'tags'])->find($id);
         
         if (!$question || $question->status == 0) {
             return back()->with('error', 'Question not found');
@@ -356,13 +358,13 @@ class QuestionController extends Controller
     public function update(Request $request, $id)
     {
         // Check if exam is active
-        $caseStudy = CaseStudy::with('section.exam')->find($request->sub_case_id);
-        if ($caseStudy && $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+        $visit = \App\Models\Visit::with('caseStudy.section.exam')->find($request->visit_id);
+        if ($visit && $visit->caseStudy && $visit->caseStudy->section && $visit->caseStudy->section->exam && $visit->caseStudy->section->exam->is_active == 1) {
             return redirect()->back()->with('error', 'Cannot modify question in an active exam. Please deactivate the exam first.');
         }
 
         $request->validate([
-            'sub_case_id' => 'required|exists:case_studies,id',
+            'visit_id' => 'required|exists:visits,id',
             'question_text' => 'required|string',
             'question_type' => 'required|in:single,multiple',
             'max_question_points' => 'required|integer|min:0|max:3',
@@ -385,14 +387,15 @@ class QuestionController extends Controller
 
         // Check for duplicate question text in exam
         // Need to load exam first
-        $caseStudy = CaseStudy::with('section.exam')->find($request->sub_case_id);
-        if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $request->question_text, $id)) {
+        $visit = \App\Models\Visit::with('caseStudy.section.exam')->find($request->visit_id);
+        
+        if ($this->isQuestionDuplicateInExam($visit->caseStudy->section->exam_id, $request->question_text, $id)) {
              $strippedText = strip_tags($request->question_text);
              return back()->with('error', "Question '{$strippedText}' already exists in this exam.");
         }
 
         $question->update([
-            'case_study_id' => $request->sub_case_id,
+            'visit_id' => $request->visit_id,
             'question_text' => trim($request->question_text),
             'question_type' => $request->question_type,
             'max_question_points' => $request->max_question_points ?? 1,
@@ -432,14 +435,14 @@ class QuestionController extends Controller
 
     public function destroy($id)
     {
-        $question = Question::with('caseStudy.section.exam')->find($id);
+        $question = Question::with('visit.caseStudy.section.exam')->find($id);
         
         if (!$question) {
             return back()->with('error', 'Question not found');
         }
 
         // Check if exam is active
-        if ($question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1) {
+        if ($question->visit && $question->visit->caseStudy && $question->visit->caseStudy->section && $question->visit->caseStudy->section->exam && $question->visit->caseStudy->section->exam->is_active == 1) {
             return back()->with('error', 'Cannot delete question from an active exam. Please deactivate the exam first.');
         }
 
@@ -449,7 +452,7 @@ class QuestionController extends Controller
 
     public function show($id)
     {
-        $question = Question::with(['caseStudy.section.exam.category', 'options'])->findOrFail($id);
+        $question = Question::with(['visit.caseStudy.section.exam.category', 'options'])->findOrFail($id);
         return view('admin.questions.show', compact('question'));
     }
 
@@ -462,11 +465,15 @@ class QuestionController extends Controller
         $sections = Section::where('exam_id', $examId)
             ->where('status', 1)
             ->with(['examStandardCategory'])
-            ->withCount(['questions' => function($q) { $q->where('status', 1); }])
             ->get();
         
         // Add exam active status and category data
         $sections->each(function($section) use ($exam) {
+            // Count active questions in this section
+            $section->questions_count = Question::whereHas('visit.caseStudy', function($q) use ($section) {
+                $q->where('section_id', $section->id);
+            })->where('status', 1)->count();
+
             $section->exam_is_active = $exam ? $exam->is_active : 0;
             if ($section->examStandardCategory) {
                 // Pass category name and its content areas for filtering in UI
@@ -497,7 +504,9 @@ class QuestionController extends Controller
 
     public function getQuestions($caseStudyId)
     {
-        $questions = Question::where('case_study_id', $caseStudyId)
+        $questions = Question::whereHas('visit', function($q) use ($caseStudyId) {
+                $q->where('case_study_id', $caseStudyId);
+            })
             ->where('status', 1)
             ->with(['options', 'tags'])
             ->get(); // Return full objects
@@ -509,7 +518,7 @@ class QuestionController extends Controller
     public function export()
     {
         $questions = Question::where('status', 1)
-            ->with(['caseStudy.section', 'options', 'tags'])
+            ->with(['visit.caseStudy.section', 'options', 'tags'])
             ->get();
         
         $filename = 'questions_' . date('Y-m-d_His') . '.csv';
@@ -525,7 +534,7 @@ class QuestionController extends Controller
             foreach ($questions as $q) {
                 fputcsv($file, [
                     $q->id,
-                    $q->caseStudy->title ?? '',
+                    $q->visit && $q->visit->caseStudy ? $q->visit->caseStudy->title : '',
                     strip_tags($q->question_text),
                     $q->question_type,
                     $q->max_question_points,
@@ -544,18 +553,19 @@ class QuestionController extends Controller
         $request->validate([
             'source_question_ids' => 'required|array',
             'source_question_ids.*' => 'exists:questions,id',
-            'target_case_study_id' => 'required|exists:case_studies,id',
+            'source_question_ids.*' => 'exists:questions,id',
+            'target_visit_id' => 'required|exists:visits,id',
         ]);
 
-        $targetCaseStudy = CaseStudy::with('section.exam')->findOrFail($request->target_case_study_id);
+        $targetVisit = \App\Models\Visit::with('caseStudy.section.exam')->findOrFail($request->target_visit_id);
 
-        if ($targetCaseStudy->section && $targetCaseStudy->section->exam && $targetCaseStudy->section->exam->is_active == 1) {
+        if ($targetVisit->caseStudy && $targetVisit->caseStudy->section && $targetVisit->caseStudy->section->exam && $targetVisit->caseStudy->section->exam->is_active == 1) {
             return redirect()->back()->with('error', 'Cannot clone questions into an active exam. Please deactivate the exam first.');
         }
 
         // CHECK CAPACITY
         $countToClone = count($request->source_question_ids);
-        $capacityCheck = $this->checkExamLimit($targetCaseStudy->section->exam_id, $countToClone);
+        $capacityCheck = $this->checkExamLimit($targetVisit->caseStudy->section->exam_id, $countToClone);
         if ($capacityCheck !== true) {
              return redirect()->back()->with('error', $capacityCheck);
         }
@@ -568,13 +578,13 @@ class QuestionController extends Controller
                  $sourceQuestion = Question::with(['options', 'tags'])->findOrFail($questionId);
 
                 // Check for duplicates in TARGET exam
-                if ($this->isQuestionDuplicateInExam($targetCaseStudy->section->exam_id, $sourceQuestion->question_text)) {
+                if ($this->isQuestionDuplicateInExam($targetVisit->caseStudy->section->exam_id, $sourceQuestion->question_text)) {
                      $strippedText = strip_tags($sourceQuestion->question_text);
                      throw new \Exception("Question '{$strippedText}' already exists in the target exam.");
                 }
 
                 $newQuestion = Question::create([
-                    'case_study_id' => $targetCaseStudy->id,
+                    'visit_id' => $targetVisit->id,
                     'question_text' => trim($sourceQuestion->question_text),
                     'question_type' => $sourceQuestion->question_type,
                     'max_question_points' => $sourceQuestion->max_question_points,
@@ -606,9 +616,9 @@ class QuestionController extends Controller
 
             return redirect()->route('admin.questions.index')
                 ->with('question_created_success', true)
-                ->with('selected_exam_id', $targetCaseStudy->section->exam_id)
-                ->with('selected_section_id', $targetCaseStudy->section_id)
-                ->with('selected_case_study_id', $targetCaseStudy->id)
+                ->with('selected_exam_id', $targetVisit->caseStudy->section->exam_id)
+                ->with('selected_section_id', $targetVisit->caseStudy->section_id)
+                ->with('selected_visit_id', $targetVisit->id)
                 ->with('success', "$clonedCount question(s) cloned successfully!");
 
         } catch (\Exception $e) {
@@ -622,11 +632,12 @@ class QuestionController extends Controller
     {
         $request->validate([
             'file' => 'required|file|mimes:csv,txt',
-            'sub_case_id' => 'required|exists:case_studies,id'
+            'file' => 'required|file|mimes:csv,txt',
+            'visit_id' => 'required|exists:visits,id'
         ]);
 
-        $caseStudy = CaseStudy::with('section.exam')->findOrFail($request->sub_case_id);
-        if ($caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
+        $visit = \App\Models\Visit::with('caseStudy.section.exam')->findOrFail($request->visit_id);
+        if ($visit->caseStudy->section->exam && $visit->caseStudy->section->exam->is_active == 1) {
             return redirect()->back()->with('error', 'Cannot import questions into an active exam.');
         }
 
@@ -643,7 +654,7 @@ class QuestionController extends Controller
         }
 
         if ($countToImport > 0) {
-            $capacityCheck = $this->checkExamLimit($caseStudy->section->exam_id, $countToImport);
+            $capacityCheck = $this->checkExamLimit($visit->caseStudy->section->exam_id, $countToImport);
             if ($capacityCheck !== true) {
                  return redirect()->back()->with('error', $capacityCheck);
             }
@@ -660,13 +671,13 @@ class QuestionController extends Controller
                 $qText = trim($data[0]);
                 
                 // Check if already exists in Exam
-                if ($this->isQuestionDuplicateInExam($caseStudy->section->exam_id, $qText)) {
+                if ($this->isQuestionDuplicateInExam($visit->caseStudy->section->exam_id, $qText)) {
                     $skipped++;
                     continue; 
                 }
 
                 Question::create([
-                    'case_study_id' => $request->sub_case_id,
+                    'visit_id' => $request->visit_id,
                     'question_text' => $qText,
                     'question_type' => $data[1] ?? 'single',
                     'content_area_id' => null, 
@@ -689,14 +700,14 @@ class QuestionController extends Controller
     // ACTIVATE QUESTION
     public function activate($id)
     {
-        $question = Question::with('caseStudy.section.exam')->findOrFail($id);
+        $question = Question::with('visit.caseStudy.section.exam')->findOrFail($id);
         
-        if ($question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1) {
+        if ($question->visit && $question->visit->caseStudy && $question->visit->caseStudy->section && $question->visit->caseStudy->section->exam && $question->visit->caseStudy->section->exam->is_active == 1) {
             return redirect()->back()->with('error', 'Cannot activate question in an active exam.');
         }
 
         if ($question->status == 0) {
-             $capacityCheck = $this->checkExamLimit($question->caseStudy->section->exam_id, 1);
+             $capacityCheck = $this->checkExamLimit($question->visit->caseStudy->section->exam_id, 1);
              if ($capacityCheck !== true) {
                   return redirect()->back()->with('error', $capacityCheck);
              }
@@ -713,9 +724,9 @@ class QuestionController extends Controller
             'value' => 'nullable'
         ]);
 
-        $question = Question::with('caseStudy.section.exam')->findOrFail($id);
+        $question = Question::with('visit.caseStudy.section.exam')->findOrFail($id);
 
-        if ($question->caseStudy && $question->caseStudy->section && $question->caseStudy->section->exam && $question->caseStudy->section->exam->is_active == 1) {
+        if ($question->visit && $question->visit->caseStudy && $question->visit->caseStudy->section && $question->visit->caseStudy->section->exam && $question->visit->caseStudy->section->exam->is_active == 1) {
             return response()->json(['success' => false, 'message' => 'Cannot modify question in an active exam.']);
         }
 
@@ -741,8 +752,8 @@ class QuestionController extends Controller
 
         // Get updated compliance stats
         // Reload relationships to ensure we get the full chain
-        $question->load('caseStudy.section.exam.examStandard.categories.contentAreas');
-        $exam = $question->caseStudy->section->exam;
+        $question->load('visit.caseStudy.section.exam.examStandard.categories.contentAreas');
+        $exam = $question->visit && $question->visit->caseStudy ? $question->visit->caseStudy->section->exam : null;
         
         $compliance = null;
         if($exam) {
@@ -761,12 +772,35 @@ class QuestionController extends Controller
      */
     public function getQuestionsByCaseStudy($caseStudyId)
     {
-        $questions = Question::where('case_study_id', $caseStudyId)
+        $questions = Question::whereHas('visit', function($q) use ($caseStudyId) {
+                $q->where('case_study_id', $caseStudyId);
+            })
             ->where('status', 1)
             ->with(['options', 'tags'])
             ->orderBy('id')
             ->get();
         
+        return response()->json($questions);
+    }
+
+    public function getVisits($caseStudyId)
+    {
+        $visits = \App\Models\Visit::where('case_study_id', $caseStudyId)
+            ->where('status', 1)
+            ->orderBy('order_no')
+            ->get(['id', 'title', 'order_no']);
+            
+        return response()->json($visits);
+    }
+
+    public function getQuestionsByVisit($visitId)
+    {
+        $questions = Question::where('visit_id', $visitId)
+            ->where('status', 1)
+            ->with(['options', 'tags'])
+            ->orderBy('id')
+            ->get();
+            
         return response()->json($questions);
     }
 
@@ -780,7 +814,7 @@ class QuestionController extends Controller
      */
     private function isQuestionDuplicateInExam($examId, $questionText, $excludeQuestionId = null)
     {
-        return Question::whereHas('caseStudy.section', function($q) use ($examId) {
+        return Question::whereHas('visit.caseStudy.section', function($q) use ($examId) {
             $q->where('exam_id', $examId);
         })
         ->where('question_text', trim($questionText))

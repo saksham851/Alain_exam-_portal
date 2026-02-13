@@ -234,17 +234,24 @@ public function store(Request $request)
                 
                 $newCaseStudy->save();
 
-                // Clone all questions and their options
-                foreach ($sourceCaseStudy->questions as $sourceQuestion) {
-                    $newQuestion = $sourceQuestion->replicate();
-                    $newQuestion->case_study_id = $newCaseStudy->id;
-                    $newQuestion->save();
+                // Clone all active visits and their questions
+                foreach ($sourceCaseStudy->visits->where('status', 1) as $sourceVisit) {
+                    $newVisit = $sourceVisit->replicate();
+                    $newVisit->case_study_id = $newCaseStudy->id;
+                    $newVisit->save();
 
-                    // Clone question options
-                    foreach ($sourceQuestion->options as $sourceOption) {
-                        $newOption = $sourceOption->replicate();
-                        $newOption->question_id = $newQuestion->id;
-                        $newOption->save();
+                    // Clone all questions for this visit
+                    foreach ($sourceVisit->questions->where('status', 1) as $sourceQuestion) {
+                        $newQuestion = $sourceQuestion->replicate();
+                        $newQuestion->visit_id = $newVisit->id;
+                        $newQuestion->save();
+
+                        // Clone question options
+                        foreach ($sourceQuestion->options as $sourceOption) {
+                            $newOption = $sourceOption->replicate();
+                            $newOption->question_id = $newQuestion->id;
+                            $newOption->save();
+                        }
                     }
                 }
 
@@ -276,11 +283,14 @@ public function store(Request $request)
     {
         $sections = Section::where('exam_id', $examId)
             ->where('status', 1)
-            ->withCount(['questions' => function($q) {
-                $q->where('status', 1);
-            }])
             ->orderBy('title')
             ->get(['id', 'title']);
+
+        $sections->each(function($section) {
+            $section->questions_count = Question::whereHas('visit.caseStudy', function($q) use ($section) {
+                $q->where('section_id', $section->id);
+            })->where('status', 1)->count();
+        });
 
         return response()->json([
             'success' => true,
@@ -290,7 +300,9 @@ public function store(Request $request)
 
     public function edit($id)
     {
-        $caseStudy = CaseStudy::with('section.exam')->findOrFail($id);
+        $caseStudy = CaseStudy::with(['section.exam', 'visits' => function($q) {
+            $q->orderBy('order_no');
+        }])->findOrFail($id);
         $exams = Exam::where('status', 1)->orderBy('name')->get();
         return view('admin.case-studies-bank.edit', compact('caseStudy', 'exams'));
     }
@@ -309,22 +321,67 @@ public function store(Request $request)
             'section_id' => 'required|exists:sections,id',
             'content' => 'nullable|string',
             'order_no' => 'required|integer|min:1',
+            'visits' => 'nullable|array',
+            'visits.*.id' => 'nullable|exists:visits,id',
+            'visits.*.title' => 'required_with:visits|string|max:255',
+            'visits.*.description' => 'nullable|string',
+            'visits.*.order_no' => 'nullable|integer',
+            'deleted_visits' => 'nullable|array'
         ]);
 
-        // Check if target section exam is active (if changing section)
-        $newSection = Section::with('exam')->find($request->section_id);
-        if ($newSection && $newSection->exam && $newSection->exam->is_active == 1) {
-            return redirect()->back()->with('error', 'Cannot move case study to an active exam.');
+        DB::beginTransaction();
+
+        try {
+            // Check if target section exam is active (if changing section)
+            $newSection = Section::with('exam')->find($request->section_id);
+            if ($newSection && $newSection->exam && $newSection->exam->is_active == 1) {
+                return redirect()->back()->with('error', 'Cannot move case study to an active exam.');
+            }
+
+            $caseStudy->update([
+                'title' => $request->title,
+                'section_id' => $request->section_id,
+                'content' => $request->content,
+                'order_no' => $request->order_no,
+            ]);
+
+            // Handle Deleted Visits
+            if ($request->filled('deleted_visits')) {
+                \App\Models\Visit::whereIn('id', $request->deleted_visits)->delete();
+            }
+
+            // Handle Visits (Create/Update)
+            if ($request->has('visits')) {
+                foreach ($request->visits as $index => $visitData) {
+                    $visit = null;
+                    
+                    if (!empty($visitData['id'])) {
+                        $visit = \App\Models\Visit::find($visitData['id']);
+                    }
+
+                    $dataToSave = [
+                        'case_study_id' => $caseStudy->id,
+                        'title' => $visitData['title'],
+                        'description' => $visitData['description'] ?? null,
+                        'order_no' => $visitData['order_no'] ?? ($index + 1),
+                        'status' => 1
+                    ];
+
+                    if ($visit) {
+                        $visit->update($dataToSave);
+                    } else {
+                        \App\Models\Visit::create($dataToSave);
+                    }
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('admin.case-studies-bank.index')->with('success', 'Case Study and Visits updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Error updating case study: ' . $e->getMessage());
         }
-
-        $caseStudy->update([
-            'title' => $request->title,
-            'section_id' => $request->section_id,
-            'content' => $request->content,
-            'order_no' => $request->order_no,
-        ]);
-
-        return redirect()->route('admin.case-studies-bank.index')->with('success', 'Case Study updated successfully.');
     }
 
     public function show($id)
