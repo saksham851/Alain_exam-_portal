@@ -68,7 +68,13 @@
                                     @if(!$isValidStatus)
                                         <i class="ti ti-alert-triangle text-warning me-2 fs-5"></i>
                                         <span class="small text-warning">
-                                            {{ $expectedTotal - $totalQuestions > 0 ? 'Action required: Add ' . ($expectedTotal - $totalQuestions) . ' more points' : 'Action required: Remove ' . ($totalQuestions - $expectedTotal) . ' points' }}
+                                            @if($expectedTotal == $totalQuestions)
+                                                Action required: <strong class="text-danger">Questions are not properly categorized</strong> (See breakdown below)
+                                            @elseif($expectedTotal > $totalQuestions)
+                                                Action required: Add {{ $expectedTotal - $totalQuestions }} more points
+                                            @else
+                                                Action required: Remove {{ $totalQuestions - $expectedTotal }} points
+                                            @endif
                                         </span>
                                     @else
                                         <i class="ti ti-circle-check text-success me-2 fs-5"></i>
@@ -87,9 +93,11 @@
                     <!-- Compliance Guidance (New) -->
                     @if(!$isValidStatus && !empty($validation['compliance_guidance']))
                     <div class="mt-2 mb-4 p-3 bg-light-warning border border-warning-subtle rounded-3">
-                        <h6 class="text-warning-emphasis fw-bold mb-2">
-                            <i class="ti ti-bulb me-1"></i> Question Quantity Guide (To Achieve Compliance)
-                        </h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-warning-emphasis fw-bold mb-0">
+                                <i class="ti ti-bulb me-1"></i> Question Quantity Guide (To Achieve Compliance)
+                            </h6>
+                        </div>
                         <ul class="list-unstyled mb-0 vstack gap-2">
                             @foreach($validation['compliance_guidance'] as $guide)
                             <li class="small d-flex align-items-center">
@@ -211,11 +219,11 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Exam Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', optional($exam)->name) }}" required pattern="^[a-zA-Z0-9\s]+$" title="Only letters, numbers, and spaces are allowed.">
+                            <input type="text" name="name" class="form-control" value="{{ old('name', optional($exam)->name) }}" required pattern="^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$" title="Only letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ) are allowed.">
                             @error('name') 
                                 <small class="text-danger">{{ $message }}</small> 
                             @else
-                                <small class="text-muted">Only letters, numbers, and spaces are allowed.</small>
+                                <small class="text-muted">Only letters, numbers, spaces, and common symbols are allowed.</small>
                             @enderror
                         </div>
 
@@ -253,7 +261,7 @@
                                     <option value="">Select Certification Type</option>
                                     <option value="NHMCE" {{ old('certification_type', optional($exam)->certification_type) == 'NHMCE' ? 'selected' : '' }}>NHMCE</option>
                                 </select>
-                                <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;" pattern="^[a-zA-Z0-9\s]+$" title="Only letters, numbers, and spaces are allowed.">
+                                <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;" pattern="^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$" title="Only letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ) are allowed.">
                                 <button type="button" id="addNewTypeBtn" class="btn btn-primary" style="white-space: nowrap;">
                                     <i class="ti ti-plus me-1"></i> Add New
                                 </button>
@@ -262,11 +270,11 @@
                             @error('new_certification_type') 
                                 <small class="text-danger d-block mt-1">{{ $message }}</small> 
                             @else
-                                <small class="text-muted d-none mt-1" id="certTypeHelper">Only letters, numbers, and spaces are allowed.</small>
+                                <small class="text-muted d-none mt-1" id="certTypeHelper">Only letters, numbers, spaces, and common symbols are allowed.</small>
                             @enderror
                         </div>
 
-                        <div class="col-md-6 mb-3" style="display: none;">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Total Questions <span class="text-danger">*</span></label>
                             <input type="number" name="total_questions" class="form-control" value="{{ old('total_questions', optional($exam)->total_questions ?? 0) }}" min="0">
                             <small class="text-muted">Required number of questions for this exam.</small>
@@ -506,23 +514,42 @@ function confirmStatusChange() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const forceEditCheckbox = document.getElementById('forceEdit');
-    const formInputs = document.querySelectorAll('input[name="name"], input[name="exam_code"], select[name="category_id"], input[name="duration_minutes"], textarea[name="description"]');
+    // Select all inputs, selects, and textareas within the form, except the forceEdit checkbox itself
+    const formInputs = document.querySelectorAll('form input:not(#forceEdit), form select, form textarea, form button:not([type="submit"]):not([data-bs-toggle="collapse"])');
     const submitBtn = document.getElementById('submitBtn');
 
     function updateFieldStates() {
         const isChecked = forceEditCheckbox.checked;
         
         formInputs.forEach(input => {
+            // Skip the back button, the status toggle button, and EXAM CODE (always readonly)
+            if (input.closest('.page-header') || input.id === 'addNewTypeBtn' || input.id === 'status-toggle-form' || input.name === 'exam_code') {
+                return;
+            }
+
             input.disabled = !isChecked;
             if (isChecked) {
                 input.style.opacity = '1';
                 input.style.pointerEvents = 'auto';
+                if (input.tagName === 'INPUT' || input.tagName === 'SELECT' || input.tagName === 'TEXTAREA') {
+                    input.style.backgroundColor = '';
+                }
             } else {
                 input.style.opacity = '0.5';
                 input.style.pointerEvents = 'none';
-                input.style.backgroundColor = '#f0f0f0';
+                if (input.tagName === 'INPUT' || input.tagName === 'SELECT' || input.tagName === 'TEXTAREA') {
+                    input.style.backgroundColor = '#f0f0f0';
+                }
             }
         });
+
+        // Special handling for the Add New button to ensure it looks disabled/enabled
+        const addNewBtn = document.getElementById('addNewTypeBtn');
+        if (addNewBtn) {
+            addNewBtn.disabled = !isChecked;
+            addNewBtn.style.opacity = isChecked ? '1' : '0.5';
+            addNewBtn.style.pointerEvents = isChecked ? 'auto' : 'none';
+        }
 
         // Handle submit button
         submitBtn.disabled = !isChecked;

@@ -153,28 +153,29 @@ class ExamController extends Controller
             ]);
         }
 
-        // FORCE GENERATE EXAM CODE ON BACKEND TO PREVENT TAMPERING
-        $latestExam = Exam::orderBy('id', 'desc')->first();
-        $nextCode = 'MH0001';
-        if ($latestExam && preg_match('/MH(\d+)/', $latestExam->exam_code, $matches)) {
-            $num = intval($matches[1]) + 1;
-            $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
+        // GENERATE EXAM CODE IF NOT PROVIDED
+        if (!$request->filled('exam_code')) {
+            $latestExam = Exam::orderBy('id', 'desc')->first();
+            $nextCode = 'MH0001';
+            if ($latestExam && preg_match('/MH(\d+)/', $latestExam->exam_code, $matches)) {
+                $num = intval($matches[1]) + 1;
+                $nextCode = 'MH' . str_pad($num, 4, '0', STR_PAD_LEFT);
+            }
+
+            // Ensure uniqueness (simple collision check)
+            while(Exam::where('exam_code', $nextCode)->exists()) {
+                 $nextCode = 'MH' . str_pad((intval(substr($nextCode, 2)) + 1), 4, '0', STR_PAD_LEFT);
+            }
+            $request->merge(['exam_code' => $nextCode]); 
         }
 
-        // Ensure uniqueness (simple collision check)
-        while(Exam::where('exam_code', $nextCode)->exists()) {
-             $nextCode = 'MH' . str_pad((intval(substr($nextCode, 2)) + 1), 4, '0', STR_PAD_LEFT);
-        }
-
-        // Overwrite user input for exam_code
-        $request->merge(['exam_code' => $nextCode]); 
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'exam_code' => 'required|string|max:50|unique:exams,exam_code',
             'category_id' => 'required|exists:exam_categories,id',
-            'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
+            'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'exam_standard_id' => 'nullable|exists:exam_standards,id',
@@ -182,8 +183,8 @@ class ExamController extends Controller
             'passing_scores.*' => 'nullable|integer|min:0',
             'total_questions' => 'nullable|integer|min:0',
         ], [
-            'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
-            'certification_type.regex' => 'The certification type must only contain letters, numbers, and spaces.',
+            'name.regex' => 'The exam name must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
+            'certification_type.regex' => 'The certification type must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
             'duration_minutes.min' => 'The exam duration must be at least 1 minute.',
         ]);
 
@@ -284,10 +285,10 @@ class ExamController extends Controller
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'exam_code' => 'required|string|max:50|unique:exams,exam_code,' . $id,
             'category_id' => 'required|exists:exam_categories,id',
-            'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s]+$/'],
+            'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'exam_standard_id' => 'nullable|exists:exam_standards,id',
@@ -295,8 +296,8 @@ class ExamController extends Controller
             'passing_scores.*' => 'nullable|integer|min:0',
             'total_questions' => 'nullable|integer|min:0',
         ], [
-            'name.regex' => 'The exam name must only contain letters, numbers, and spaces.',
-            'certification_type.regex' => 'The certification type must only contain letters, numbers, and spaces.',
+            'name.regex' => 'The exam name must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
+            'certification_type.regex' => 'The certification type must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
             'duration_minutes.min' => 'The exam duration must be at least 1 minute.',
         ]);
 
@@ -694,67 +695,103 @@ class ExamController extends Controller
             'exam_name' => $exam->name
         ]);
     }
-    // Auto-Fix Compliance: Distribute uncategorized questions to deficient areas
+    // Auto-Fix Compliance: Distribute uncategorized questions to deficient areas (Dual Tagging)
     public function autoFixCompliance($id)
     {
-        $exam = Exam::with(['examStandard.categories.contentAreas', 'sections.caseStudies.questions'])->findOrFail($id);
+        $exam = Exam::with(['examStandard.categories.contentAreas'])->findOrFail($id);
         
-        $totalQuestions = $exam->total_questions ?? $exam->getAllQuestions()->count();
-        if($totalQuestions == 0) return response()->json(['success' => false, 'message' => 'No questions in exam']);
+        if (!$exam->examStandard) {
+            return response()->json(['success' => false, 'message' => 'No standard assigned to this exam.']);
+        }
 
-        // 1. Calculate Deficiencies
-        $deficiencies = []; // [content_area_id => count_needed]
+        $standard = $exam->examStandard;
+        $cat1 = $standard->categories->where('category_number', 1)->first();
+        $cat2 = $standard->categories->where('category_number', 2)->first();
+
+        if (!$cat1 || !$cat2) {
+            return response()->json(['success' => false, 'message' => 'Standard must have both Category 1 and Category 2 for auto-assignment.']);
+        }
+
+        // 1. Get current compliance status
+        $validation = $exam->validateStandardCompliance();
+        if ($validation['valid']) {
+            return response()->json(['success' => true, 'message' => 'Exam is already compliant.']);
+        }
+
+        // 2. Calculate Deficiencies for both categories
+        $cat1Gaps = []; // [content_area_id => points_needed]
+        $cat2Gaps = [];
         
-        // Helper to check deficiencies
-        $checkDeficiency = function($area) use ($totalQuestions, $exam, &$deficiencies) {
-             if ($area->percentage == 0) return;
-             $current = $exam->questions()->where('content_area_id', $area->id)->count();
-             $required = (int) round(($totalQuestions * $area->percentage) / 100);
-             if ($current < $required) {
-                 $deficiencies[$area->id] = $required - $current;
-             }
-        };
-
-        if ($exam->examStandard->categories) {
-            foreach ($exam->examStandard->categories as $category) {
-                if($category->contentAreas) {
-                    foreach ($category->contentAreas as $area) $checkDeficiency($area);
+        foreach ($validation['content_areas'] as $areaData) {
+            if (!$areaData['valid']) {
+                $areaModel = \App\Models\ContentArea::find($areaData['id']);
+                if ($areaModel) {
+                    if ($areaModel->score_category_id == $cat1->id) {
+                        $cat1Gaps[$areaModel->id] = $areaData['required'] - $areaData['current'];
+                    } elseif ($areaModel->score_category_id == $cat2->id) {
+                        $cat2Gaps[$areaModel->id] = $areaData['required'] - $areaData['current'];
+                    }
                 }
             }
         }
-        
-        if(empty($deficiencies)) {
-            return response()->json(['success' => true, 'message' => 'No deficiencies found']);
+
+        // 3. Get questions that are missing tags in either category
+        $allQuestions = $exam->getAllQuestions()->with('tags')->get();
+        $untagged = $allQuestions->filter(function($q) use ($cat1, $cat2) {
+            $hasCat1 = $q->tags->where('score_category_id', $cat1->id)->isNotEmpty();
+            $hasCat2 = $q->tags->where('score_category_id', $cat2->id)->isNotEmpty();
+            return !$hasCat1 || !$hasCat2;
+        });
+
+        if ($untagged->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No untagged or partially tagged questions available.']);
         }
 
-        // 2. Get Uncategorized Questions
-        // We find questions that have NULL content area OR (optional: invalid content area)
-        // Simplest: NULL content_area_id
-        $uncategorized = $exam->getAllQuestions()
-            ->whereNull('content_area_id')
-            ->get();
-            
-        if($uncategorized->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'No uncategorized questions available to distribute']);
-        }
-        
-        // 3. Distribute
+        // 4. Distribute Tags
         $distributedCount = 0;
-        foreach ($deficiencies as $areaId => $needed) {
-            if($uncategorized->isEmpty()) break;
+        $tagsCreated = 0;
 
-            $chunk = $uncategorized->splice(0, $needed);
-            foreach ($chunk as $q) {
-                // Update question
-                $qModel = \App\Models\Question::find($q->id);
-                if($qModel) {
-                    $qModel->content_area_id = $areaId;
-                    $qModel->save();
-                    $distributedCount++;
-                }
+        foreach ($untagged as $q) {
+            $hasCat1 = $q->tags->where('score_category_id', $cat1->id)->isNotEmpty();
+            $hasCat2 = $q->tags->where('score_category_id', $cat2->id)->isNotEmpty();
+            $points = $q->max_question_points ?: 1;
+            $taggedThisQ = false;
+
+            // Handle Category 1 Tagging
+            if (!$hasCat1 && !empty($cat1Gaps)) {
+                $areaId = array_key_first($cat1Gaps);
+                \App\Models\QuestionTag::create([
+                    'question_id' => $q->id,
+                    'score_category_id' => $cat1->id,
+                    'content_area_id' => $areaId
+                ]);
+                $cat1Gaps[$areaId] -= $points;
+                if ($cat1Gaps[$areaId] <= 0) unset($cat1Gaps[$areaId]);
+                $tagsCreated++;
+                $taggedThisQ = true;
             }
+
+            // Handle Category 2 Tagging
+            if (!$hasCat2 && !empty($cat2Gaps)) {
+                $areaId = array_key_first($cat2Gaps);
+                \App\Models\QuestionTag::create([
+                    'question_id' => $q->id,
+                    'score_category_id' => $cat2->id,
+                    'content_area_id' => $areaId
+                ]);
+                $cat2Gaps[$areaId] -= $points;
+                if ($cat2Gaps[$areaId] <= 0) unset($cat2Gaps[$areaId]);
+                $tagsCreated++;
+                $taggedThisQ = true;
+            }
+
+            if ($taggedThisQ) $distributedCount++;
         }
-        
-        return response()->json(['success' => true, 'distributed' => $distributedCount]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully processed $distributedCount questions and created $tagsCreated tags to satisfy standard requirements.",
+            'distributed' => $distributedCount
+        ]);
     }
 }
