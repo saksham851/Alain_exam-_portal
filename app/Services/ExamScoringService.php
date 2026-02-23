@@ -17,8 +17,12 @@ class ExamScoringService
      */
     public function calculateScore($attemptId)
     {
-        $attempt = ExamAttempt::with(['exam.examStandard.categories', 'exam.categoryPassingScores'])->findOrFail($attemptId);
-        $exam = $attempt->exam;
+        $attempt = ExamAttempt::with([
+            'studentExam.exam.examStandard.categories', 
+            'studentExam.exam.categoryPassingScores'
+        ])->findOrFail($attemptId);
+        
+        $exam = $attempt->studentExam->exam;
         
         // Data structures for reporting
         $overallStats = [
@@ -40,7 +44,7 @@ class ExamScoringService
                 $categoryStats[$cat->id] = [
                     'id' => $cat->id,
                     'name' => $cat->name,
-                    'max_points' => 0,
+                    'max_points' => $cat->contentAreas->sum('max_points'), // Sum of content areas
                     'earned_points' => 0,
                     'percentage' => 0,
                 ];
@@ -55,7 +59,7 @@ class ExamScoringService
                         'id' => $area->id,
                         'name' => $area->name,
                         'category_id' => $cat->id,
-                        'max_points' => 0,
+                        'max_points' => $area->max_points ?? 0, // Use standard's defined points (e.g. 15)
                         'earned_points' => 0,
                         'percentage' => 0,
                     ];
@@ -111,13 +115,13 @@ class ExamScoringService
                 
                 // Add points to EACH hit category
                 foreach (array_keys($hitCategories) as $catId) {
-                    $categoryStats[$catId]['max_points'] += $questionMaxPoints;
+                    // max_points is already fixed from standard initialization, only increment earned
                     $categoryStats[$catId]['earned_points'] += $pointsEarned;
                 }
 
                 // Add points to EACH hit content area
                 foreach (array_keys($hitContentAreas) as $areaId) {
-                    $contentAreaStats[$areaId]['max_points'] += $questionMaxPoints;
+                    // max_points is already fixed from standard initialization, only increment earned
                     $contentAreaStats[$areaId]['earned_points'] += $pointsEarned;
                 }
             } else {

@@ -239,27 +239,28 @@
         ];
 
         foreach($section->caseStudies as $caseStudy) {
-            foreach($caseStudy->questions as $question) {
-                $questionsList[] = [
-                    'question' => $question,
-                    'section_id' => $section->id, 
-                    'section_title' => $section->title,
-                    'case_title' => $caseStudy->title,
-                    'case_id' => $caseStudy->id,
-                    'case_content' => $caseStudy->content, 
-                    // Previously 'case_content' was section content and 'sub_content' was case study content in old Loop
-                    // Mapping correctly to visual expectation:
-                    // Top Card: Section Content (Scenario) -> $section->content
-                    // Inner Card: Case Study Content -> $caseStudy->content
-                    'scenario_content' => $section->content, // The main scenario text
-                    'sub_content' => $caseStudy->content     // The specific sub-case text
-                ];
+            foreach($caseStudy->visits as $visit) {
+                foreach($visit->questions as $question) {
+                    $questionsList[] = [
+                        'question' => $question,
+                        'section_id' => $section->id, 
+                        'section_title' => $section->title,
+                        'case_title' => $caseStudy->title,
+                        'case_id' => $caseStudy->id,
+                        'case_content' => $caseStudy->content, 
+                        'visit_id' => $visit->id,
+                        'visit_title' => $visit->title,
+                        'visit_content' => $visit->description,
+                        'scenario_content' => $section->content, 
+                        'sub_content' => $caseStudy->content
+                    ];
+                }
             }
         }
     }
 @endphp
 
-<div x-data="examWizard({{ count($questionsList) }})" x-init="initTimer()" x-cloak>
+<div x-data="examWizard({{ count($questionsList) }}, {{ json_encode(array_column($questionsList, 'section_id')) }})" x-init="initTimer()" x-cloak>
     
     <!-- START OVERLAY -->
     <div id="startOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
@@ -361,13 +362,35 @@
                     </div>
                     @endif
 
-                    <div class="text-center py-5" x-show="!viewedCases.includes('{{ $slide['case_id'] }}')">
-                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold" @click="viewedCases.push('{{ $slide['case_id'] }}')">
+                    @if(!empty(strip_tags($slide['visit_content'] ?? '')))
+                    <div class="case-study-box mt-3">
+                        <div class="case-title-area bg-light" @click="isVisitExpanded = !isVisitExpanded">
+                            <div class="d-flex align-items-center">
+                                <i class="ti ti-notes text-secondary fs-5 me-2"></i>
+                                <h6 class="mb-0 fw-bold text-slate-700">{{ $slide['visit_title'] }}</h6>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;" x-text="isVisitExpanded ? 'COLLAPSE' : 'EXPAND'"></span>
+                                <i class="ti fs-5 transition-all" :class="isVisitExpanded ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
+                            </div>
+                        </div>
+                        <div x-show="isVisitExpanded" x-transition.opacity>
+                            <div class="card-body p-4 bg-white">
+                                <div class="text-slate-700" style="font-size: 1.05rem; line-height: 1.7;">
+                                    {!! $slide['visit_content'] !!}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="text-center py-5" x-show="!viewedCases.includes('{{ $slide['visit_id'] }}')">
+                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold" @click="viewedCases.push('{{ $slide['visit_id'] }}')">
                             VIEW QUESTION & OPTIONS
                         </button>
                     </div>
 
-                    <div class="question-card" x-show="viewedCases.includes('{{ $slide['case_id'] }}')" x-transition.opacity>
+                    <div class="question-card" x-show="viewedCases.includes('{{ $slide['visit_id'] }}')" x-transition.opacity>
                         <div class="question-head">
                             <span class="q-badge">Question {{ $index + 1 }}</span>
                             <h2 class="question-text">{!! $slide['question']->question_text !!}</h2>
@@ -395,10 +418,13 @@
             <!-- Action Bar (FLUID) -->
             <div class="action-bar shadow-sm">
                 <div class="action-inner">
-                    <button type="button" class="btn btn-light btn-action" x-show="currentIndex > 0" @click="prevSlide()">
+                    <!-- Can only go back if the previous question is in the same section -->
+                    <button type="button" class="btn btn-light btn-action" 
+                            x-show="currentIndex > 0 && questionSections[currentIndex] === questionSections[currentIndex - 1]" 
+                            @click="prevSlide()">
                        <i class="ti ti-chevron-left me-1"></i> Previous
                     </button>
-                    <div x-show="currentIndex === 0"></div>
+                    <div x-show="currentIndex === 0 || questionSections[currentIndex] !== questionSections[currentIndex - 1]"></div>
                     
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-primary btn-action" x-show="currentIndex < totalSlides - 1" @click="nextSlide()">
@@ -443,10 +469,11 @@
     <!-- AlpineJS Logic -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-        function examWizard(totalSlides) {
+        function examWizard(totalSlides, questionSections) {
             return {
                 currentIndex: 0,
                 totalSlides: totalSlides,
+                questionSections: questionSections,
                 expiryTimestamp: {{ \Carbon\Carbon::parse($attempt->started_at)->addMinutes($exam->duration_minutes)->timestamp }} * 1000,
                 now: new Date().getTime(),
                 
@@ -454,6 +481,7 @@
                 isSubmitting: false, 
                 boundHandleBeforeUnload: null,
                 isCaseExpanded: true,
+                isVisitExpanded: true,
                 viewedCases: [],
                 
                 currentSectionId: null,
@@ -527,15 +555,21 @@
                         const oldSecId = this.currentSectionId;
                         this.currentIndex++;
                         this.isCaseExpanded = true;
+                        this.isVisitExpanded = true;
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },
 
                 prevSlide() {
                     if (this.currentIndex > 0) {
+                        // Safety check: Don't allow going back to a different section
+                        if (this.questionSections[this.currentIndex] !== this.questionSections[this.currentIndex - 1]) {
+                            return;
+                        }
                         const oldSecId = this.currentSectionId;
                         this.currentIndex--;
                         this.isCaseExpanded = true;
+                        this.isVisitExpanded = true;
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },

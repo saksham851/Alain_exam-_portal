@@ -46,13 +46,16 @@ class ExamController extends Controller
             ->where('exam_id', $id)
             ->with([
                 'exam.sections' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('sections.status', 1);
                 },
                 'exam.sections.caseStudies' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('case_studies.status', 1);
                 },
-                'exam.sections.caseStudies.questions' => function($query) {
-                    $query->where('status', 1);
+                'exam.sections.caseStudies.visits' => function($query) {
+                    $query->where('visits.status', 1);
+                },
+                'exam.sections.caseStudies.visits.questions' => function($query) {
+                    $query->where('questions.status', 1);
                 },
                 'attempts' => function($query) {
                     $query->where('status', 'submitted')->orderBy('created_at', 'desc');
@@ -149,15 +152,18 @@ class ExamController extends Controller
             ->where('exam_id', $id)
             ->with([
                 'exam.sections' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('sections.status', 1);
                 },
                 'exam.sections.caseStudies' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('case_studies.status', 1);
                 },
-                'exam.sections.caseStudies.questions' => function($query) {
-                    $query->where('status', 1);
+                'exam.sections.caseStudies.visits' => function($query) {
+                    $query->where('visits.status', 1);
                 },
-                'exam.sections.caseStudies.questions.options'
+                'exam.sections.caseStudies.visits.questions' => function($query) {
+                    $query->where('questions.status', 1);
+                },
+                'exam.sections.caseStudies.visits.questions.options'
             ])
             ->firstOrFail();
             
@@ -269,15 +275,16 @@ class ExamController extends Controller
     {
         $attempt = \App\Models\ExamAttempt::with([
             'studentExam.exam.sections' => function($query) {
-                $query->where('status', 1);
+                $query->where('sections.status', 1);
             },
             'studentExam.exam.sections.caseStudies' => function($query) {
-                $query->where('status', 1);
+                $query->where('case_studies.status', 1);
             },
             'studentExam.exam.sections.caseStudies.questions' => function($query) {
-                $query->where('status', 1);
+                $query->where('questions.status', 1);
             },
             'studentExam.exam.sections.caseStudies.questions.options',
+            'studentExam.exam.examStandard.categories.contentAreas',
             'studentExam.student',
             'answers.question.options'
         ])
@@ -309,13 +316,13 @@ class ExamController extends Controller
         $attempt = \App\Models\ExamAttempt::with([
             'studentExam.student',
             'studentExam.exam.sections' => function($query) {
-                $query->where('status', 1);
+                $query->where('sections.status', 1);
             },
             'studentExam.exam.sections.caseStudies' => function($query) {
-                $query->where('status', 1);
+                $query->where('case_studies.status', 1);
             },
             'studentExam.exam.sections.caseStudies.questions' => function($query) {
-                $query->where('status', 1);
+                $query->where('questions.status', 1);
             },
             'answers'
         ])
@@ -366,13 +373,13 @@ class ExamController extends Controller
             ->where('exam_id', $id)
             ->with([
                 'exam.sections' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('sections.status', 1);
                 },
                 'exam.sections.caseStudies' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('case_studies.status', 1);
                 },
                 'exam.sections.caseStudies.questions' => function($query) {
-                    $query->where('status', 1);
+                    $query->where('questions.status', 1);
                 },
                 'exam.sections.caseStudies.questions.options'
             ])

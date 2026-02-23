@@ -119,34 +119,56 @@ class ExamStandardController extends Controller
                 'description' => $request->description,
             ]);
 
-            // Reset Categories: Simplest approach is delete & recreate to handle reordering/additions
-            // Note: This changes IDs of categories. If questions link to content areas, they will break.
-            // Assumption: Questions link to content areas which are children of categories.
-            // Since we are changing structure, we might need to be careful.
-            // But previous code also deleted content areas!
-            
-            // Delete all existing categories (and cascade content areas if DB set up or manual)
-            // Delete all existing categories (and cascade content areas)
-            foreach($standard->categories as $cat) {
-                 // ContentAreas cascade delete via DB or model, but being explicit is fine.
-                 $cat->contentAreas()->delete();
-                 $cat->delete();
-            }
+            $existingCategoryIds = $standard->categories->pluck('id')->toArray();
+            $processedCategoryIds = [];
 
             foreach($request->categories as $cIndex => $catData) {
-                $category = ScoreCategory::create([
-                    'exam_standard_id' => $standard->id,
-                    'name' => $catData['name'],
-                    'category_number' => $cIndex + 1,
-                ]);
+                $category = ScoreCategory::updateOrCreate(
+                    [
+                        'id' => $catData['id'] ?? null,
+                        'exam_standard_id' => $standard->id
+                    ],
+                    [
+                        'name' => $catData['name'],
+                        'category_number' => $cIndex + 1,
+                    ]
+                );
+                
+                $processedCategoryIds[] = $category->id;
 
-                foreach($catData['areas'] as $aIndex => $areaData) {
-                    ContentArea::create([
-                        'score_category_id' => $category->id,
-                        'name' => $areaData['name'],
-                        'max_points' => $areaData['max_points'] ?? 0,
-                        'order_no' => $aIndex + 1,
-                    ]);
+                $existingAreaIds = $category->contentAreas->pluck('id')->toArray();
+                $processedAreaIds = [];
+
+                if (isset($catData['areas']) && is_array($catData['areas'])) {
+                    foreach($catData['areas'] as $aIndex => $areaData) {
+                        $area = ContentArea::updateOrCreate(
+                            [
+                                'id' => $areaData['id'] ?? null,
+                                'score_category_id' => $category->id
+                            ],
+                            [
+                                'name' => $areaData['name'],
+                                'max_points' => $areaData['max_points'] ?? 0,
+                                'order_no' => $aIndex + 1,
+                            ]
+                        );
+                        $processedAreaIds[] = $area->id;
+                    }
+                }
+
+                // Delete areas removed in the UI for this category
+                $areasToDelete = array_diff($existingAreaIds, $processedAreaIds);
+                if (!empty($areasToDelete)) {
+                    ContentArea::whereIn('id', $areasToDelete)->delete();
+                }
+            }
+
+            // Delete categories removed in the UI
+            $categoriesToDelete = array_diff($existingCategoryIds, $processedCategoryIds);
+            if (!empty($categoriesToDelete)) {
+                foreach(ScoreCategory::whereIn('id', $categoriesToDelete)->get() as $cat) {
+                    $cat->contentAreas()->delete();
+                    $cat->delete();
                 }
             }
 

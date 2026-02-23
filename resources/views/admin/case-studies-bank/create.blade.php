@@ -25,6 +25,9 @@
 
         <form action="{{ route('admin.case-studies-bank.store') }}" method="POST" id="caseStudyForm">
             @csrf
+            @if(request()->has('return_url'))
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+            @endif
             
             <!-- Hidden inputs for deleted case studies -->
             <template x-for="id in deletedCaseStudyIds" :key="id">
@@ -37,51 +40,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
-                        <!-- Strategic Insight Widget -->
-                        <div class="col-12 mb-3" style="display:none;" x-show="selectedExamId && compliance">
-                             <div class="alert alert-info bg-info-subtle border-info">
-                                <h6 class="alert-heading fw-bold mb-2 text-info">
-                                    <i class="ti ti-bulb me-1"></i> Strategic Insight & Question Quota
-                                </h6>
-                                <p class="small mb-2 text-dark">
-                                    <strong>Exam Progress:</strong> <span x-text="compliance?.total_current ?? 0"></span> / <span x-text="compliance?.total_required ?? 0"></span> Questions
-                                </p>
-                                <div class="row">
-                                    <div class="col-md-7">
-                                         <h6 class="small fw-bold text-muted mb-1">Standard Requirements (Overall):</h6>
-                                         <ul class="list-group list-group-flush bg-transparent small mb-0">
-                                            <template x-if="compliance && compliance.content_areas">
-                                                <template x-for="area in compliance.content_areas" :key="area.id">
-                                                    <li class="list-group-item bg-transparent px-0 py-1 d-flex justify-content-between align-items-center border-bottom-0">
-                                                        <span x-text="area.name"></span>
-                                                        <span class="badge border" :class="area.current >= area.required ? 'bg-success-subtle text-success border-success' : 'bg-warning-subtle text-warning border-warning'"
-                                                              x-text="area.current + ' / ' + area.required + (area.current >= area.required ? ' (Completed)' : ' (Need ' + (area.required - area.current) + ')')"></span>
-                                                    </li>
-                                                </template>
-                                            </template>
-                                         </ul>
-                                    </div>
-                                    <div class="col-md-5 border-start">
-                                         <h6 class="small fw-bold text-muted mb-1">Current Section Status:</h6>
-                                         <div x-show="selectedSectionId" class="mt-2">
-                                             <div class="d-flex align-items-center mb-2">
-                                                 <i class="ti ti-chart-bar me-2 fs-4 text-primary"></i>
-                                                 <div>
-                                                     <div class="fs-4 fw-bold text-primary" x-text="(sections.find(s => s.id == selectedSectionId)?.questions_count || 0) + ' Questions'"></div>
-                                                     <div class="small text-muted">Currently in this section</div>
-                                                 </div>
-                                             </div>
-                                             <p class="small text-muted fst-italic mb-0 line-height-sm">
-                                                 Tip: Usually, a Case Study has 3-5 questions. Check the 'Standard Requirements' to see which content area needs more questions and create scenarios accordingly.
-                                             </p>
-                                         </div>
-                                         <div x-show="!selectedSectionId" class="text-muted small fst-italic mt-2">
-                                             Select a section to see specific counts.
-                                         </div>
-                                    </div>
-                                </div>
-                             </div>
-                        </div>
+
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Select Exam <span class="text-danger">*</span></label>
@@ -111,28 +70,207 @@
                                 <i class="ti ti-edit me-2"></i> Existing Case Studies (Editable)
                             </h6>
                             <template x-for="(study, index) in existingCaseStudies" :key="study.id">
-                                <div class="card border mb-3" style="background-color: #fcfcfc;">
-                                    <div class="card-body position-relative">
-                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
-                                                @click="removeExistingCaseStudy(index, study.id)"
+                                <div class="card border mb-3">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3" 
+                                         style="cursor: pointer;" 
+                                         @click="study.isOpen = !study.isOpen">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="ti fs-5 text-muted transition-transform" 
+                                               :class="study.isOpen ? 'ti-chevron-down' : 'ti-chevron-right'"></i>
+                                            <h6 class="mb-0 fw-bold text-dark" x-text="study.title || 'Case Study #' + (index + 1)"></h6>
+                                            <span class="badge bg-light-secondary text-secondary ms-2" x-text="'ID: ' + study.id"></span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle" 
+                                                @click.stop="removeExistingCaseStudy(index, study.id)"
                                                 title="Delete this case study">
                                             <i class="ti ti-trash"></i>
                                         </button>
-                                        <div class="row">
-                                            <div class="col-md-8 mb-3">
-                                                <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
-                                                <input type="text" :name="'existing_case_studies['+study.id+'][title]'" class="form-control" 
-                                                       x-model="study.title" required>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-bold">Order No <span class="text-danger">*</span></label>
-                                                <input type="number" :name="'existing_case_studies['+study.id+'][order_no]'" class="form-control" 
-                                                       x-model="study.order_no" min="1" required>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <label class="form-label fw-bold">Content / Scenario</label>
-                                                <textarea :id="'existing_editor_'+study.id" :name="'existing_case_studies['+study.id+'][content]'" 
-                                                          class="form-control" rows="4" x-model="study.content"></textarea>
+                                    </div>
+
+                                    <div x-show="study.isOpen" x-collapse>
+                                        <div class="card-body pt-0">
+                                            <hr class="mt-0 mb-4 border-light">
+                                            
+                                            <div class="row">
+                                                <div class="col-md-8 mb-3">
+                                                    <label class="form-label fw-bold small text-uppercase text-secondary">Title <span class="text-danger">*</span></label>
+                                                    <input type="text" :name="'existing_case_studies['+study.id+'][title]'" class="form-control" 
+                                                           x-model="study.title" required @click.stop>
+                                                </div>
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold small text-uppercase text-secondary">Order No <span class="text-danger">*</span></label>
+                                                    <input type="number" :name="'existing_case_studies['+study.id+'][order_no]'" class="form-control" 
+                                                           x-model="study.order_no" min="1" required @click.stop>
+                                                </div>
+                                                <div class="col-md-12 mb-3">
+                                                    <label class="form-label fw-bold small text-uppercase text-secondary">Content / Scenario</label>
+                                                    <textarea :id="'existing_editor_'+study.id" :name="'existing_case_studies['+study.id+'][content]'" 
+                                                              class="form-control" rows="4" x-model="study.content" @click.stop></textarea>
+                                                </div>
+
+                                                <!-- Existing Visits for this Case Study -->
+                                                <div class="col-md-12 mt-4">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                                        <h6 class="mb-0 fw-bold text-muted d-flex align-items-center">
+                                                            <i class="ti ti-map-pin me-2 fs-5"></i> Visits
+                                                            <span class="badge bg-primary-subtle text-primary ms-2 rounded-pill px-2" x-text="(study.visits ? study.visits.length : 0) + ' existing'"></span>
+                                                        </h6>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" @click.stop="addVisitToExisting(index)">
+                                                            <i class="ti ti-plus me-1"></i> Add Visit
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Existing visits (from DB) -->
+                                                    <template x-if="study.visits && study.visits.length > 0">
+                                                        <div class="vstack gap-3">
+                                                            <template x-for="(visit, vIdx) in study.visits" :key="visit.id">
+                                                                <div class="visit-block animate-in border rounded-3 overflow-hidden">
+                                                                    <!-- Visit Header / Toggle -->
+                                                                    <div class="d-flex justify-content-between align-items-center p-3 bg-light-subtle cursor-pointer"
+                                                                         @click="visit.isOpen = !visit.isOpen">
+                                                                        <div class="d-flex align-items-center gap-3">
+                                                                            <i class="ti fs-6 text-muted transition-transform" :class="visit.isOpen ? 'ti-chevron-down' : 'ti-chevron-right'"></i>
+
+                                                                            <div>
+                                                                                <h6 class="fw-bold text-dark mb-0" x-text="visit.title || 'Visit #' + (vIdx + 1)"></h6>
+                                                                                <small class="text-muted d-block" style="font-size: 11px;">
+                                                                                    ID: <span x-text="visit.id"></span>
+                                                                                </small>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle"
+                                                                                @click.stop="removeExistingVisit(index, vIdx, visit.id)"
+                                                                                title="Remove visit">
+                                                                            <i class="ti ti-trash"></i>
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <!-- Visit Body (Collapsible) -->
+                                                                    <div x-show="visit.isOpen" x-collapse>
+                                                                        <div class="p-3 bg-white border-top">
+                                                                            <div class="row g-3">
+                                                                                <div class="col-md-9">
+                                                                                    <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Name <span class="text-danger">*</span></label>
+                                                                                    <input type="hidden" :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][id]'" :value="visit.id">
+                                                                                    <input type="text"
+                                                                                           :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][title]'"
+                                                                                           x-model="visit.title" class="form-control" required @click.stop>
+                                                                                </div>
+                                                                                <div class="col-md-3">
+                                                                                    <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
+                                                                                    <input type="number"
+                                                                                           :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][order_no]'"
+                                                                                           x-model="visit.order_no" class="form-control" @click.stop>
+                                                                                </div>
+                                                                                <div class="col-md-12">
+                                                                                    <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
+                                                                                    <textarea :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][description]'"
+                                                                                              x-model="visit.description" class="form-control" rows="3" placeholder="Optional" @click.stop></textarea>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <!-- Existing Questions Dropdown -->
+                                                                            <div class="mt-4 pt-3 border-top">
+                                                                                <div class="d-flex align-items-center justify-content-between cursor-pointer"
+                                                                                     @click.stop="visit.isQuestionsOpen = !visit.isQuestionsOpen">
+                                                                                    <h6 class="mb-0 text-muted small fw-bold text-uppercase d-flex align-items-center">
+                                                                                        <i class="ti ti-help-circle me-1 fs-6"></i> 
+                                                                                        Existing Questions 
+                                                                                        <span class="badge bg-light ms-2 text-dark border" x-text="visit.questions ? visit.questions.length : 0"></span>
+                                                                                    </h6>
+                                                                                    <i class="ti fs-6 text-muted transition-transform" :class="visit.isQuestionsOpen ? 'ti-chevron-down' : 'ti-chevron-right'"></i>
+                                                                                </div>
+
+                                                                                <div x-show="visit.isQuestionsOpen" x-collapse class="mt-3">
+                                                                                    <template x-if="visit.questions && visit.questions.length > 0">
+                                                                                        <div class="list-group list-group-flush border rounded-2 overflow-hidden">
+                                                                                            <template x-for="q in visit.questions" :key="q.id">
+                                                                                                <div class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 px-3 bg-light-subtle">
+                                                                                                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                                                                                        <span class="badge bg-white border text-dark shadow-sm" x-text="q.question_type"></span>
+                                                                                                        <div class="text-truncate small text-dark" style="max-width: 300px;" x-html="q.question_text"></div>
+                                                                                                    </div>
+                                                                                                    <div class="d-flex align-items-center gap-3">
+                                                                                                        <span class="badge bg-light text-muted border" x-text="q.points + ' pts'"></span>
+                                                                                                        <a :href="'/admin/questions/' + q.id + '/edit'" class="btn btn-icon btn-sm btn-light-primary rounded-circle" title="Edit Question">
+                                                                                                            <i class="ti ti-pencil"></i>
+                                                                                                        </a>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </template>
+                                                                                        </div>
+                                                                                    </template>
+                                                                                    <template x-if="!visit.questions || visit.questions.length === 0">
+                                                                                        <div class="text-center text-muted small py-3 border border-dashed rounded bg-light-subtle">
+                                                                                            No questions found for this visit.
+                                                                                        </div>
+                                                                                    </template>
+                                                                                </div>
+                                                                            </div>
+
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!study.visits || study.visits.length === 0">
+                                                        <div class="text-center text-muted small py-4 bg-light rounded border border-dashed">
+                                                            <i class="ti ti-alert-circle me-1 fs-5 mb-2 d-block"></i>
+                                                            No visits yet for this case study.
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- New visits to add to this existing case study -->
+                                                    <template x-if="study.newVisits && study.newVisits.length > 0">
+                                                        <div class="mt-3">
+                                                            <div class="text-muted small fw-bold mb-2 ps-1"><i class="ti ti-plus me-1 text-success"></i>New Visits to Add:</div>
+                                                            <div class="vstack gap-2">
+                                                                <template x-for="(nv, nvIdx) in study.newVisits" :key="nvIdx">
+                                                                    <div class="visit-block animate-in border border-success-subtle bg-success-subtle bg-opacity-10 rounded-3 p-3">
+                                                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                                                            <div class="d-flex align-items-center gap-3">
+
+                                                                                <div>
+                                                                                    <h6 class="fw-bold text-dark mb-0">New Visit #<span x-text="nvIdx + 1"></span></h6>
+                                                                                    <small class="text-success d-block" style="font-size: 11px;">Adding to existing case study</small>
+                                                                                </div>
+                                                                            </div>
+                                                                            <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle"
+                                                                                    @click="study.newVisits.splice(nvIdx, 1)">
+                                                                                <i class="ti ti-trash"></i>
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div class="row g-3">
+                                                                            <div class="col-md-9">
+                                                                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Name <span class="text-danger">*</span></label>
+                                                                                <input type="text"
+                                                                                       :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][title]'"
+                                                                                       x-model="nv.title" class="form-control" required placeholder="e.g. Follow-up">
+                                                                            </div>
+                                                                            <div class="col-md-3">
+                                                                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
+                                                                                <input type="number"
+                                                                                       :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][order_no]'"
+                                                                                       x-model="nv.order_no" class="form-control">
+                                                                            </div>
+                                                                            <div class="col-md-12">
+                                                                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
+                                                                                <textarea :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][description]'"
+                                                                                          x-model="nv.description" class="form-control" rows="3" placeholder="Optional"></textarea>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+
+                                                <!-- Hidden inputs for deleted visits -->
+                                                <template x-for="vid in (study.deletedVisitIds || [])" :key="vid">
+                                                    <input type="hidden" :name="'existing_case_studies['+study.id+'][deleted_visits][]'" :value="vid">
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -153,7 +291,7 @@
                     <template x-for="(caseStudy, index) in caseStudies" :key="index">
                         <div class="card border mb-3">
                             <div class="card-body position-relative">
-                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
+                                <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle position-absolute top-0 end-0 m-2" 
                                         @click="removeCaseStudy(index)">
                                     <i class="ti ti-x"></i>
                                 </button>
@@ -173,6 +311,66 @@
                                         <label class="form-label fw-bold">Content / Scenario</label>
                                         <textarea :id="'editor_'+index" :name="'case_studies['+index+'][content]'" 
                                                   class="form-control" rows="4" x-model="caseStudy.content"></textarea>
+                                    </div>
+
+                                    <!-- Visits Section -->
+                                    <div class="col-md-12 mt-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                            <h6 class="mb-0 fw-bold text-muted"><i class="ti ti-map-pin me-1"></i> Visits (Required)</h6>
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" @click="addVisit(index)">
+                                                <i class="ti ti-plus me-1"></i> Add Visit
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="bg-light rounded p-3 mb-2" x-show="!caseStudy.visits || caseStudy.visits.length === 0">
+                                            <div class="text-center text-muted small">
+                                                <i class="ti ti-alert-circle mb-1 fs-5 d-block"></i>
+                                                Please add at least one visit for this case study.
+                                            </div>
+                                        </div>
+
+                                        <template x-for="(visit, vIndex) in caseStudy.visits" :key="vIndex">
+                                            <div class="visit-block animate-in mb-3">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div class="icon-square bg-primary-subtle text-primary">
+                                                            <i class="ti ti-map-pin fs-5"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="fw-bold text-dark mb-0">Visit #<span x-text="vIndex + 1"></span></h6>
+                                                            <small class="text-muted d-block" style="font-size: 11px;">Step <span x-text="vIndex + 1"></span></small>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle" 
+                                                            @click="removeVisit(index, vIndex)" title="Remove Visit">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="row g-3">
+                                                    <div class="col-md-9">
+                                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Name <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white text-muted border-end-0"><i class="ti ti-h-1"></i></span>
+                                                            <input type="text" :name="'case_studies['+index+'][visits]['+vIndex+'][title]'" 
+                                                                   x-model="visit.title" class="form-control border-start-0 ps-0" 
+                                                                   placeholder="e.g. Initial Consultation" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
+                                                        <input type="number" :name="'case_studies['+index+'][visits]['+vIndex+'][order_no]'" 
+                                                               x-model="visit.order_no" class="form-control">
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
+                                                        <textarea :name="'case_studies['+index+'][visits]['+vIndex+'][description]'"
+                                                                  x-model="visit.description" class="form-control" 
+                                                                  rows="2" placeholder="Description for this visit..."></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
@@ -200,6 +398,50 @@
     </div>
 </div>
 
+<style>
+    /* Premium Visit Block Styling */
+    .visit-block {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        position: relative;
+        overflow: hidden;
+    }
+    .visit-block:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        transform: translateY(-1px);
+    }
+    .visit-block input:focus, .visit-block textarea:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .icon-square {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+    }
+
+    .form-control, .input-group-text {
+        font-size: 0.9rem;
+    }
+    
+    .animate-in {
+        animation: slideUpFade 0.3s ease-out forwards;
+    }
+    @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
 <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
@@ -216,7 +458,7 @@
             existingCaseStudies: @json($existingCaseStudies ?? []),
             deletedCaseStudyIds: [],
             caseStudies: [
-                { title: '', order_no: 1, content: '' }
+                { title: '', order_no: 1, content: '', visits: [] }
             ],
             
             init() {
@@ -238,10 +480,27 @@
             },
 
             addCaseStudy() {
+                // Validation: Previous case study must have at least one visit
+                if (this.caseStudies.length > 0) {
+                    const lastCS = this.caseStudies[this.caseStudies.length - 1];
+                    // Skip validation if title is empty (meaning user hasn't really started filling it)
+                    // But user specifically asked for "must add visit"
+                    if (lastCS.title && (!lastCS.visits || lastCS.visits.length === 0)) {
+                        window.showAlert.error('Please add at least one visit to the current case study before adding another.');
+                        return;
+                    }
+                     // Strict check: even if title is empty, if it's in the list, it counts.
+                     if (!lastCS.visits || lastCS.visits.length === 0) {
+                        window.showAlert.error('Please add at least one visit to the current case study before adding another.');
+                        return;
+                    }
+                }
+
                 this.caseStudies.push({ 
                     title: '', 
                     order_no: 1, // Will be updated by recalculateOrders
-                    content: '' 
+                    content: '',
+                    visits: []
                 });
                 
                 this.recalculateOrders();
@@ -249,6 +508,45 @@
                 this.$nextTick(() => {
                     this.initEditor(this.caseStudies.length - 1);
                 });
+            },
+
+            addVisit(index) {
+                if (!this.caseStudies[index].visits) {
+                    this.caseStudies[index].visits = [];
+                }
+                this.caseStudies[index].visits.push({
+                    title: '',
+                    order_no: this.caseStudies[index].visits.length + 1,
+                    description: ''
+                });
+            },
+
+            removeVisit(csIndex, vIndex) {
+                // Since these are new, unsaved visits, we don't need to soft-delete from DB.
+                // But we can still ask for confirmation to prevent accidental loss of data.
+                if (this.caseStudies[csIndex].visits[vIndex].title || this.caseStudies[csIndex].visits[vIndex].description) {
+                     window.showAlert.confirm('Are you sure you want to remove this visit?', 'Remove Visit?', () => {
+                        this.caseStudies[csIndex].visits.splice(vIndex, 1);
+                     });
+                } else {
+                    this.caseStudies[csIndex].visits.splice(vIndex, 1);
+                }
+            },
+
+            // Add a new (unsaved) visit to an existing case study
+            addVisitToExisting(csIndex) {
+                const study = this.existingCaseStudies[csIndex];
+                if (!study.newVisits) study.newVisits = [];
+                const nextOrder = (study.visits ? study.visits.length : 0) + study.newVisits.length + 1;
+                study.newVisits.push({ title: '', order_no: nextOrder, description: '' });
+            },
+
+            // Remove an existing (DB) visit from an existing case study
+            removeExistingVisit(csIndex, vIdx, visitId) {
+                const study = this.existingCaseStudies[csIndex];
+                if (!study.deletedVisitIds) study.deletedVisitIds = [];
+                study.deletedVisitIds.push(visitId);
+                study.visits.splice(vIdx, 1);
             },
 
             removeCaseStudy(index) {
@@ -440,7 +738,11 @@
                     const response = await fetch(`/admin/questions-ajax/sub-case-studies/${this.selectedSectionId}`);
                     const caseStudies = await response.json();
                     
-                    this.existingCaseStudies = caseStudies;
+                    this.existingCaseStudies = caseStudies.map(cs => ({
+                         ...cs,
+                         isOpen: false, // Default closed
+                         visits: cs.visits.map(v => ({...v, isOpen: false, isQuestionsOpen: false})) // Visits also default closed
+                    }));
                     
                     // Initialize editors for updated list
                     this.$nextTick(() => {

@@ -54,6 +54,16 @@ class CaseStudyBankController extends Controller
             $q->where('status', 1);
         });
 
+        // Eager load counts for active questions and actual nested relationships for the expanded view
+        $query->withCount(['questions' => function ($q) {
+            $q->where('questions.status', 1);
+        }])->with(['visits' => function($q) {
+            $q->where('status', 1)->orderBy('order_no')
+              ->with(['questions' => function($q2) {
+                  $q2->where('status', 1);
+              }]);
+        }]);
+
         $caseStudies = $query->orderBy('created_at', 'desc')->paginate(20);
 
         // Get filter data
@@ -111,6 +121,10 @@ public function store(Request $request)
         'case_studies.*.title' => 'required_with:case_studies|string|max:255',
         'case_studies.*.content' => 'nullable|string',
         'case_studies.*.order_no' => 'required_with:case_studies|integer|min:1',
+        'case_studies.*.visits' => 'nullable|array',
+        'case_studies.*.visits.*.title' => 'required_with:case_studies.*.visits|string|max:255',
+        'case_studies.*.visits.*.order_no' => 'nullable|integer',
+        'case_studies.*.visits.*.description' => 'nullable|string',
     ]);
     
     // Ensure at least one action is performed (update, create, or delete)
@@ -152,11 +166,48 @@ public function store(Request $request)
                 $existingCaseStudy = CaseStudy::find($id);
                 if ($existingCaseStudy && $existingCaseStudy->section_id == $request->section_id) {
                     $existingCaseStudy->update([
-                        'title' => $data['title'],
-                        'content' => $data['content'] ?? null,
+                        'title'    => $data['title'],
+                        'content'  => $data['content'] ?? null,
                         'order_no' => $data['order_no'],
                     ]);
                     $updatedCount++;
+
+                    // Delete removed visits
+                    if (!empty($data['deleted_visits'])) {
+                        \App\Models\Visit::whereIn('id', $data['deleted_visits'])
+                            ->where('case_study_id', $id)
+                            ->update(['status' => 0]);
+                    }
+
+                    // Update existing visits
+                    if (!empty($data['visits']) && is_array($data['visits'])) {
+                        foreach ($data['visits'] as $vIdx => $visitData) {
+                            if (empty($visitData['id'])) continue;
+                            $visit = \App\Models\Visit::find($visitData['id']);
+                            if ($visit && $visit->case_study_id == $id) {
+                                $visit->update([
+                                    'title'       => $visitData['title'],
+                                    'description' => $visitData['description'] ?? null,
+                                    'order_no'    => $visitData['order_no'] ?? ($vIdx + 1),
+                                    'status'      => 1,
+                                ]);
+                            }
+                        }
+                    }
+
+                    // Create new visits for this existing case study
+                    if (!empty($data['new_visits']) && is_array($data['new_visits'])) {
+                        foreach ($data['new_visits'] as $nvIdx => $nvData) {
+                            if (empty($nvData['title'])) continue;
+                            \App\Models\Visit::create([
+                                'case_study_id' => $id,
+                                'title'         => $nvData['title'],
+                                'description'   => $nvData['description'] ?? null,
+                                'order_no'      => $nvData['order_no'] ?? ($nvIdx + 1),
+                                'status'        => 1,
+                            ]);
+                        }
+                    }
                 }
             }
         }
@@ -167,13 +218,29 @@ public function store(Request $request)
                 // Skip empty entries if any
                 if(empty($caseStudyData['title'])) continue;
 
-                CaseStudy::create([
+                $caseStudy = CaseStudy::create([
                     'section_id' => $request->section_id,
                     'title' => $caseStudyData['title'],
                     'content' => $caseStudyData['content'] ?? null,
                     'order_no' => $caseStudyData['order_no'],
                     'status' => 1,
                 ]);
+
+                // Create Visits for the new Case Study
+                if (isset($caseStudyData['visits']) && is_array($caseStudyData['visits'])) {
+                    foreach ($caseStudyData['visits'] as $visitData) {
+                        if (empty($visitData['title'])) continue;
+
+                        \App\Models\Visit::create([
+                            'case_study_id' => $caseStudy->id,
+                            'title' => $visitData['title'],
+                            'description' => $visitData['description'] ?? null,
+                            'order_no' => $visitData['order_no'] ?? 0,
+                            'status' => 1,
+                        ]);
+                    }
+                }
+
                 $createdCount++;
             }
         }
@@ -186,6 +253,16 @@ public function store(Request $request)
         if ($deletedCount > 0) $messageParts[] = "deleted {$deletedCount} existing " . \Illuminate\Support\Str::plural('case study', $deletedCount);
         
         $message = "Successfully " . implode(' and ', $messageParts) . "!";
+        
+        if ($request->has('return_url')) {
+            $returnUrl = $request->return_url;
+            // Append section_id if not present to ensure the section stays open
+            if (strpos($returnUrl, 'section_id=') === false) {
+                 $separator = (strpos($returnUrl, '?') !== false) ? '&' : '?';
+                 $returnUrl .= $separator . 'section_id=' . $request->section_id;
+            }
+            return redirect($returnUrl)->with('success', $message);
+        }
         
         return redirect()->route('admin.case-studies-bank.index')
             ->with('case_study_created_success', true)
@@ -301,7 +378,7 @@ public function store(Request $request)
     public function edit($id)
     {
         $caseStudy = CaseStudy::with(['section.exam', 'visits' => function($q) {
-            $q->orderBy('order_no');
+            $q->where('status', 1)->orderBy('order_no');
         }])->findOrFail($id);
         $exams = Exam::where('status', 1)->orderBy('name')->get();
         return view('admin.case-studies-bank.edit', compact('caseStudy', 'exams'));
@@ -347,7 +424,12 @@ public function store(Request $request)
 
             // Handle Deleted Visits
             if ($request->filled('deleted_visits')) {
-                \App\Models\Visit::whereIn('id', $request->deleted_visits)->delete();
+                $visitsToDelete = \App\Models\Visit::whereIn('id', $request->deleted_visits)->get();
+                foreach ($visitsToDelete as $visit) {
+                    $visit->update(['status' => 0]);
+                    // Cascade soft delete to questions
+                    $visit->questions()->update(['status' => 0]);
+                }
             }
 
             // Handle Visits (Create/Update)
@@ -356,6 +438,10 @@ public function store(Request $request)
                     $visit = null;
                     
                     if (!empty($visitData['id'])) {
+                        // CRITICAL: Check if this ID is marked for deletion to avoid resurrection
+                        if (in_array($visitData['id'], $request->input('deleted_visits', []))) {
+                            continue;
+                        }
                         $visit = \App\Models\Visit::find($visitData['id']);
                     }
 
@@ -376,6 +462,11 @@ public function store(Request $request)
             }
 
             DB::commit();
+            
+            if ($request->has('return_url')) {
+                return redirect($request->return_url)->with('success', 'Case Study and Visits updated successfully.');
+            }
+            
             return redirect()->route('admin.case-studies-bank.index')->with('success', 'Case Study and Visits updated successfully.');
 
         } catch (\Exception $e) {
@@ -386,8 +477,15 @@ public function store(Request $request)
 
     public function show($id)
     {
-        $caseStudy = CaseStudy::with(['section.exam.category', 'questions.options'])
-            ->findOrFail($id);
+        $caseStudy = CaseStudy::with([
+            'section.exam.category', 
+            'visits' => function($q) {
+                $q->where('status', 1)->orderBy('order_no');
+            },
+            'questions' => function($q) {
+                $q->where('status', 1)->with('options');
+            }
+        ])->findOrFail($id);
 
         return view('admin.case-studies-bank.show', compact('caseStudy'));
     }
@@ -461,8 +559,40 @@ public function store(Request $request)
         $caseStudies = CaseStudy::where('section_id', $sectionId)
             ->where('status', 1)
             ->orderBy('order_no')
+            ->with(['visits' => function($q) {
+                $q->where('status', 1)->orderBy('order_no')
+                  ->with(['questions' => function($q2) {
+                      $q2->where('status', 1);
+                  }]);
+            }])
             ->get(['id', 'title', 'content', 'order_no']);
-        
-        return response()->json($caseStudies);
+
+        // Map to include visits as plain arrays
+        $result = $caseStudies->map(function($cs) {
+            return [
+                'id'       => $cs->id,
+                'title'    => $cs->title,
+                'content'  => $cs->content,
+                'order_no' => $cs->order_no,
+                'visits'   => $cs->visits->map(function($v) {
+                    return [
+                        'id'          => $v->id,
+                        'title'       => $v->title,
+                        'description' => $v->description,
+                        'order_no'    => $v->order_no,
+                        'questions'   => $v->questions->map(function($q) {
+                            return [
+                                'id' => $q->id,
+                                'question_text' => $q->question_text,
+                                'question_type' => $q->question_type,
+                                'points' => $q->max_question_points
+                            ];
+                        })->values()->toArray()
+                    ];
+                })->values()->toArray(),
+            ];
+        });
+
+        return response()->json($result);
     }
 }

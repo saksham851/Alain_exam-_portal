@@ -328,6 +328,10 @@ class QuestionController extends Controller
             if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing " . \Illuminate\Support\Str::plural('question', $updatedCount);
             
             $message = "Successfully " . implode(' and ', $messageParts) . "!";
+            
+            if ($request->has('return_url')) {
+                return redirect($request->return_url)->with('success', $message);
+            }
 
             return redirect()->route('admin.questions.index')
                 ->with('question_created_success', true)
@@ -429,6 +433,10 @@ class QuestionController extends Controller
             ]);
         }
 
+        if ($request->has('return_url')) {
+            return redirect($request->return_url)->with('success', 'Question updated successfully!');
+        }
+
         return redirect()->route('admin.questions.index')
             ->with('success', 'Question updated successfully!');
     }
@@ -443,10 +451,18 @@ class QuestionController extends Controller
 
         // Check if exam is active
         if ($question->visit && $question->visit->caseStudy && $question->visit->caseStudy->section && $question->visit->caseStudy->section->exam && $question->visit->caseStudy->section->exam->is_active == 1) {
-            return back()->with('error', 'Cannot delete question from an active exam. Please deactivate the exam first.');
+            $msg = 'Cannot delete question from an active exam. Please deactivate the exam first.';
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->with('error', $msg);
         }
 
         $question->update(['status' => 0]);
+        
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Question deleted successfully.']);
+        }
         return back()->with('success', 'Question deleted successfully!');
     }
 

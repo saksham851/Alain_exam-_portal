@@ -163,6 +163,24 @@ Route::middleware(['auth'])->group(function () {
          Route::get('questions-ajax/visits/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getVisits']);
          Route::get('questions-ajax/questions-by-visit/{visitId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByVisit']);
 
+         // API Routes for Sections (used in exam edit page)
+         Route::get('api/sections/{examId}', [SectionController::class, 'getSections']);
+         Route::get('api/sections/{examId}/deleted', [SectionController::class, 'getDeletedSections']);
+         Route::get('api/sections/{sectionId}/content', [SectionController::class, 'getSectionContent']);
+         Route::get('api/sections-ajax/{id}', [SectionController::class, 'show']);
+         Route::delete('api/sections-ajax/{id}', [SectionController::class, 'ajaxDestroy']);
+         Route::patch('api/sections-ajax/{id}/restore', [SectionController::class, 'ajaxRestore']);
+
+         // API Routes for Exam Builder (Case Studies, Visits, Questions)
+         Route::delete('api/case-studies/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy']);
+         
+         Route::get('api/visits-detail/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxShow']);
+         Route::post('api/visits', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxStore']);
+         Route::put('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxUpdate']);
+         Route::delete('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxDestroy']);
+
+         Route::delete('api/questions/{id}', [\App\Http\Controllers\Admin\QuestionController::class, 'destroy']);
+
          // Sections
          Route::resource('sections', SectionController::class);
          Route::patch('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');

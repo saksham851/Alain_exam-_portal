@@ -94,9 +94,10 @@
 @php
     $initialData = old('categories', $standard->categories->map(function($c) { 
         return [
+            'id' => $c->id,
             'name' => $c->name, 
             'areas' => $c->contentAreas->map(function($a){ 
-                return ['name'=>$a->name, 'percentage'=>$a->percentage, 'max_points'=>$a->max_points]; 
+                return ['id'=>$a->id, 'name'=>$a->name, 'percentage'=>$a->percentage, 'max_points'=>$a->max_points]; 
             })->values()
         ]; 
     })->values());
@@ -127,6 +128,7 @@
         card.dataset.index = index;
 
         // Default Values
+        const catId = data && data.id ? data.id : '';
         const catName = data ? data.name : '';
         const areas = (data && data.areas && data.areas.length > 0) ? data.areas : [{name:'', max_points: 0}];
 
@@ -136,6 +138,7 @@
                 ${index > 0 ? `<button type="button" class="btn btn-danger btn-sm remove-category-btn" onclick="removeCategory(this)"><i class="ti ti-trash"></i></button>` : ''}
             </div>
             <div class="card-body">
+                <input type="hidden" name="categories[${index}][id]" class="category-id-input" value="${catId}">
                 <div class="mb-3">
                     <label class="form-label">Enter Category Name <span class="text-danger">*</span></label>
                     <input type="text" name="categories[${index}][name]" class="form-control category-name-input" 
@@ -174,9 +177,12 @@
         const name = data ? data.name : '';
         const maxPoints = data ? (data.max_points !== undefined ? data.max_points : 0) : 0;
 
+        const areaId = data && data.id ? data.id : '';
+
         const row = document.createElement('div');
         row.className = 'row area-row mb-2 align-items-center';
         row.innerHTML = `
+            <input type="hidden" name="categories[${catIndex}][areas][${areaIndex}][id]" class="area-id-input" value="${areaId}">
             <div class="col-md-7">
                 <input type="text" name="categories[${catIndex}][areas][${areaIndex}][name]" 
                        class="form-control area-name-input" placeholder="Area Name" value="${name}" required>
@@ -229,10 +235,12 @@
         if (!container) return;
 
         Array.from(container.children).forEach((row, idx) => {
+            const idInput = row.querySelector('.area-id-input');
             const nameInput = row.querySelector('.area-name-input');
             const pointsInput = row.querySelector('.max-points-input');
             const removeBtn = row.querySelector('.remove-area-btn');
 
+            if (idInput) idInput.name = `categories[${catIndex}][areas][${idx}][id]`;
             if (nameInput) nameInput.name = `categories[${catIndex}][areas][${idx}][name]`;
             if (pointsInput) {
                 pointsInput.name = `categories[${catIndex}][areas][${idx}][max_points]`;
@@ -253,6 +261,9 @@
 
             const nameInput = card.querySelector('.category-name-input');
             if(nameInput) nameInput.name = `categories[${index}][name]`;
+
+            const idInput = card.querySelector('.category-id-input');
+            if(idInput) idInput.name = `categories[${index}][id]`;
             
             const areasDiv = card.querySelector('.areas-container');
             if (areasDiv) areasDiv.id = `areas-${index}`;

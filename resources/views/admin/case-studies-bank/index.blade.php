@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 200);
     };
-
+ 
     // Source Flow
     const sourceExamSelect = document.getElementById('clone_source_exam_id');
     const sourceSectionSelect = document.getElementById('clone_source_section_id');
@@ -513,6 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
+                                <th style="width: 50px;"></th> <!-- Toggle Column -->
                                 <th>Case Study Title</th>
                                 <th>Current Section</th>
                                 <th>Current Exam</th>
@@ -525,9 +526,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         </thead>
                         <tbody>
                             @forelse($caseStudies as $caseStudy)
-                            <tr>
+                            <tr class="align-middle">
+                                @php
+                                    // specific check for case study being in an active exam
+                                    $isActiveExam = $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1;
+                                @endphp
                                 <td>
-                                    <strong>{{ $caseStudy->title }}</strong>
+                                    <button class="btn btn-sm btn-icon btn-light-primary rounded-circle shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCaseStudy{{ $caseStudy->id }}" aria-expanded="false" aria-controls="collapseCaseStudy{{ $caseStudy->id }}">
+                                        <i class="ti ti-chevron-right transition-transform"></i>
+                                    </button>
+                                </td>
+                                <td>
+                                    <a href="{{ $isActiveExam ? route('admin.case-studies-bank.show', $caseStudy->id) : route('admin.case-studies-bank.edit', $caseStudy->id) }}" class="text-decoration-none text-dark hover-primary">
+                                        <strong>{{ $caseStudy->title }}</strong>
+                                    </a>
                                 </td>
                                 <td>
                                     <span class="text-muted">{{ $caseStudy->section->title ?? 'N/A' }}</span>
@@ -553,13 +565,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="badge bg-light-info">{{ $caseStudy->section->exam->certification_type ?? 'N/A' }}</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-light-success">{{ $caseStudy->questions->count() }} Questions</span>
+                                    <span class="badge bg-light-success">{{ $caseStudy->questions_count }} Questions</span>
                                 </td>
                                 <td class="text-end">
-                                    @php
-                                        // specific check for case study being in an active exam
-                                        $isActiveExam = $caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1;
-                                    @endphp
                                     <div class="dropdown">
                                         <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
                                                 data-bs-toggle="dropdown" 
@@ -616,9 +624,84 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                 </td>
                             </tr>
+                            <!-- Expanded Detail Row -->
+                            <tr class="collapse bg-light-subtle" id="collapseCaseStudy{{ $caseStudy->id }}">
+                                <td colspan="9" class="p-0 border-bottom">
+                                    <div class="p-4">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <h6 class="text-uppercase text-muted fw-bold small mb-3">Case Study Flow & Structure</h6>
+                                                
+                                                @if($caseStudy->visits->count() > 0)
+                                                    <div class="d-flex flex-column gap-3">
+                                                        @foreach($caseStudy->visits as $visit)
+                                                            <div class="card border mb-0 shadow-sm">
+                                                                <!-- Card Header - Clickable for toggle -->
+                                                                <div class="card-header bg-white d-flex align-items-center justify-content-between py-2 clickable" 
+                                                                     data-bs-toggle="collapse" 
+                                                                     data-bs-target="#collapseVisit{{ $visit->id }}" 
+                                                                     aria-expanded="false" 
+                                                                     aria-controls="collapseVisit{{ $visit->id }}"
+                                                                     style="cursor: pointer;">
+                                                                    
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <!-- Chevron for Visit -->
+                                                                        <i class="ti ti-chevron-right transition-transform text-muted"></i>
+                                                                        
+                                                                        <span class="badge bg-light-primary text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">{{ $loop->iteration }}</span>
+                                                                        <div>
+                                                                            <h6 class="mb-0 fw-bold">
+                                                                                <a href="{{ $isActiveExam ? route('admin.case-studies-bank.show', $caseStudy->id) : route('admin.case-studies-bank.edit', $caseStudy->id) }}#visit-{{ $visit->id }}" 
+                                                                                   class="text-dark text-decoration-none hover-primary"
+                                                                                   onclick="event.stopPropagation();">
+                                                                                    {{ $visit->title }}
+                                                                                </a>
+                                                                            </h6>
+                                                                            @if($visit->description)
+                                                                                <small class="text-muted">{{ Str::limit($visit->description, 60) }}</small>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                    <span class="badge bg-light-secondary">{{ $visit->questions->count() }} Questions</span>
+                                                                </div>
+                                                                
+                                                                <!-- Collapsible Questions Section -->
+                                                                @if($visit->questions->count() > 0)
+                                                                    <div id="collapseVisit{{ $visit->id }}" class="collapse">
+                                                                        <div class="card-body bg-light-subtle p-3">
+                                                                            <ul class="list-group list-group-flush rounded border">
+                                                                                @foreach($visit->questions as $question)
+                                                                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-white">
+                                                                                        <div class="d-flex align-items-center gap-2 text-truncate">
+                                                                                            <i class="ti ti-help-circle text-muted"></i>
+                                                                                            <a href="{{ route('admin.questions.edit', $question->id) }}" class="text-truncate text-decoration-none text-dark hover-primary" title="{{ strip_tags($question->question_text) }}">
+                                                                                                {{ Str::limit(strip_tags($question->question_text), 80) }}
+                                                                                            </a>
+                                                                                        </div>
+                                                                                        <span class="badge bg-light text-dark border">{{ $question->max_question_points ?? 1 }} pts</span>
+                                                                                    </li>
+                                                                                @endforeach
+                                                                            </ul>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <div class="text-center text-muted py-3 border rounded bg-white">
+                                                        <i class="ti ti-alert-circle mb-2 fs-4"></i>
+                                                        <p class="mb-0">No visits defined for this case study yet.</p>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4">No case studies found.</td>
+                                <td colspan="9" class="text-center py-4">No case studies found.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -658,6 +741,14 @@ nav[role="navigation"] > div:not(.pagination) {
 /* Ensure pagination links are visible */
 .card-footer .pagination {
     margin: 0;
+}
+
+/* Chevron Rotation */
+.transition-transform {
+    transition: transform 0.3s ease;
+}
+[aria-expanded="true"] .transition-transform {
+    transform: rotate(90deg);
 }
 </style>
 

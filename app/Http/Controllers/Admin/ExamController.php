@@ -179,7 +179,7 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'exam_standard_id' => 'nullable|exists:exam_standards,id',
-            'passing_score_overall' => 'nullable|integer|min:0',
+
             'passing_scores.*' => 'nullable|integer|min:0',
             'total_questions' => 'nullable|integer|min:0',
         ], [
@@ -196,7 +196,7 @@ class ExamController extends Controller
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'exam_standard_id' => $request->exam_standard_id,
-            'passing_score_overall' => $request->passing_score_overall ?? 65,
+            'passing_score_overall' => 0,
             'total_questions' => $request->total_questions,
             'status' => 1,
             'is_active' => 0, // New exams start as inactive
@@ -224,12 +224,14 @@ class ExamController extends Controller
     public function show($id)
     {
         $exam = Exam::with(['category', 'sections' => function($q) {
-            $q->where('status', 1)->orderBy('order_no');
+            $q->where('sections.status', 1)->orderBy('order_no');
         }, 'sections.caseStudies' => function($q) {
-            $q->where('status', 1)->orderBy('order_no');
-        }, 'sections.caseStudies.questions' => function($q) {
-            $q->where('status', 1);
-        }, 'sections.caseStudies.questions.options'])
+            $q->where('case_studies.status', 1)->orderBy('order_no');
+        }, 'sections.caseStudies.visits' => function($q) {
+            $q->where('visits.status', 1)->orderBy('order_no');
+        }, 'sections.caseStudies.visits.questions' => function($q) {
+            $q->where('questions.status', 1);
+        }, 'sections.caseStudies.visits.questions.options'])
         ->findOrFail($id);
 
         $compliance = $exam->validateStandardCompliance();
@@ -292,7 +294,7 @@ class ExamController extends Controller
             'description' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'exam_standard_id' => 'nullable|exists:exam_standards,id',
-            'passing_score_overall' => 'nullable|integer|min:0',
+
             'passing_scores.*' => 'nullable|integer|min:0',
             'total_questions' => 'nullable|integer|min:0',
         ], [
@@ -309,7 +311,7 @@ class ExamController extends Controller
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'exam_standard_id' => $request->exam_standard_id,
-            'passing_score_overall' => $request->passing_score_overall ?? 65,
+            'passing_score_overall' => 0,
             'total_questions' => $request->total_questions,
         ]);
 
@@ -428,7 +430,6 @@ class ExamController extends Controller
             ->with('success', "Successfully imported $imported exams!");
     }
 
-
     // CLONE EXAM (DEEP COPY)
     public function clone(Request $request, $id)
     {
@@ -439,15 +440,18 @@ class ExamController extends Controller
 
         $sourceExam = Exam::with([
             'sections' => function($query) {
-                $query->where('status', 1);
+                $query->where('sections.status', 1);
             },
             'sections.caseStudies' => function($query) {
-                $query->where('status', 1);
+                $query->where('case_studies.status', 1);
             },
-            'sections.caseStudies.questions' => function($query) {
-                $query->where('status', 1);
+            'sections.caseStudies.visits' => function($query) {
+                $query->where('visits.status', 1);
             },
-            'sections.caseStudies.questions.options'
+            'sections.caseStudies.visits.questions' => function($query) {
+                $query->where('questions.status', 1);
+            },
+            'sections.caseStudies.visits.questions.options'
         ])->findOrFail($id);
 
         // Filter to get only active sections

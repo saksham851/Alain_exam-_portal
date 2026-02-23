@@ -114,107 +114,175 @@ class SectionController extends Controller
     }
 
     public function store(Request $request)
-{
-    // Check if exam is active
-    $exam = Exam::find($request->exam_id);
-    if ($exam && $exam->is_active == 1) {
-        return redirect()->back()->with('error', 'Cannot add section to an active exam. Please deactivate the exam first.');
-    }
+    {
+        // Check if exam is active
+        $exam = Exam::find($request->exam_id);
+        if ($exam && $exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot add section to an active exam. Please deactivate the exam first.');
+        }
 
-    // Sanitize input: remove extra spaces from title
-    if ($request->has('title')) {
-        $request->merge([
-            'title' => trim(preg_replace('/\s+/', ' ', $request->title))
+        // Sanitize input: remove extra spaces from title
+        if ($request->has('title')) {
+            $request->merge([
+                'title' => trim(preg_replace('/\s+/', ' ', $request->title))
+            ]);
+        }
+
+        $request->validate([
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('sections')->where(function ($query) use ($request) {
+                    return $query->where('exam_id', $request->exam_id)
+                                 ->where('status', 1); // Only check against active sections
+                }),
+            ],
+            'exam_id' => 'required|exists:exams,id',
+            'exam_standard_category_id' => 'nullable|exists:exam_standard_categories,id',
+            'content' => 'nullable|string',
+        ], [
+            'title.unique' => 'A section with this name already exists in the selected exam.',
         ]);
+
+        // Create main section
+        $section = Section::create([
+            'exam_id' => $request->exam_id,
+            'exam_standard_category_id' => $request->exam_standard_category_id,
+            'title' => $request->title,
+            'content' => $request->content,
+            'order_no' => Section::where('exam_id', $request->exam_id)->max('order_no') + 1,
+            'status' => 1,
+        ]);
+
+        if ($request->has('return_url')) {
+            return redirect($request->return_url)->with('success', 'Section created successfully!');
+        }
+
+        return redirect()->route('admin.sections.index')
+            ->with('section_created_success', true)
+            ->with('created_exam_id', $request->exam_id)
+            ->with('created_section_id', $section->id);
     }
-
-    $request->validate([
-        'title' => [
-            'required',
-            'string',
-            'max:255',
-            Rule::unique('sections')->where(function ($query) use ($request) {
-                return $query->where('exam_id', $request->exam_id)
-                             ->where('status', 1); // Only check against active sections
-            }),
-        ],
-        'exam_id' => 'required|exists:exams,id',
-        'exam_standard_category_id' => 'nullable|exists:exam_standard_categories,id',
-        'content' => 'nullable|string',
-    ], [
-        'title.unique' => 'A section with this name already exists in the selected exam.',
-    ]);
-
-    // Create main section
-    $section = Section::create([
-        'exam_id' => $request->exam_id,
-        'exam_standard_category_id' => $request->exam_standard_category_id,
-        'title' => $request->title,
-        'content' => $request->content,
-        'order_no' => Section::where('exam_id', $request->exam_id)->max('order_no') + 1,
-        'status' => 1,
-    ]);
-
-    return redirect()->route('admin.sections.index')
-        ->with('section_created_success', true)
-        ->with('created_exam_id', $request->exam_id)
-        ->with('created_section_id', $section->id);
-}
 
     public function edit($id)
     {
         $section = Section::with('caseStudies')->find($id);
         if (!$section || $section->status == 0) return back()->with('error', 'Section not found');
 
-        $exams = Exam::where('status', 1)->get();
+        $exams = Exam::where('status', 1)->with(['examStandard.categories.contentAreas', 'sections'])->get();
         return view('admin.case_studies.edit', ['caseStudy' => $section, 'exams' => $exams]);
     }
 
     public function update(Request $request, $id)
-{
-    // Check if exam is active
-    $exam = Exam::find($request->exam_id);
-    if ($exam && $exam->is_active == 1) {
-        return redirect()->back()->with('error', 'Cannot modify section in an active exam. Please deactivate the exam first.');
-    }
+    {
+        // Check if exam is active
+        $exam = Exam::find($request->exam_id);
+        if ($exam && $exam->is_active == 1) {
+            return redirect()->back()->with('error', 'Cannot modify section in an active exam. Please deactivate the exam first.');
+        }
 
-    // Sanitize input: remove extra spaces from title
-    if ($request->has('title')) {
-        $request->merge([
-            'title' => trim(preg_replace('/\s+/', ' ', $request->title))
+        // Sanitize input: remove extra spaces from title
+        if ($request->has('title')) {
+            $request->merge([
+                'title' => trim(preg_replace('/\s+/', ' ', $request->title))
+            ]);
+        }
+
+        $request->validate([
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('sections')->where(function ($query) use ($request) {
+                    return $query->where('exam_id', $request->exam_id)
+                                 ->where('status', 1); // Only check against active sections
+                })->ignore($id),
+            ],
+            'exam_id' => 'required|exists:exams,id',
+            'exam_standard_category_id' => 'nullable|exists:exam_standard_categories,id',
+            'content' => 'nullable|string',
+        ], [
+            'title.unique' => 'A section with this name already exists in the selected exam.',
         ]);
+
+        $section = Section::find($id);
+        if (!$section || $section->status == 0) return back()->with('error', 'Section not found');
+
+        // Update main section
+        $section->update([
+            'exam_id' => $request->exam_id,
+            'exam_standard_category_id' => $request->exam_standard_category_id,
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
+        if ($request->has('return_url')) {
+            return redirect($request->return_url)->with('success', 'Section updated successfully.');
+        }
+
+        return redirect()->route('admin.sections.index')->with('success', 'Section updated successfully.');
     }
 
-    $request->validate([
-        'title' => [
-            'required',
-            'string',
-            'max:255',
-            Rule::unique('sections')->where(function ($query) use ($request) {
-                return $query->where('exam_id', $request->exam_id)
-                             ->where('status', 1); // Only check against active sections
-            })->ignore($id),
-        ],
-        'exam_id' => 'required|exists:exams,id',
-        'exam_standard_category_id' => 'nullable|exists:exam_standard_categories,id',
-        'content' => 'nullable|string',
-    ], [
-        'title.unique' => 'A section with this name already exists in the selected exam.',
-    ]);
+    public function ajaxDestroy($id)
+    {
+        $section = Section::with('exam')->find($id);
+        if (!$section) {
+            return response()->json(['success' => false, 'message' => 'Section not found'], 404);
+        }
 
-    $section = Section::find($id);
-    if (!$section || $section->status == 0) return back()->with('error', 'Section not found');
+        // Check if exam is active
+        if ($section->exam && $section->exam->is_active == 1) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete section from an active exam.'], 422);
+        }
 
-    // Update main section
-    $section->update([
-        'exam_id' => $request->exam_id,
-        'exam_standard_category_id' => $request->exam_standard_category_id,
-        'title' => $request->title,
-        'content' => $request->content,
-    ]);
+        $section->update(['status' => 0]); 
+        return response()->json(['success' => true, 'message' => 'Section deleted successfully.']);
+    }
 
-    return redirect()->route('admin.sections.index')->with('success', 'Section updated successfully.');
-}
+    // AJAX: Get deleted (soft-deleted) sections for an exam
+    public function getDeletedSections($examId)
+    {
+        try {
+            $sections = Section::where('exam_id', $examId)
+                ->where('status', 0)
+                ->orderBy('updated_at', 'desc')
+                ->get(['id', 'title', 'updated_at']);
+
+            $formatted = $sections->map(function($s) {
+                return [
+                    'id'         => $s->id,
+                    'title'      => $s->title,
+                    'deleted_at' => $s->updated_at->diffForHumans(),
+                ];
+            });
+
+            return response()->json(['success' => true, 'sections' => $formatted]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'sections' => [], 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // AJAX: Restore a soft-deleted section
+    public function ajaxRestore($id)
+    {
+        $section = Section::with('exam')->find($id);
+        if (!$section) {
+            return response()->json(['success' => false, 'message' => 'Section not found'], 404);
+        }
+
+        if ($section->status == 1) {
+            return response()->json(['success' => false, 'message' => 'Section is already active.'], 422);
+        }
+
+        // Check if exam is active
+        if ($section->exam && $section->exam->is_active == 1) {
+            return response()->json(['success' => false, 'message' => 'Cannot restore section in an active exam. Please deactivate the exam first.'], 422);
+        }
+
+        $section->update(['status' => 1]);
+        return response()->json(['success' => true, 'message' => 'Section restored successfully.']);
+    }
 
     public function show($id)
     {
@@ -377,6 +445,80 @@ class SectionController extends Controller
                 'success' => false,
                 'error' => $e->getMessage(),
                 'sections' => []
+            ], 500);
+        }
+    }
+
+    // AJAX: Get section content (case studies, visits, questions)
+    public function getSectionContent($sectionId)
+    {
+        try {
+            $section = Section::with([
+                'caseStudies' => function($q) {
+                    $q->where('status', 1)->orderBy('order_no');
+                },
+                'caseStudies.visits' => function($q) {
+                    $q->where('status', 1)->orderBy('order_no');
+                },
+                'caseStudies.visits.questions' => function($q) {
+                    $q->where('status', 1);
+                },
+                'caseStudies.visits.questions.options',
+                'caseStudies.visits.questions.tags'
+            ])->find($sectionId);
+
+            if (!$section) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Section not found',
+                    'case_studies' => []
+                ]);
+            }
+
+            $formattedCaseStudies = $section->caseStudies->map(function($cs) {
+                return [
+                    'id' => $cs->id,
+                    'title' => $cs->title,
+                    'content' => $cs->content,
+                    'order_no' => $cs->order_no,
+                    'visits' => $cs->visits->map(function($visit) {
+                        return [
+                            'id' => $visit->id,
+                            'title' => $visit->title,
+                            'description' => $visit->description,
+                            'order_no' => $visit->order_no,
+                            'questions' => $visit->questions->map(function($q) {
+                                return [
+                                    'id' => $q->id,
+                                    'question_text' => $q->question_text,
+                                    'question_type' => $q->question_type,
+                                    'max_question_points' => $q->max_question_points,
+                                    'tags_count' => $q->tags ? $q->tags->count() : 0,
+                                    'options' => $q->options->map(function($opt) {
+                                        return [
+                                            'id' => $opt->id,
+                                            'option_key' => $opt->option_key,
+                                            'option_text' => $opt->option_text,
+                                            'is_correct' => $opt->is_correct
+                                        ];
+                                    })
+                                ];
+                            })
+                        ];
+                    })
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'case_studies' => $formattedCaseStudies
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'case_studies' => []
             ], 500);
         }
     }

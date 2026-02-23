@@ -66,6 +66,24 @@
             }
         </style>
         
+        <!-- Hide Default Template Loader -->
+        <style>
+            .loader-bg {
+                display: none !important;
+            }
+            
+            /* Alpine.js x-cloak */
+            [x-cloak] {
+                display: none !important;
+            }
+            
+            /* Prevent logo spinning/animation */
+            .logo-lg, .b-brand img, .m-header img {
+                animation: none !important;
+                transform: none !important;
+            }
+        </style>
+        
     </head>
     <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-layout="vertical" data-pc-direction="ltr" data-pc-theme_contrast="" data-pc-theme="light">
         <!-- [ Pre-loader ] start -->
@@ -218,31 +236,32 @@
             // Feather icons
             feather.replace();
 
-            // Custom handler for Exams submenu toggle
+            // Custom handler for all sidebar submenu toggles
             document.addEventListener('DOMContentLoaded', function() {
                 // Wait a bit for feather icons to render
                 setTimeout(function() {
-                    const examMenuItem = document.querySelector('.pc-navbar > li.pc-hasmenu');
-                    if (examMenuItem) {
-                        const examLink = examMenuItem.querySelector('a.pc-link');
-                        const submenu = examMenuItem.querySelector('.pc-submenu');
+                    const menuItems = document.querySelectorAll('.pc-navbar > li.pc-hasmenu');
+                    
+                    menuItems.forEach(function(menuItem) {
+                        const menuLink = menuItem.querySelector('a.pc-link');
+                        const submenu = menuItem.querySelector('.pc-submenu');
                         
-                        if (examLink && submenu) {
-                            examLink.addEventListener('click', function(e) {
+                        if (menuLink && submenu) {
+                            menuLink.addEventListener('click', function(e) {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 
                                 // Toggle the menu
-                                if (examMenuItem.classList.contains('pc-trigger')) {
-                                    examMenuItem.classList.remove('pc-trigger');
+                                if (menuItem.classList.contains('pc-trigger')) {
+                                    menuItem.classList.remove('pc-trigger');
                                     submenu.style.display = 'none';
                                 } else {
-                                    examMenuItem.classList.add('pc-trigger');
+                                    menuItem.classList.add('pc-trigger');
                                     submenu.style.display = 'block';
                                 }
                             });
                         }
-                    }
+                    });
                 }, 100);
             });
         </script>

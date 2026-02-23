@@ -16,7 +16,8 @@
 </div>
 <!-- [ breadcrumb ] end -->
 
-<div class="row" x-data="questionForm()">
+<div x-data="questionForm()">
+    <div class="row">
     <div class="col-md-8">
         @php
             $isActiveExam = false;
@@ -37,6 +38,9 @@
         <form action="{{ isset($question) ? route('admin.questions.update', $question->id) : route('admin.questions.store') }}" method="POST" id="questionForm">
             @csrf
             @if(isset($question)) @method('PUT') @endif
+            @if(request()->has('return_url'))
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+            @endif
 
             <!-- Cascading Dropdowns (Location) -->
             <!-- This section is common for all questions being added -->
@@ -573,6 +577,8 @@
             </div>
         </div>
     </div>
+</div> <!-- End Alpine Component -->
+
 
 @php
     $isEdit = false;
@@ -583,6 +589,7 @@
     $selectedSubCaseId = null;
     $selectedCaseStudyId = null;
     $selectedExamId = null;
+    $selectedVisitId = null;
 
     $selectedSectionCategoryId = null;
     $initialAllowedContentAreas = [];
@@ -730,17 +737,12 @@ function questionForm() {
         complianceHasErrors: false,
         isLoadingCompliance: false,
 
-        init() {
+        async init() {
+            // Load initial data sequentially
             if(this.selectedExamId) {
-                // Ensure the variable is set for internal methods
-                this.loadCaseStudies(this.selectedExamId);
+                await this.loadCaseStudies(this.selectedExamId);
             }
-            if(this.selectedSubCaseId) {
-                 this.$nextTick(() => { this.loadVisits(this.selectedSubCaseId); });
-            }
-            if(this.selectedVisitId) {
-                 this.$nextTick(() => { if (!this.isEdit) this.loadExistingQuestions(this.selectedVisitId); });
-            }
+            
             this.$nextTick(() => {
                 if(typeof ClassicEditor !== 'undefined') {
                     this.questions.forEach((q) => {
@@ -949,6 +951,7 @@ function questionForm() {
                     this.loadExamStandardData(standard);
                 }
 
+                // Continue loading if section is pre-selected
                 if(this.selectedCaseStudyId) {
                     await this.loadSubCaseStudies(this.selectedCaseStudyId);
                 }
@@ -959,15 +962,21 @@ function questionForm() {
         },
 
         async loadSubCaseStudies(sectionId) {
-             this.visits = []; this.selectedVisitId = null;
-             if(!sectionId) { this.subCaseStudies = []; return; }
+             // Don't reset visits and selectedVisitId if we're loading initial data
+             const preserveVisitId = this.selectedVisitId; // Save it
+             if(!sectionId) { this.subCaseStudies = []; this.visits = []; return; }
              try {
                 const response = await fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`);
                 this.subCaseStudies = await response.json();
+                
+                // Restore the visit ID if it was set
+                if(preserveVisitId) {
+                    this.selectedVisitId = preserveVisitId;
+                }
+                
+                // Continue loading if case study is pre-selected
                 if(this.selectedSubCaseId) {
-                    this.$nextTick(() => {
-                        this.loadVisits(this.selectedSubCaseId);
-                    });
+                    await this.loadVisits(this.selectedSubCaseId);
                 }
              } catch(e) { console.error(e); }
         },
@@ -978,10 +987,12 @@ function questionForm() {
              try {
                 const response = await fetch(`/admin/questions-ajax/visits/${caseStudyId}`);
                 this.visits = await response.json();
+                
+                // Load existing questions if visit is pre-selected
                 if(this.selectedVisitId) {
-                    this.$nextTick(() => {
-                        if (!this.isEdit) this.loadExistingQuestions(this.selectedVisitId);
-                    });
+                    if (!this.isEdit) {
+                        await this.loadExistingQuestions(this.selectedVisitId);
+                    }
                 }
              } catch(e) { console.error(e); }
         },

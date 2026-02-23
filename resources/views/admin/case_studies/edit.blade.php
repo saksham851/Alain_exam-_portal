@@ -31,6 +31,9 @@
         <form id="caseStudyForm" action="{{ isset($caseStudy) ? route('admin.sections.update', $caseStudy->id) : route('admin.sections.store') }}" method="POST">
             @csrf
             @if(isset($caseStudy)) @method('PUT') @endif
+            @if(request()->has('return_url'))
+                <input type="hidden" name="return_url" value="{{ request('return_url') }}">
+            @endif
 
             <div class="card">
                 <div class="card-header">
@@ -40,28 +43,20 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assign to Exam</label>
+                            @php
+                                $selectedExamIdVal = old('exam_id', request('exam_id', $caseStudy->exam_id ?? ''));
+                            @endphp
                             <select name="exam_id" class="form-select" required {{ request('exam_id') ? 'style=pointer-events:none;background-color:#e9ecef;' : '' }} x-model="selectedExamId" @change="onExamChange($event.target.value)">
                                 <option value="">Select Exam</option>
                                 @foreach($exams as $exam)
-                                   <option value="{{ $exam->id }}">{{ $exam->name }}</option>
+                                   <option value="{{ $exam->id }}" {{ $selectedExamIdVal == $exam->id ? 'selected' : '' }}>{{ $exam->name }}</option>
                                 @endforeach
                             </select>
                             @if(request('exam_id'))
                                 <input type="hidden" name="exam_id" value="{{ request('exam_id') }}">
                             @endif
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Assign to Standard Category</label>
-                            <select name="exam_standard_category_id" id="category_id" class="form-select" @change="onCategorySelect($event.target.value)">
-                                <option value="">Select Category (Optional)</option>
-                                <template x-if="selectedExamId">
-                                    <template x-for="cat in getStandardCategories(selectedExamId)" :key="cat.id">
-                                        <option :value="cat.id" :selected="cat.id == {{ old('exam_standard_category_id', $caseStudy->exam_standard_category_id ?? '0') }}" x-text="cat.name"></option>
-                                    </template>
-                                </template>
-                            </select>
-                            <small class="text-muted">Linking here helps in compliance tracking.</small>
-                        </div>
+
 
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Section Name</label>
@@ -79,7 +74,11 @@
             </div>
 
             <div class="mt-3 text-end">
-                <a href="{{ route('admin.sections.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                @if(request()->has('return_url'))
+                    <a href="{{ urldecode(request('return_url')) }}" class="btn btn-secondary me-2">Cancel</a>
+                @else
+                    <a href="{{ route('admin.sections.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                @endif
                 <button type="submit" class="btn btn-primary" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'disabled' : '' }}>Save Section</button>
             </div>
         </form>
