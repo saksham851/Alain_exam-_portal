@@ -48,36 +48,92 @@
             .swal2-icon { animation: none !important; transform: scale(1) !important; }
         </style>
         
-        <!-- Custom Styles to Hide Page Headers -->
+        <!-- Core Branding & UI Refinements -->
         <style>
+            :root {
+                --bs-primary: #01284E; /* Refined Navy */
+                --bs-primary-rgb: 1, 40, 78;
+                --primary: #01284E;
+                
+                --bs-success: #008B8B; /* Teal */
+                --bs-success-rgb: 0, 139, 139;
+                
+                --bs-warning: #E6B325; /* Gold/Yellow */
+                --bs-warning-rgb: 230, 179, 37;
+                
+                --bs-info: #0056b3;
+                
+                /* Template specific overrides */
+                --pc-primary: #01284E !important;
+                --pc-primary-hover: #001a33 !important;
+            }
+
+            /* Extra force for primary buttons to prevent theme overrides */
+            .btn-primary, 
+            .btn-primary:not(:hover),
+            .btn-primary:not(:active) {
+                background-color: #01284E !important;
+                border-color: #01284E !important;
+                color: #fff !important;
+            }
+
+            /* Override Bootstrap primary buttons and elements */
+            .btn-primary {
+                background-color: var(--bs-primary) !important;
+                border-color: var(--bs-primary) !important;
+                box-shadow: 0 4px 10px rgba(1, 40, 78, 0.2) !important;
+            }
+            .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+                background-color: #001a33 !important;
+                border-color: #001a33 !important;
+            }
+
+            .bg-primary { background-color: var(--bs-primary) !important; }
+            .text-primary { color: var(--bs-primary) !important; }
+            .bg-light-primary { background-color: rgba(1, 51, 102, 0.1) !important; color: var(--bs-primary) !important; }
+
+            .bg-success { background-color: var(--bs-success) !important; }
+            .text-success { color: var(--bs-success) !important; }
+            .bg-light-success { background-color: rgba(0, 139, 139, 0.1) !important; color: var(--bs-success) !important; }
+
+            .bg-warning { background-color: var(--bs-warning) !important; }
+            .text-warning { color: var(--bs-warning) !important; }
+            .bg-light-warning { background-color: rgba(230, 179, 37, 0.1) !important; color: var(--bs-warning) !important; }
+
+            /* Sidebar Enhancements */
+            .pc-sidebar .pc-link:hover, .pc-sidebar .pc-item.active > .pc-link {
+                color: var(--bs-primary) !important;
+                background: rgba(1, 51, 102, 0.05) !important;
+            }
+            .pc-sidebar .pc-item.active > .pc-link::after {
+                background: var(--bs-primary) !important;
+            }
+            .pc-micon { color: #64748b; }
+            .pc-item.active .pc-micon { color: var(--bs-primary) !important; }
+
+            /* Card & Layout Polishing */
+            .card {
+                border-radius: 12px !important;
+                border: none !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+            }
+            .breadcrumb-item.active { color: var(--bs-primary) !important; }
+            
             /* Hide page headers globally to save space */
-            .page-header {
-                display: none !important;
-            }
-            
-            /* Remove top padding/margin from main content area */
-            .pc-container {
-                padding-top: 0 !important;
-            }
-            
-            section.pc-container {
-                margin-top: 0 !important;
-                padding-top: 20px !important;
-            }
+            .page-header { display: none !important; }
+            .pc-container { padding-top: 0 !important; }
+            section.pc-container { margin-top: 0 !important; padding-top: 20px !important; }
+
+            /* Scrollbar Refinement */
+            ::-webkit-scrollbar { width: 6px; height: 6px; }
+            ::-webkit-scrollbar-track { background: #f1f5f9; }
+            ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         </style>
         
-        <!-- Hide Default Template Loader -->
         <style>
-            .loader-bg {
-                display: none !important;
-            }
-            
-            /* Alpine.js x-cloak */
-            [x-cloak] {
-                display: none !important;
-            }
-            
-            /* Prevent logo spinning/animation */
+            .loader-bg { display: none !important; }
+            [x-cloak] { display: none !important; }
             .logo-lg, .b-brand img, .m-header img {
                 animation: none !important;
                 transform: none !important;

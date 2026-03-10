@@ -22,8 +22,8 @@
                             <!-- Icon & Title -->
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
-                                    <div class="avtar avtar-s bg-light-primary text-primary rounded-circle me-3 shadow-sm">
-                                        <i class="ti ti-history f-20"></i>
+                                    <div class="avtar bg-light-primary text-primary rounded-circle me-3 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
+                                        <i class="ti ti-history fs-5"></i>
                                     </div>
                                     <div>
                                         <h6 class="mb-0 fw-bold text-dark">{{ $attempt->studentExam->exam->name }}</h6>

@@ -19,13 +19,13 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    All Questions 
-                    <span class="badge bg-light-secondary ms-2">{{ $questions->total() }} Total</span>
-                </h5>
-                <button type="button" class="btn btn-primary btn-sm" onclick="handleAddQuestionClick()">
-                    <i class="ti ti-plus me-1"></i> Add Question
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0 fw-bold">Question Bank</h5>
+                    <span class="text-muted small fw-normal">{{ $questions->total() }} total questions available</span>
+                </div>
+                <button type="button" class="btn btn-primary d-flex align-items-center gap-2 px-3 fw-bold" onclick="handleAddQuestionClick()">
+                    <i class="ti ti-plus fs-5"></i> Add Question
                 </button>
             </div>
 
@@ -259,15 +259,15 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover table-vcenter mb-0">
-                        <thead>
+                        <thead style="background: #f8fafc;">
                             <tr>
-                                <th style="width: 25%;">Question</th>
-                                <th style="width: 20%;">Groups</th>
-                                <th style="width: 15%;">Case Study</th>
-                                <th style="width: 10%;">Source</th>
-                                <th style="width: 10%;">Type</th>
-                                <th style="width: 10%;">Options</th>
-                                <th class="text-end" style="width: 10%;">Actions</th>
+                                <th class="border-0 text-muted small fw-bold" style="width: 25%;">QUESTION TITLE</th>
+                                <th class="border-0 text-muted small fw-bold" style="width: 18%;">CATEGORIES & AREAS</th>
+                                <th class="border-0 text-muted small fw-bold" style="width: 15%;">CONTEXT</th>
+                                <th class="border-0 text-muted small fw-bold" style="width: 10%;">SOURCE</th>
+                                <th class="border-0 text-muted small fw-bold text-center" style="width: 10%;">TYPE</th>
+                                <th class="border-0 text-muted small fw-bold text-center" style="width: 12%;">OPTIONS</th>
+                                <th class="border-0 text-end text-muted small fw-bold" style="width: 10%;">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -324,16 +324,16 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     @if($question->question_type == 'single')
                                         <span class="badge bg-light-primary">Single Choice</span>
                                     @else
                                         <span class="badge bg-light-success">Multiple Choice</span>
                                     @endif
                                 </td>
-                                <td>
-                                    <span class="badge bg-light-info">{{ $question->options->count() }} Options</span>
-                                    <span class="badge bg-light-success">{{ $question->options->where('is_correct', 1)->count() }} Correct</span>
+                                <td class="text-center">
+                                    <span class="badge bg-light-info mb-1 d-block">{{ $question->options->count() }} Options</span>
+                                    <span class="badge bg-light-success d-block">{{ $question->options->where('is_correct', 1)->count() }} Correct</span>
                                 </td>
                                 <td class="text-end">
                                     @php

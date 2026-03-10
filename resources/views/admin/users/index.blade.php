@@ -19,11 +19,11 @@
 <div class="row">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header">
-                <h5>
-                    All Students 
-                    <span class="badge bg-light-secondary ms-2">{{ $users->total() }} Total</span>
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold">
+                    Student Management
                 </h5>
+                <span class="text-muted small fw-normal">{{ $users->total() }} total students registered</span>
             </div>
             
             <!-- Compact Filters Section -->
@@ -119,27 +119,30 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
-                        <thead>
+                        <thead style="background: #f8fafc;">
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Last Login</th>
-                                <th>Last Submission</th>
-                                <th>Total Attempts</th>
-                                <th class="text-end">Actions</th>
+                                <th class="border-0 text-muted small fw-bold">STUDENT NAME</th>
+                                <th class="border-0 text-muted small fw-bold">EMAIL ADDRESS</th>
+                                <th class="border-0 text-muted small fw-bold">CONTACT</th>
+                                <th class="border-0 text-muted small fw-bold">LAST LOGIN</th>
+                                <th class="border-0 text-muted small fw-bold">LAST SUBMISSION</th>
+                                <th class="border-0 text-muted small fw-bold">ATTEMPTS REMAINING</th>
+                                <th class="border-0 text-end text-muted small fw-bold">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($users as $user)
                             <tr>
                                 <td>
-                                    <div>
-                                        <h6 class="mb-0">{{ $user->first_name }} {{ $user->last_name }}</h6>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avtar avtar-s bg-light-primary text-primary rounded-circle me-2">
+                                            <i class="ti ti-user fs-5"></i>
+                                        </div>
+                                        <h6 class="mb-0 fw-bold">{{ $user->first_name }} {{ $user->last_name }}</h6>
                                     </div>
                                 </td>
-                                <td>{{ $user->email }}</td>
-                                <td>{{ $user->phone ?? 'N/A' }}</td>
+                                <td><span class="text-muted small">{{ $user->email }}</span></td>
+                                <td><span class="text-muted small">{{ $user->phone ?? 'N/A' }}</span></td>
                                 <td>
                                     @if($user->last_login_at)
                                         <div class="d-flex flex-column">

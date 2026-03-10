@@ -8,9 +8,9 @@
       <a href="{{ route('admin.users.index') }}" class="text-decoration-none">
         <div class="card h-100">
           <div class="card-body pt-3 px-3 pb-2">
-            <h6 class="mb-2 f-w-400 text-muted">Total Students</h6>
-            <h4 class="mb-2">{{ number_format($stats['total_students']) }} <span class="badge bg-light-primary border border-primary"><i class="ti ti-users"></i></span></h4>
-            <p class="mb-0 text-muted text-sm">Registered users</p>
+            <h6 class="mb-2 f-w-700 text-muted small text-uppercase" style="letter-spacing: 0.5px;">Total Students</h6>
+            <h4 class="mb-1 fw-bold">{{ number_format($stats['total_students']) }}</h4>
+            <span class="badge rounded-pill bg-light-primary text-primary px-3 py-1 fw-bold" style="font-size: 0.65rem;"><i class="ti ti-users me-1"></i> ACTIVE USERS</span>
           </div>
         </div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
       </a>
@@ -20,9 +20,9 @@
       <a href="{{ route('admin.exams.index') }}" class="text-decoration-none">
         <div class="card h-100">
           <div class="card-body pt-3 px-3 pb-2">
-            <h6 class="mb-2 f-w-400 text-muted">Total Exams</h6>
-            <h4 class="mb-2">{{ $stats['active_exams'] }} <span class="badge bg-light-success border border-success"><i class="ti ti-book"></i></span></h4>
-            <p class="mb-0 text-muted text-sm">Available exams</p>
+            <h6 class="mb-2 f-w-700 text-muted small text-uppercase" style="letter-spacing: 0.5px;">Total Exams</h6>
+            <h4 class="mb-1 fw-bold">{{ $stats['active_exams'] }}</h4>
+            <span class="badge rounded-pill bg-light-success text-success px-3 py-1 fw-bold" style="font-size: 0.65rem;"><i class="ti ti-book me-1"></i> LIVE EXAMS</span>
           </div>
         </div>
       </a>
@@ -164,16 +164,16 @@
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover mb-0">
-              <thead>
+              <thead style="background: #f8fafc;">
                 <tr>
-                  <th>STUDENT NAME</th>
-                  <th>EMAIL</th>
-                  <th>ENROLLED EXAMS</th>
-                  <th>TOTAL ATTEMPTS</th>
-                  <th>AVERAGE SCORE</th>
-                  <th>STATUS</th>
-                  <th>JOINED DATE</th>
-                  <th class="text-end">ACTIONS</th>
+                  <th class="border-0 text-muted small fw-bold">STUDENT NAME</th>
+                  <th class="border-0 text-muted small fw-bold">EMAIL</th>
+                  <th class="border-0 text-muted small fw-bold">ENROLLED</th>
+                  <th class="border-0 text-muted small fw-bold">ATTEMPTS</th>
+                  <th class="border-0 text-muted small fw-bold">AVG SCORE</th>
+                  <th class="border-0 text-muted small fw-bold">STATUS</th>
+                  <th class="border-0 text-muted small fw-bold">JOINED DATE</th>
+                  <th class="border-0 text-end text-muted small fw-bold">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -233,6 +233,19 @@
             </table>
           </div>
         </div>
+        
+        @if($studentDetails->count() > 0)
+        <div class="card-footer bg-white border-top py-3">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="text-muted small">
+              Showing <span class="fw-bold">{{ $studentDetails->firstItem() }}</span> to <span class="fw-bold">{{ $studentDetails->lastItem() }}</span> of <span class="fw-bold">{{ $studentDetails->total() }}</span> students
+            </div>
+            <div class="student-pagination">
+              {{ $studentDetails->appends(request()->except('student_page'))->links('pagination::bootstrap-5') }}
+            </div>
+          </div>
+        </div>
+        @endif
       </div>
     </div>
 </div>
@@ -429,6 +442,19 @@
             </table>
           </div>
         </div>
+
+        @if($examOverview->count() > 0)
+        <div class="card-footer bg-white border-top py-3">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="text-muted small">
+              Showing <span class="fw-bold">{{ $examOverview->firstItem() }}</span> to <span class="fw-bold">{{ $examOverview->lastItem() }}</span> of <span class="fw-bold">{{ $examOverview->total() }}</span> exams
+            </div>
+            <div class="exam-pagination">
+              {{ $examOverview->appends(request()->except('exam_page'))->links('pagination::bootstrap-5') }}
+            </div>
+          </div>
+        </div>
+        @endif
       </div>
     </div>
 </div>

@@ -93,8 +93,8 @@
         overflow: hidden;
         margin-bottom: 1.5rem;
         position: relative;
-        background: {{ $overallPassed ? 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' : 'linear-gradient(135deg, #1a0a0a 0%, #3d1515 50%, #6b1a1a 100%)' }};
-        box-shadow: 0 32px 64px rgba(0,0,0,0.22);
+        background: {{ $overallPassed ? 'linear-gradient(135deg, #01284E 0%, #008B8B 100%)' : 'linear-gradient(135deg, #01284E 0%, #6b1a1a 100%)' }};
+        box-shadow: 0 32px 64px rgba(1, 40, 78, 0.25);
     }
 
     .rp-hero::before {
@@ -129,7 +129,7 @@
         text-transform: uppercase;
         margin-bottom: 1rem;
         backdrop-filter: blur(10px);
-        {{ $overallPassed ? 'background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5); color: #6ee7b7;' : 'background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5;' }}
+        {{ $overallPassed ? 'background: rgba(0,139,139,0.2); border: 1px solid rgba(0,139,139,0.5); color: #80eaea;' : 'background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5;' }}
     }
 
     .rp-exam-name {
@@ -224,7 +224,7 @@
         font-size: 2rem;
         font-weight: 800;
         line-height: 1.1;
-        background: {{ $overallPassed ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'linear-gradient(135deg,#ef4444,#dc2626)' }};
+        background: {{ $overallPassed ? 'linear-gradient(135deg, #01284E, #008B8B)' : 'linear-gradient(135deg, #01284E, #ef4444)' }};
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -258,7 +258,7 @@
     .rp-section-icon {
         width: 36px; height: 36px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        background: linear-gradient(135deg, #01284E, #008B8B);
         display: flex; align-items: center; justify-content: center;
         color: white; font-size: 1rem;
         flex-shrink: 0;
@@ -498,22 +498,22 @@
     }
 
     .rp-btn-outline:hover {
-        border-color: #6366f1;
-        color: #6366f1;
+        border-color: #01284E;
+        color: #01284E;
         transform: translateY(-1px);
         text-decoration: none;
     }
 
     .rp-btn-primary {
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        background: #01284E;
         color: white;
-        box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+        box-shadow: 0 4px 14px rgba(1, 40, 78, 0.35);
     }
 
     .rp-btn-primary:hover {
-        background: linear-gradient(135deg, #4f46e5, #4338ca);
+        background: #001a33;
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99,102,241,0.4);
+        box-shadow: 0 8px 20px rgba(1, 40, 78, 0.4);
         color: white;
         text-decoration: none;
     }
@@ -528,7 +528,7 @@
             <div class="rp-hero-left">
                 <div class="rp-status-chip">
                     <i class="ti {{ $overallPassed ? 'ti-trophy' : 'ti-mood-sad' }}"></i>
-                    {{ $overallPassed ? 'EXAM PASSED' : 'EXAM FAILED' }}
+                    {{ $overallPassed ? 'PASS' : 'FAIL' }}
                 </div>
                 <div class="rp-exam-name">{{ $examName }}</div>
                 <div class="rp-student-meta">
@@ -599,7 +599,7 @@
                             </div>
                             <span class="rp-cat-badge {{ $passed ? 'pass' : 'fail' }}">
                                 <i class="ti {{ $passed ? 'ti-circle-check' : 'ti-circle-x' }} me-1"></i>
-                                {{ $passed ? 'Qualified' : 'Not Qualified' }}
+                                {{ $passed ? 'PASS' : 'FAIL' }}
                             </span>
                         </div>
 

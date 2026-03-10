@@ -28,6 +28,28 @@
   <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" id="main-style-link" >
   <link rel="stylesheet" href="{{ asset('assets/css/style-preset.css') }}" >
   <style>
+    :root {
+      --bs-primary: #01284E;
+      --bs-primary-rgb: 1, 40, 78;
+      --primary: #01284E;
+      --pc-primary: #01284E;
+    }
+
+    .btn-primary {
+      background-color: #01284E !important;
+      border-color: #01284E !important;
+      box-shadow: 0 4px 10px rgba(1, 40, 78, 0.2) !important;
+    }
+
+    .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+      background-color: #001a33 !important;
+      border-color: #001a33 !important;
+    }
+
+    .link-primary {
+      color: #01284E !important;
+    }
+
     .auth-main .auth-wrapper.v3 .auth-form {
       background: none !important;
     }

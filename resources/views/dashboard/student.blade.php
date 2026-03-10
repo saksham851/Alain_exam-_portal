@@ -9,13 +9,13 @@
             <div class="card-body p-0">
                 <div class="d-flex flex-column flex-md-row align-items-stretch">
                     <!-- Name & ID Section -->
-                    <div class="bg-primary d-flex align-items-center px-4 py-2" style="min-width: 220px; background: linear-gradient(135deg, #0d6efd 0%, #004ecc 100%);">
+                    <div class="bg-primary d-flex align-items-center px-4 py-2" style="min-width: 220px; background: linear-gradient(135deg, #01284E 0%, #001a33 100%);">
                         <div class="avtar avtar-m bg-white bg-opacity-25 text-white rounded-circle me-3">
                             <i class="ti ti-user fs-4"></i>
                         </div>
                         <div>
                             <h5 class="text-white fw-bold mb-0 lh-1">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h5>
-                            <span class="text-white text-opacity-75" style="font-size: 0.75rem; letter-spacing: 0.5px;">STUDENT PORTAL</span>
+                            <span class="text-white text-opacity-75" style="font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; font-weight: 700;">Student Portal</span>
                         </div>
                     </div>
                     
@@ -53,51 +53,39 @@
 </div>
 
 <div class="row mb-3">
-    <!-- Stats Cards - Compact Mode -->
-    <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+    <!-- Stats Cards - Three Column Mode -->
+    <div class="col-6 col-lg-4 mb-3 mb-lg-0">
         <div class="card mb-0 shadow-sm border-0" style="border-radius: 12px; height: 100%;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="mb-0 fw-medium text-muted small text-uppercase">Enrolled</h6>
-                    <div class="bg-light-primary text-primary rounded p-1"><i class="ti ti-book fs-5"></i></div>
+                    <h6 class="mb-0 fw-bold text-muted small text-uppercase">Total Enrolled</h6>
+                    <div class="bg-light-primary text-primary rounded p-1" style="background: rgba(1, 51, 102, 0.08) !important;"><i class="ti ti-book fs-5"></i></div>
                 </div>
                 <h3 class="mb-0 fw-bold text-dark">{{ $stats['enrolled'] }}</h3>
             </div>
         </div>
     </div>
 
-    <div class="col-6 col-lg-3 mb-3 mb-lg-0">
+    <div class="col-6 col-lg-4 mb-3 mb-lg-0">
         <div class="card mb-0 shadow-sm border-0" style="border-radius: 12px; height: 100%;">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="mb-0 fw-medium text-muted small text-uppercase">Passed</h6>
-                    <div class="bg-light-success text-success rounded p-1"><i class="ti ti-trophy fs-5"></i></div>
-                </div>
-                <h3 class="mb-0 fw-bold text-dark">{{ $stats['passed_exams'] }}</h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-6 col-lg-3">
-        <div class="card mb-0 shadow-sm border-0" style="border-radius: 12px; height: 100%;">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="mb-0 fw-medium text-muted small text-uppercase">Avg Score</h6>
-                    <div class="bg-light-warning text-warning rounded p-1"><i class="ti ti-chart-bar fs-5"></i></div>
-                </div>
-                <h3 class="mb-0 fw-bold text-dark">{{ round($stats['average_score']) }} <small class="text-muted" style="font-size: 0.6rem;">PTS</small></h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-6 col-lg-3">
-        <div class="card mb-0 shadow-sm border-0" style="border-radius: 12px; height: 100%;">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="mb-0 fw-medium text-muted small text-uppercase">Success</h6>
+                    <h6 class="mb-0 fw-bold text-muted small text-uppercase">Success Rate</h6>
                     <div class="bg-light-info text-info rounded p-1"><i class="ti ti-activity fs-5"></i></div>
                 </div>
                 <h3 class="mb-0 fw-bold text-dark">{{ round($stats['success_rate']) }}%</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card mb-0 shadow-sm border-0" style="border-radius: 12px; height: 100%;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="mb-0 fw-bold text-muted small text-uppercase">Passed Exams</h6>
+                    <div class="bg-light-success text-success rounded p-1" style="background: rgba(0, 139, 139, 0.08) !important;"><i class="ti ti-trophy fs-5"></i></div>
+                </div>
+                <h3 class="mb-0 fw-bold text-dark">{{ $stats['passed_exams'] }}</h3>
             </div>
         </div>
     </div>
@@ -109,18 +97,18 @@
         <div class="card shadow-sm border-0 h-100" style="border-radius: 12px;">
             <div class="card-header bg-white py-3">
                 <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0 fw-bold text-slate-800">My Active Exams</h5>
+                    <h5 class="mb-0 fw-bold text-dark">My Active Exams</h5>
                 </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-muted uppercase small font-weight-bold">
+                        <thead style="background: #f8fafc;">
                             <tr>
-                                <th class="px-4 py-2 border-0">EXAM NAME</th>
-                                <th class="px-4 py-2 border-0 text-center">ATTEMPTS</th>
-                                <th class="px-4 py-2 border-0">PROGRESS</th>
-                                <th class="px-4 py-2 border-0 text-end">ACTION</th>
+                                <th class="px-4 py-3 border-0 text-muted small fw-bold">EXAM NAME</th>
+                                <th class="px-4 py-3 border-0 text-center text-muted small fw-bold">ATTEMPTS</th>
+                                <th class="px-4 py-3 border-0 text-muted small fw-bold">PROGRESS</th>
+                                <th class="px-4 py-3 border-0 text-end text-muted small fw-bold">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -128,8 +116,8 @@
                             <tr>
                                 <td class="px-4 py-3">
                                     <div class="d-flex align-items-center">
-                                        <div class="avtar avtar-s bg-primary-subtle text-primary rounded-circle me-3">
-                                            <i class="ti ti-notes"></i>
+                                        <div class="avtar bg-primary-subtle text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;">
+                                            <i class="ti ti-notes fs-5"></i>
                                         </div>
                                         <div>
                                             <h6 class="mb-0 fw-bold">{{ $exam->title }}</h6>
@@ -151,8 +139,8 @@
                                 </td>
                                 <td class="px-4 py-3 text-end">
                                     @if($exam->can_attempt)
-                                        <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1" style="white-space: nowrap;">
-                                            Start <i class="ti ti-chevron-right"></i>
+                                        <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold d-inline-flex align-items-center gap-2 shadow-sm" style="white-space: nowrap;">
+                                            Start <i class="ti ti-chevron-right fs-6"></i>
                                         </a>
                                     @else
                                         <span class="badge bg-light text-muted border px-2 py-1">LOCKED</span>

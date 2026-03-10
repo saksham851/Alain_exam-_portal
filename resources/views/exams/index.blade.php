@@ -23,13 +23,13 @@
             <div class="card-body p-4 d-flex flex-column">
                 <!-- Header: Category & Status -->
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-light-info text-info border border-info px-2 py-1 rounded-pill">
-                        {{ $exam->category->name ?? 'General' }}
+                    <span class="badge bg-light-success text-success border border-teal-subtle px-3 py-1 rounded-pill fw-bold" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="ti ti-category me-1"></i>{{ $exam->category->name ?? 'General' }}
                     </span>
                     @if(now() > $exam->expiry_date)
-                        <span class="badge bg-light-danger text-danger"><i class="ti ti-clock-off me-1"></i>Expired</span>
+                        <span class="badge bg-light-danger text-danger px-2 py-1"><i class="ti ti-clock-off me-1"></i>Expired</span>
                     @else
-                        <span class="badge bg-light-success text-success"><i class="ti ti-circle-check me-1"></i>Active</span>
+                        <span class="badge bg-light-success text-success px-2 py-1"><i class="ti ti-circle-check me-1"></i>Active</span>
                     @endif
                 </div>
 
@@ -53,10 +53,10 @@
                 <div class="row g-2 mb-4 bg-light-subtle rounded p-2 mx-0">
                     <div class="col-6">
                         <div class="d-flex align-items-center mb-1">
-                            <i class="ti ti-clock text-primary me-2 f-18"></i>
-                            <span class="text-muted small">Duration</span>
+                            <i class="ti ti-clock text-primary me-2 fs-5"></i>
+                            <span class="text-muted small fw-bold">Duration</span>
                         </div>
-                        <span class="fw-semibold">{{ $exam->duration_minutes }} mins</span>
+                        <span class="fw-bold text-dark">{{ $exam->duration_minutes }} mins</span>
                     </div>
                     <div class="col-6 border-start ps-3">
                         <div class="d-flex align-items-center mb-1">
@@ -104,10 +104,10 @@
                         </div>
                     @else
                         <div class="d-flex gap-2">
-                            <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary flex-grow-1">
-                                <i class="ti ti-player-play me-1"></i> Start Exam
+                            <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                Start Exam <i class="ti ti-chevron-right"></i>
                             </a>
-                            <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-light-secondary icon-btn" data-bs-toggle="tooltip" title="View Details">
+                            <a href="{{ route('exams.show', $exam->id) }}" class="btn btn-light-secondary icon-btn rounded-circle" data-bs-toggle="tooltip" title="View Details">
                                 <i class="ti ti-eye"></i>
                             </a>
                         </div>

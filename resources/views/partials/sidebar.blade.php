@@ -12,8 +12,8 @@
         @if(auth()->check() && auth()->user()->role === 'admin')
         {{-- ADMIN LINKS --}}
         <li class="pc-item pc-caption">
-            <label>Admin Control</label>
-            <i class="ti ti-dashboard"></i>
+            <label class="fw-bold text-uppercase small" style="letter-spacing: 1px; color: #94a3b8;">Administrator</label>
+            <i class="ti ti-settings"></i>
         </li>
         
         <li class="pc-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -104,7 +104,7 @@
         @if(auth()->check() && auth()->user()->role === 'student')
         {{-- STUDENT LINKS --}}
         <li class="pc-item pc-caption">
-            <label>Student Panel</label>
+            <label class="fw-bold text-uppercase small" style="letter-spacing: 1px; color: #94a3b8;">Student Center</label>
             <i class="ti ti-school"></i>
         </li>
 

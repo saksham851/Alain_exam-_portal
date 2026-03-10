@@ -91,11 +91,11 @@
         transition: all 0.3s ease;
     }
     .section-step.active {
-        background-color: #0F5EF7;
-        border-color: #0F5EF7;
+        background-color: #01284E;
+        border-color: #01284E;
         color: white;
         transform: scale(1.1);
-        box-shadow: 0 4px 10px rgba(15, 94, 247, 0.2);
+        box-shadow: 0 4px 10px rgba(1, 40, 78, 0.2);
     }
     .section-step.passed {
         background-color: #f0f7ff;
@@ -134,8 +134,8 @@
     }
     .q-badge {
         display: inline-block;
-        background: #eff6ff;
-        color: #3b82f6;
+        background: #f0f7ff;
+        color: #01284E;
         padding: 4px 12px;
         border-radius: 6px;
         font-size: 0.75rem;
@@ -173,9 +173,9 @@
         border-color: #cbd5e1 !important;
     }
     .option-row:has(input:checked) {
-        border-color: #0F5EF7 !important;
+        border-color: #01284E !important;
         background-color: #f0f7ff;
-        box-shadow: 0 2px 8px rgba(15, 94, 247, 0.05);
+        box-shadow: 0 2px 8px rgba(1, 40, 78, 0.05);
     }
     .option-radio-ui {
         min-width: 20px;
@@ -244,11 +244,12 @@
                     $questionsList[] = [
                         'question' => $question,
                         'section_id' => $section->id, 
+                        'visit_id' => $visit->id,
+                        // ... other fields
                         'section_title' => $section->title,
                         'case_title' => $caseStudy->title,
                         'case_id' => $caseStudy->id,
                         'case_content' => $caseStudy->content, 
-                        'visit_id' => $visit->id,
                         'visit_title' => $visit->title,
                         'visit_content' => $visit->description,
                         'scenario_content' => $section->content, 
@@ -260,16 +261,40 @@
     }
 @endphp
 
-<div x-data="examWizard({{ count($questionsList) }}, {{ json_encode(array_column($questionsList, 'section_id')) }})" x-init="initTimer()" x-cloak>
+<div x-data="examWizard(
+    {{ count($questionsList) }}, 
+    {{ json_encode(array_column($questionsList, 'section_id')) }},
+    {{ json_encode(array_column($questionsList, 'visit_id')) }}
+)" x-init="initTimer()" x-cloak>
     
     <!-- START OVERLAY -->
     <div id="startOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column;">
         <div class="text-center p-4">
             <img src="{{ asset('assets/images/logo-new.png') }}" alt="Logo" class="mb-5" style="height: 60px;">
-            <h2 class="mb-3 fw-bold text-dark">Ready to Begin?</h2>
-            <p class="mb-5 text-muted lead">The exam environment is optimized for a focus-driven experience.</p>
-            <button class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg fw-bold" @click="startFullscreen()">
-                START EXAM
+            <h2 class="mb-4 fw-bold text-dark">Ready to Begin?</h2>
+            
+            <div class="text-start mx-auto mb-5" style="max-width: 600px;">
+                <h6 class="fw-bold text-dark mb-3 text-center">Please review the following before starting your exam:</h6>
+                <div class="d-flex align-items-start mb-3">
+                    <i class="ti ti-circle-check text-success mt-1 me-2 f-18"></i>
+                    <p class="text-dark mb-0">Once you start the exam, the timer cannot be paused or stopped.</p>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <i class="ti ti-circle-check text-success mt-1 me-2 f-18"></i>
+                    <p class="text-dark mb-0">If you exit or cancel the exam after starting, the attempt will still be counted as completed.</p>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <i class="ti ti-circle-check text-success mt-1 me-2 f-18"></i>
+                    <p class="text-dark mb-0">Read each case study and question carefully before selecting your answer.</p>
+                </div>
+                <div class="d-flex align-items-start mb-3">
+                    <i class="ti ti-circle-check text-success mt-1 me-2 f-18"></i>
+                    <p class="text-dark mb-0">Make sure you are ready and have sufficient uninterrupted time before beginning. When you are ready, click <strong>Start Exam</strong>.</p>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg fw-bold d-inline-flex align-items-center gap-2" @click="startFullscreen()">
+                Start Exam <i class="ti ti-chevron-right fs-4"></i>
             </button>
         </div>
     </div>
@@ -385,8 +410,8 @@
                     @endif
 
                     <div class="text-center py-5" x-show="!viewedCases.includes('{{ $slide['visit_id'] }}')">
-                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold" @click="viewedCases.push('{{ $slide['visit_id'] }}')">
-                            View Questions
+                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-sm fw-bold d-inline-flex align-items-center gap-2" @click="viewedCases.push('{{ $slide['visit_id'] }}')">
+                            View Questions <i class="ti ti-chevron-right"></i>
                         </button>
                     </div>
 
@@ -420,13 +445,14 @@
                 <div class="action-inner">
                     <!-- Can only go back if the previous question is in the same section -->
                     <button type="button" class="btn btn-light btn-action" 
-                            x-show="currentIndex > 0 && questionSections[currentIndex] === questionSections[currentIndex - 1]" 
+                            x-show="currentIndex > 0 && 
+                                    questionSections[currentIndex] === questionSections[currentIndex - 1] && 
+                                    visitIds[currentIndex] === visitIds[currentIndex - 1]" 
                             @click="prevSlide()">
                        <i class="ti ti-chevron-left me-1"></i> Previous
                     </button>
-                    <div x-show="currentIndex === 0 || questionSections[currentIndex] !== questionSections[currentIndex - 1]"></div>
                     
-                    <div class="d-flex gap-2">
+                    <div class="ms-auto d-flex gap-2">
                         <button type="button" class="btn btn-primary btn-action" x-show="currentIndex < totalSlides - 1" @click="nextSlide()">
                             Next <i class="ti ti-chevron-right ms-1"></i>
                         </button>
@@ -541,11 +567,12 @@
     <!-- AlpineJS Logic -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-        function examWizard(totalSlides, questionSections) {
+        function examWizard(totalSlides, questionSections, visitIds) {
             return {
                 currentIndex: 0,
                 totalSlides: totalSlides,
                 questionSections: questionSections,
+                visitIds: visitIds,
                 expiryTimestamp: {{ \Carbon\Carbon::parse($attempt->started_at)->addMinutes($exam->duration_minutes)->timestamp }} * 1000,
                 now: new Date().getTime(),
                 
@@ -634,8 +661,9 @@
 
                 prevSlide() {
                     if (this.currentIndex > 0) {
-                        // Safety check: Don't allow going back to a different section
-                        if (this.questionSections[this.currentIndex] !== this.questionSections[this.currentIndex - 1]) {
+                        // Safety check: Don't allow going back to a different section or visit
+                        if (this.questionSections[this.currentIndex] !== this.questionSections[this.currentIndex - 1] ||
+                            this.visitIds[this.currentIndex] !== this.visitIds[this.currentIndex - 1]) {
                             return;
                         }
                         const oldSecId = this.currentSectionId;

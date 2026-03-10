@@ -3,50 +3,39 @@
 @section('content')
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-9">
             <!-- Exam Header -->
-            <div class="mb-4">
-                <h2 class="fw-bold text-dark mb-2">{{ $exam->name }}</h2>
-                <p class="text-muted mb-0">{{ $exam->description ?? 'This exam is only for ' . ($exam->category->name ?? 'General') }}</p>
+            <div class="mb-4 text-center">
+                <h2 class="fw-bold text-dark mb-1">{{ $exam->name }}</h2>
+                <p class="text-muted mb-0">{{ $exam->description ?? 'This exam is for ' . ($exam->category->name ?? 'General') }}</p>
             </div>
 
             <!-- Exam Info Cards -->
             <div class="row g-3 mb-4">
-                <!-- Duration -->
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm">
                         <div class="card-body text-center p-3">
-                            <div class="bg-light-primary text-primary rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                                <i class="ti ti-clock f-24"></i>
-                            </div>
-                            <p class="text-muted small mb-1">Duration</p>
-                            <h4 class="fw-bold mb-0">{{ $exam->duration_minutes }} minutes</h4>
+                            <i class="ti ti-clock text-primary f-24 mb-1 d-block"></i>
+                            <p class="text-muted small mb-0">Duration</p>
+                            <h5 class="fw-bold mb-0 text-dark">{{ $exam->duration_minutes }} mins</h5>
                         </div>
                     </div>
                 </div>
-
-                <!-- Attempts Left -->
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm">
                         <div class="card-body text-center p-3">
-                            <div class="bg-light-success text-success rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                                <i class="ti ti-refresh f-24"></i>
-                            </div>
-                            <p class="text-muted small mb-1">Attempts Left</p>
-                            <h4 class="fw-bold mb-0">{{ $attemptsLeft }}/{{ $studentExam->attempts_allowed }}</h4>
+                            <i class="ti ti-refresh text-success f-24 mb-1 d-block"></i>
+                            <p class="text-muted small mb-0">Attempts Left</p>
+                            <h5 class="fw-bold mb-0 text-dark">{{ $attemptsLeft }}/{{ $studentExam->attempts_allowed }}</h5>
                         </div>
                     </div>
                 </div>
-
-                <!-- Valid Until -->
                 <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm">
                         <div class="card-body text-center p-3">
-                            <div class="bg-light-warning text-warning rounded-circle p-3 d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-                                <i class="ti ti-calendar f-24"></i>
-                            </div>
-                            <p class="text-muted small mb-1">Valid Until</p>
-                            <h4 class="fw-bold mb-0" style="font-size: 1rem;">{{ \Carbon\Carbon::parse($studentExam->expiry_date)->format('M d, Y') }}</h4>
+                            <i class="ti ti-calendar text-warning f-24 mb-1 d-block"></i>
+                            <p class="text-muted small mb-0">Valid Until</p>
+                            <h5 class="fw-bold mb-0 text-dark">{{ \Carbon\Carbon::parse($studentExam->expiry_date)->format('M d, Y') }}</h5>
                         </div>
                     </div>
                 </div>
@@ -54,18 +43,35 @@
 
             <!-- Instructions Card -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-light-info border-0 py-3">
+                <div class="card-header bg-light-info border-0 py-3 px-4">
                     <h5 class="mb-0 text-info fw-bold">
-                        <i class="ti ti-info-circle me-2"></i>Instructions
+                        <i class="ti ti-info-circle me-1"></i>Exam Instructions
                     </h5>
                 </div>
                 <div class="card-body p-4">
-                    <ul class="mb-0 ps-3">
-                        <li class="mb-2 text-dark">Read each question carefully before answering</li>
-                        <li class="mb-2 text-dark">You have {{ $exam->duration_minutes }} minutes to complete the exam</li>
-                        <li class="mb-2 text-dark">You can attempt this exam {{ $studentExam->attempts_allowed }} times</li>
-                        <li class="mb-0 text-dark">This exam expires on {{ \Carbon\Carbon::parse($studentExam->expiry_date)->format('F d, Y') }}</li>
-                    </ul>
+                    <h6 class="fw-bold text-dark mb-3">Please review the following before starting your exam:</h6>
+                    
+                    <div class="instruction-list">
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="ti ti-circle-check text-success mt-1 me-2"></i>
+                            <p class="text-dark mb-0">Once you start the exam, the timer cannot be paused or stopped.</p>
+                        </div>
+                        
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="ti ti-circle-check text-success mt-1 me-2"></i>
+                            <p class="text-dark mb-0">If you exit or cancel the exam after starting, the attempt will still be counted as completed.</p>
+                        </div>
+
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="ti ti-circle-check text-success mt-1 me-2"></i>
+                            <p class="text-dark mb-0">Read each case study and question carefully before selecting your answer.</p>
+                        </div>
+
+                        <div class="d-flex align-items-start">
+                            <i class="ti ti-circle-check text-success mt-1 me-2"></i>
+                            <p class="text-dark mb-0">Make sure you are ready and have sufficient uninterrupted time before beginning. When you are ready, click <strong>Start Exam</strong>.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -73,12 +79,12 @@
             <div class="d-flex gap-3 justify-content-center">
                 <form action="{{ route('exams.confirm-start', $exam->id) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn btn-primary btn-lg px-5">
-                        <i class="ti ti-player-play me-2"></i>Start Exam
+                    <button type="submit" class="btn btn-primary px-5 py-2">
+                        <i class="ti ti-player-play me-1"></i>Start Exam
                     </button>
                 </form>
-                <a href="{{ route('exams.index') }}" class="btn btn-light-secondary btn-lg px-4">
-                    <i class="ti ti-arrow-left me-2"></i>Back to Exams
+                <a href="{{ route('exams.index') }}" class="btn btn-outline-secondary px-4 py-2">
+                    <i class="ti ti-arrow-left me-1"></i>Back
                 </a>
             </div>
         </div>
@@ -86,17 +92,10 @@
 </div>
 
 <style>
-.bg-light-primary {
-    background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
-}
-.bg-light-success {
-    background-color: rgba(var(--bs-success-rgb), 0.1) !important;
-}
-.bg-light-warning {
-    background-color: rgba(var(--bs-warning-rgb), 0.1) !important;
-}
-.bg-light-info {
-    background-color: rgba(13, 202, 240, 0.1) !important;
-}
+.f-24 { font-size: 24px; }
+.bg-light-primary { background-color: rgba(var(--bs-primary-rgb), 0.1) !important; }
+.bg-light-success { background-color: rgba(var(--bs-success-rgb), 0.1) !important; }
+.bg-light-warning { background-color: rgba(var(--bs-warning-rgb), 0.1) !important; }
+.bg-light-info { background-color: rgba(13, 202, 240, 0.1) !important; }
 </style>
 @endsection
