@@ -44,14 +44,17 @@
 
             <!-- Cascading Dropdowns (Location) -->
             <!-- This section is common for all questions being added -->
-            <div class="card" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
-                <div class="card-header">
-                    <h5>Select Location</h5>
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
+                <div class="card-header py-3 px-4" style="background: linear-gradient(135deg, #eef2ff 0%, #f5f7ff 100%); border-bottom: 2px solid #e0e7ff;">
+                    <h5 class="mb-0 fw-bold" style="color: #4158d0;">
+                        <i class="ti ti-map-pin me-2"></i>Select Location
+                    </h5>
+                    <small class="text-muted">Choose the exam, section, case study and visit to place the question.</small>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Exam <span class="text-danger">*</span></label>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark">Exam <span class="text-danger">*</span></label>
                             <select class="form-select" id="exam_id" name="exam_id" x-model="selectedExamId" @change="loadCaseStudies($event.target.value)" :disabled="isEdit" required>
                                 <option value="">Select Exam</option>
                                 <template x-for="e in allExams" :key="e.id">
@@ -60,8 +63,8 @@
                             </select>
                         </div>
 
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Section <span class="text-danger">*</span></label>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark">Section <span class="text-danger">*</span></label>
                             <select class="form-select" id="section_id" name="section_id" x-model="selectedCaseStudyId" @change="loadSubCaseStudies($event.target.value)" :disabled="caseStudies.length === 0 || isEdit" required>
                                 <option value="">Select Section</option>
                                 <template x-for="cs in caseStudies" :key="cs.id">
@@ -72,8 +75,8 @@
                             </select>
                         </div>
 
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Case Study <span class="text-danger">*</span></label>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark">Case Study <span class="text-danger">*</span></label>
                             <select class="form-select" name="sub_case_id" id="sub_case_id" x-model="selectedSubCaseId" :disabled="subCaseStudies.length === 0 || isEdit" @change="loadVisits($event.target.value)" required>
                                 <option value="">Select Case Study</option>
                                 <template x-for="scs in subCaseStudies" :key="scs.id">
@@ -83,8 +86,8 @@
                             @error('sub_case_id') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
 
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Visit <span class="text-danger">*</span></label>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark">Visit <span class="text-danger">*</span></label>
                             <select class="form-select" name="visit_id" id="visit_id" x-model="selectedVisitId" :disabled="visits.length === 0" @change="!isEdit && loadExistingQuestions($event.target.value)" required>
                                 <option value="">Select Visit</option>
                                 <template x-for="v in visits" :key="v.id">
@@ -105,7 +108,7 @@
                     </h6>
 
                     <template x-for="(exQ, eqIndex) in existingQuestions" :key="exQ.id">
-                        <div class="card border mb-3" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : 'background-color: #fcfcfc;'">
+                        <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;overflow:hidden;" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
                             <div class="card-body position-relative">
                                 <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" 
                                         @click="removeExistingQuestion(eqIndex, exQ.id)"
@@ -288,8 +291,8 @@
 
             <!-- Questions Loop -->
             <template x-for="(questionItem, qIndex) in questions" :key="questionItem.id">
-                <div class="card mb-3 border" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;overflow:hidden;" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
+                    <div class="card-header d-flex justify-content-between align-items-center py-3 px-4" style="background: #f8f9ff; border-bottom: 2px solid #e0e7ff;">
                         <h6 class="mb-0">
                            <i class="ti ti-help-circle me-1"></i> Question <span x-text="existingQuestions.length + qIndex + 1"></span>
                         </h6>
@@ -474,7 +477,7 @@
                 </div>
             </template>
 
-            <div class="mt-4 p-3 bg-light rounded">
+            <div class="mt-4 p-4 bg-light rounded-3" style="border: 1px solid #e0e7ff;">
                 <div class="d-flex justify-content-between align-items-center">
                     <!-- Add Another Question Button (Left) - Only in Create Mode -->
                     <button type="button" class="btn btn-sm btn-primary" @click="addQuestion()" x-show="!isEdit">

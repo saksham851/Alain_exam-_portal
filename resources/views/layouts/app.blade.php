@@ -263,6 +263,49 @@
                         }
                     });
                 }, 100);
+
+                // Global Multi-Click Prevention for Forms
+                document.addEventListener('submit', function(e) {
+                    const form = e.target;
+                    // Find all submit buttons in this form
+                    const submitBtns = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                    
+                    submitBtns.forEach(btn => {
+                        if (!btn.hasAttribute('data-no-disable')) {
+                            // Delay slightly to allow the click event to finish if it's a manual click
+                            setTimeout(() => {
+                                btn.disabled = true;
+                                if (!btn.querySelector('.spinner-border')) {
+                                    const text = btn.innerText.trim() || 'Processing';
+                                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${text}...`;
+                                }
+                            }, 50);
+                        }
+                    });
+                });
+
+                // Global Multi-Click Prevention for Generic Buttons (Debounce)
+                document.addEventListener('click', function(e) {
+                    const btn = e.target.closest('button, a.btn');
+                    if (!btn || btn.type === 'submit' || btn.classList.contains('no-debounce')) return;
+
+                    // Skip Alpine.js or HTMX managed buttons as they handle their own state
+                    if (btn.hasAttribute('x-on:click') || btn.hasAttribute('@click') || btn.hasAttribute('hx-post')) return;
+
+                    if (btn.getAttribute('data-is-clicked') === 'true') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+
+                    // Mark as clicked
+                    btn.setAttribute('data-is-clicked', 'true');
+                    
+                    // Re-enable after a timeout (2 seconds)
+                    setTimeout(() => {
+                        btn.removeAttribute('data-is-clicked');
+                    }, 2000);
+                }, true); // Use capture phase
             });
         </script>
 

@@ -206,8 +206,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-                    if (Array.isArray(data) && data.length > 0) {
-                        data.forEach(section => {
+                    // Handle both direct array or object with sections property
+                    const sections = data.sections || data;
+                    if (Array.isArray(sections) && sections.length > 0) {
+                        sections.forEach(section => {
                             sectionSelect.innerHTML += `<option value="${section.id}">${section.title}</option>`;
                         });
                         sectionSelect.disabled = false;
@@ -637,32 +639,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         @foreach($caseStudy->visits as $visit)
                                                             <div class="card border mb-0 shadow-sm">
                                                                 <!-- Card Header - Clickable for toggle -->
-                                                                <div class="card-header bg-white d-flex align-items-center justify-content-between py-2 clickable" 
-                                                                     data-bs-toggle="collapse" 
-                                                                     data-bs-target="#collapseVisit{{ $visit->id }}" 
-                                                                     aria-expanded="false" 
-                                                                     aria-controls="collapseVisit{{ $visit->id }}"
-                                                                     style="cursor: pointer;">
+                                                                 <div class="card-header bg-white d-flex align-items-center justify-content-between py-2">
                                                                     
-                                                                    <div class="d-flex align-items-center gap-2">
-                                                                        <!-- Chevron for Visit -->
-                                                                        <i class="ti ti-chevron-right transition-transform text-muted"></i>
-                                                                        
-                                                                        <span class="badge bg-light-primary text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">{{ $loop->iteration }}</span>
-                                                                        <div>
-                                                                            <h6 class="mb-0 fw-bold">
-                                                                                <a href="{{ $isActiveExam ? route('admin.case-studies-bank.show', $caseStudy->id) : route('admin.case-studies-bank.edit', $caseStudy->id) }}#visit-{{ $visit->id }}" 
-                                                                                   class="text-dark text-decoration-none hover-primary"
-                                                                                   onclick="event.stopPropagation();">
-                                                                                    {{ $visit->title }}
-                                                                                </a>
-                                                                            </h6>
-                                                                            @if($visit->description)
-                                                                                <small class="text-muted">{{ Str::limit($visit->description, 60) }}</small>
-                                                                            @endif
+                                                                    <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                                                        <!-- Chevron for Visit (still toggles collapse) -->
+                                                                        <div class="d-flex align-items-center p-1" data-bs-toggle="collapse" data-bs-target="#collapseVisit{{ $visit->id }}" style="cursor: pointer;">
+                                                                            <i class="ti ti-chevron-right transition-transform text-muted"></i>
                                                                         </div>
+                                                                        
+                                                                        <!-- Redirect Link Area -->
+                                                                        <a href="{{ $isActiveExam ? route('admin.case-studies-bank.show', $caseStudy->id) : route('admin.case-studies-bank.edit', $caseStudy->id) }}#visit-{{ $visit->id }}" 
+                                                                           class="d-flex align-items-center gap-2 text-decoration-none text-dark flex-grow-1 border-end pe-3 py-1 hover-bg-light rounded" 
+                                                                           title="{{ $isActiveExam ? 'View' : 'Edit' }} this visit">
+                                                                            <span class="badge bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 28px; height: 28px; font-size: 11px;">{{ $loop->iteration }}</span>
+                                                                            <div class="overflow-hidden">
+                                                                                <h6 class="mb-0 fw-bold hover-primary text-truncate">{{ $visit->title }}</h6>
+                                                                                @if($visit->description)
+                                                                                    <div class="text-muted small text-truncate" style="font-size: 10px;">{{ Str::limit(strip_tags($visit->description), 50) }}</div>
+                                                                                @endif
+                                                                            </div>
+                                                                            <i class="ti ti-external-link ms-auto text-muted small opacity-50"></i>
+                                                                        </a>
                                                                     </div>
-                                                                    <span class="badge bg-light-secondary">{{ $visit->questions->count() }} Questions</span>
+                                                                    
+                                                                    <!-- Right area (toggles collapse) -->
+                                                                    <div class="ms-3 clickable" data-bs-toggle="collapse" data-bs-target="#collapseVisit{{ $visit->id }}" style="cursor: pointer;">
+                                                                        <span class="badge bg-light-secondary border text-muted" style="font-size: 10px;">{{ $visit->questions->count() }} Questions</span>
+                                                                    </div>
                                                                 </div>
                                                                 
                                                                 <!-- Collapsible Questions Section -->
@@ -749,6 +752,12 @@ nav[role="navigation"] > div:not(.pagination) {
 }
 [aria-expanded="true"] .transition-transform {
     transform: rotate(90deg);
+}
+.hover-bg-light:hover {
+    background-color: #f8f9fa;
+}
+.hover-primary:hover {
+    color: #4680ff !important;
 }
 </style>
 

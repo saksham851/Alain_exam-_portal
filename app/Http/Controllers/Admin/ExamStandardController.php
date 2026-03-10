@@ -92,7 +92,8 @@ class ExamStandardController extends Controller
     public function edit($id)
     {
         $standard = ExamStandard::with(['categories.contentAreas'])->findOrFail($id);
-        return view('admin.exam-standards.edit', compact('standard'));
+        $hasActiveExams = $standard->exams()->where('is_active', 1)->exists();
+        return view('admin.exam-standards.edit', compact('standard', 'hasActiveExams'));
     }
 
     /**
@@ -112,6 +113,11 @@ class ExamStandardController extends Controller
 
         $standard = ExamStandard::findOrFail($id);
 
+        // Check for active exams
+        if ($standard->exams()->where('is_active', 1)->exists()) {
+            return back()->withErrors(['error' => 'This standard is being used by an active exam and cannot be modified. Please deactivate the associated exam(s) first.'])->withInput();
+        }
+
         DB::beginTransaction();
         try {
             $standard->update([
@@ -125,7 +131,7 @@ class ExamStandardController extends Controller
             foreach($request->categories as $cIndex => $catData) {
                 $category = ScoreCategory::updateOrCreate(
                     [
-                        'id' => $catData['id'] ?? null,
+                        'id' => (!empty($catData['id'])) ? $catData['id'] : null,
                         'exam_standard_id' => $standard->id
                     ],
                     [
@@ -143,7 +149,7 @@ class ExamStandardController extends Controller
                     foreach($catData['areas'] as $aIndex => $areaData) {
                         $area = ContentArea::updateOrCreate(
                             [
-                                'id' => $areaData['id'] ?? null,
+                                'id' => (!empty($areaData['id'])) ? $areaData['id'] : null,
                                 'score_category_id' => $category->id
                             ],
                             [

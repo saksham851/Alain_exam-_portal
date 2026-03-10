@@ -64,6 +64,32 @@
             layout_rtl_change('false');
             preset_change('preset-1');
             feather.replace();
+
+            // Multi-Click Prevention
+            document.addEventListener('submit', function(e) {
+                const submitBtn = e.target.querySelector('button[type="submit"], input[type="submit"]');
+                if (submitBtn && !submitBtn.hasAttribute('data-no-disable')) {
+                    setTimeout(() => {
+                        submitBtn.disabled = true;
+                    }, 50);
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('button, a.btn');
+                if (!btn || btn.type === 'submit' || btn.classList.contains('no-debounce')) return;
+                
+                if (btn.hasAttribute('x-on:click') || btn.hasAttribute('@click')) return;
+
+                if (btn.getAttribute('data-is-clicked') === 'true') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+
+                btn.setAttribute('data-is-clicked', 'true');
+                setTimeout(() => btn.removeAttribute('data-is-clicked'), 2000);
+            }, true);
         </script>
 
         @stack('scripts')

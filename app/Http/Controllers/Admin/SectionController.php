@@ -24,7 +24,16 @@ class SectionController extends Controller
 
         // Base query
         $status = $request->get('status', 'active');
-        $query = Section::with(['exam.category', 'caseStudies.questions', 'clonedFrom.exam']);
+        $query = Section::with([
+            'exam.category',
+            'caseStudies' => function($q) {
+                $q->where('case_studies.status', 1);
+            },
+            'caseStudies.questions' => function($q) {
+                $q->where('questions.status', 1);
+            },
+            'clonedFrom.exam'
+        ]);
 
         if ($status === 'inactive') {
             $query->where('status', 0);
@@ -226,7 +235,7 @@ class SectionController extends Controller
 
     public function ajaxDestroy($id)
     {
-        $section = Section::with('exam')->find($id);
+        $section = Section::with(['exam', 'caseStudies.visits.questions'])->find($id);
         if (!$section) {
             return response()->json(['success' => false, 'message' => 'Section not found'], 404);
         }
@@ -237,6 +246,18 @@ class SectionController extends Controller
         }
 
         $section->update(['status' => 0]); 
+
+        // Cascade soft delete
+        foreach ($section->caseStudies as $caseStudy) {
+            $caseStudy->update(['status' => 0]);
+            foreach ($caseStudy->visits as $visit) {
+                $visit->update(['status' => 0]);
+                foreach ($visit->questions as $question) {
+                    $question->update(['status' => 0]);
+                }
+            }
+        }
+
         return response()->json(['success' => true, 'message' => 'Section deleted successfully.']);
     }
 
@@ -297,7 +318,7 @@ class SectionController extends Controller
 
     public function destroy($id)
     {
-        $section = Section::with('exam')->find($id);
+        $section = Section::with(['exam', 'caseStudies.visits.questions'])->find($id);
         if (!$section) {
             return back()->with('error', 'Section not found');
         }
@@ -308,6 +329,18 @@ class SectionController extends Controller
         }
 
         $section->update(['status' => 0]); 
+
+        // Cascade soft delete
+        foreach ($section->caseStudies as $caseStudy) {
+            $caseStudy->update(['status' => 0]);
+            foreach ($caseStudy->visits as $visit) {
+                $visit->update(['status' => 0]);
+                foreach ($visit->questions as $question) {
+                    $question->update(['status' => 0]);
+                }
+            }
+        }
+
         return back()->with('success', 'Section deleted successfully.');
     }
 
@@ -567,7 +600,7 @@ class SectionController extends Controller
             $lastCreatedSectionId = null;
             
             foreach ($request->source_section_ids as $sectionId) {
-                $sourceSection = Section::with(['caseStudies.questions.options'])->find($sectionId);
+                $sourceSection = Section::with(['caseStudies.visits.questions.options', 'caseStudies.visits.questions.tags'])->find($sectionId);
                 
                 if (!$sourceSection) continue;
 
@@ -623,6 +656,15 @@ class SectionController extends Controller
                                     'option_key' => $option->option_key,
                                     'option_text' => $option->option_text,
                                     'is_correct' => $option->is_correct,
+                                ]);
+                            }
+
+                            // Clone Tags
+                            foreach ($question->tags as $tag) {
+                                \App\Models\QuestionTag::create([
+                                    'question_id' => $newQuestion->id,
+                                    'score_category_id' => $tag->score_category_id,
+                                    'content_area_id' => $tag->content_area_id,
                                 ]);
                             }
                         }

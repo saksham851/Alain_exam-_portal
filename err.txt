@@ -1,0 +1,1 @@
+SQLSTATE[42S02]: Base table or view not found: 1146 Table 'exam_portal.exam_standard_categories' doesn't exist (Connection: mysql, SQL: select * from `exam_standard_categories` where (`exam_standard_id` = 8 and `name` = Core Focus) limit 1)

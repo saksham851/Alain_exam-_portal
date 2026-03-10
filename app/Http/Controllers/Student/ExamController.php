@@ -197,12 +197,25 @@ class ExamController extends Controller
         $studentId = auth()->id();
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
-            ->firstOrFail();
+            ->first();
+
+        if (!$studentExam) {
+            return redirect()->route('exams.index')->with('error', 'Exam assignment not found.');
+        }
             
         $attempt = \App\Models\ExamAttempt::where('student_exam_id', $studentExam->id)
-            ->where('status', 'in_progress')
             ->latest()
-            ->firstOrFail();
+            ->first();
+
+        // Check if an attempt was found
+        if (!$attempt) {
+            return redirect()->route('exams.index')->with('error', 'Exam attempt not found.');
+        }
+
+        // Check if it's already submitted to avoid double submission causing 404
+        if ($attempt->status === 'submitted') {
+            return redirect()->route('exams.result', $attempt->id);
+        }
             
         // Use DB Transaction to handle high concurrency (100-200 users)
         \Illuminate\Support\Facades\DB::transaction(function () use ($attempt, $request) {

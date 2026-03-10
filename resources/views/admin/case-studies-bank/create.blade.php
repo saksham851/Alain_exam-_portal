@@ -78,7 +78,6 @@
                                             <i class="ti fs-5 text-muted transition-transform" 
                                                :class="study.isOpen ? 'ti-chevron-down' : 'ti-chevron-right'"></i>
                                             <h6 class="mb-0 fw-bold text-dark" x-text="study.title || 'Case Study #' + (index + 1)"></h6>
-                                            <span class="badge bg-light-secondary text-secondary ms-2" x-text="'ID: ' + study.id"></span>
                                         </div>
                                         <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle" 
                                                 @click.stop="removeExistingCaseStudy(index, study.id)"
@@ -92,15 +91,11 @@
                                             <hr class="mt-0 mb-4 border-light">
                                             
                                             <div class="row">
-                                                <div class="col-md-8 mb-3">
+                                                <div class="col-md-12 mb-3">
                                                     <label class="form-label fw-bold small text-uppercase text-secondary">Title <span class="text-danger">*</span></label>
                                                     <input type="text" :name="'existing_case_studies['+study.id+'][title]'" class="form-control" 
                                                            x-model="study.title" required @click.stop>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold small text-uppercase text-secondary">Order No <span class="text-danger">*</span></label>
-                                                    <input type="number" :name="'existing_case_studies['+study.id+'][order_no]'" class="form-control" 
-                                                           x-model="study.order_no" min="1" required @click.stop>
+                                                    <input type="hidden" :name="'existing_case_studies['+study.id+'][order_no]'" x-model="study.order_no">
                                                 </div>
                                                 <div class="col-md-12 mb-3">
                                                     <label class="form-label fw-bold small text-uppercase text-secondary">Content / Scenario</label>
@@ -133,9 +128,6 @@
 
                                                                             <div>
                                                                                 <h6 class="fw-bold text-dark mb-0" x-text="visit.title || 'Visit #' + (vIdx + 1)"></h6>
-                                                                                <small class="text-muted d-block" style="font-size: 11px;">
-                                                                                    ID: <span x-text="visit.id"></span>
-                                                                                </small>
                                                                             </div>
                                                                         </div>
                                                                         <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle"
@@ -149,18 +141,13 @@
                                                                     <div x-show="visit.isOpen" x-collapse>
                                                                         <div class="p-3 bg-white border-top">
                                                                             <div class="row g-3">
-                                                                                <div class="col-md-9">
+                                                                                <div class="col-md-12">
                                                                                     <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Name <span class="text-danger">*</span></label>
                                                                                     <input type="hidden" :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][id]'" :value="visit.id">
+                                                                                    <input type="hidden" :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][order_no]'" x-model="visit.order_no">
                                                                                     <input type="text"
                                                                                            :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][title]'"
                                                                                            x-model="visit.title" class="form-control" required @click.stop>
-                                                                                </div>
-                                                                                <div class="col-md-3">
-                                                                                    <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
-                                                                                    <input type="number"
-                                                                                           :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][order_no]'"
-                                                                                           x-model="visit.order_no" class="form-control" @click.stop>
                                                                                 </div>
                                                                                 <div class="col-md-12">
                                                                                     <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
@@ -243,17 +230,12 @@
                                                                         </div>
 
                                                                         <div class="row g-3">
-                                                                            <div class="col-md-9">
+                                                                            <div class="col-md-12">
                                                                                 <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Name <span class="text-danger">*</span></label>
+                                                                                <input type="hidden" :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][order_no]'" x-model="nv.order_no">
                                                                                 <input type="text"
                                                                                        :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][title]'"
                                                                                        x-model="nv.title" class="form-control" required placeholder="e.g. Follow-up">
-                                                                            </div>
-                                                                            <div class="col-md-3">
-                                                                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
-                                                                                <input type="number"
-                                                                                       :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][order_no]'"
-                                                                                       x-model="nv.order_no" class="form-control">
                                                                             </div>
                                                                             <div class="col-md-12">
                                                                                 <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
@@ -297,15 +279,11 @@
                                 </button>
                                 
                                 <div class="row">
-                                    <div class="col-md-8 mb-3">
+                                    <div class="col-md-12 mb-3">
                                         <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                                         <input type="text" :name="'case_studies['+index+'][title]'" class="form-control" 
                                                x-model="caseStudy.title" placeholder="Enter case study title" required>
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label fw-bold">Order No <span class="text-danger">*</span></label>
-                                        <input type="number" :name="'case_studies['+index+'][order_no]'" class="form-control" 
-                                               x-model="caseStudy.order_no" min="1" required>
+                                        <input type="hidden" :name="'case_studies['+index+'][order_no]'" x-model="caseStudy.order_no">
                                     </div>
                                     <div class="col-md-12">
                                         <label class="form-label fw-bold">Content / Scenario</label>
@@ -348,19 +326,15 @@
                                                 </div>
                                                 
                                                 <div class="row g-3">
-                                                    <div class="col-md-9">
+                                                    <div class="col-md-12">
                                                         <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Name <span class="text-danger">*</span></label>
+                                                        <input type="hidden" :name="'case_studies['+index+'][visits]['+vIndex+'][order_no]'" x-model="visit.order_no">
                                                         <div class="input-group">
                                                             <span class="input-group-text bg-white text-muted border-end-0"><i class="ti ti-h-1"></i></span>
                                                             <input type="text" :name="'case_studies['+index+'][visits]['+vIndex+'][title]'" 
                                                                    x-model="visit.title" class="form-control border-start-0 ps-0" 
                                                                    placeholder="e.g. Initial Consultation" required>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
-                                                        <input type="number" :name="'case_studies['+index+'][visits]['+vIndex+'][order_no]'" 
-                                                               x-model="visit.order_no" class="form-control">
                                                     </div>
                                                     <div class="col-md-12">
                                                         <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>

@@ -105,8 +105,8 @@
 
 <div class="row g-3">
     <!-- Active Exams Section -->
-    <div class="col-lg-8">
-        <div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="col-lg-8 d-flex flex-column">
+        <div class="card shadow-sm border-0 h-100" style="border-radius: 12px;">
             <div class="card-header bg-white py-3">
                 <div class="d-flex align-items-center justify-content-between">
                     <h5 class="mb-0 fw-bold text-slate-800">My Active Exams</h5>
@@ -151,8 +151,8 @@
                                 </td>
                                 <td class="px-4 py-3 text-end">
                                     @if($exam->can_attempt)
-                                        <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold">
-                                            GO <i class="ti ti-chevron-right ms-1"></i>
+                                        <a href="{{ route('exams.start', $exam->id) }}" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold d-inline-flex align-items-center gap-1" style="white-space: nowrap;">
+                                            Start <i class="ti ti-chevron-right"></i>
                                         </a>
                                     @else
                                         <span class="badge bg-light text-muted border px-2 py-1">LOCKED</span>
@@ -162,7 +162,15 @@
                             @empty
                             <tr>
                                 <td colspan="4" class="text-center py-5">
-                                    <p class="text-muted mb-0">No active exams available.</p>
+                                    <div class="py-4">
+                                        <div class="mb-3">
+                                            <div class="avtar avtar-xl bg-light-primary text-primary mx-auto shadow-sm">
+                                                <i class="ti ti-notes fs-1"></i>
+                                            </div>
+                                        </div>
+                                        <h5 class="fw-bold text-slate-800 mb-1">No Active Exams</h5>
+                                        <p class="text-muted mb-0 px-4 mx-auto" style="max-width: 320px;">You don't have any exams assigned to you yet. Please check back later or contact your administrator.</p>
+                                    </div>
                                 </td>
                             </tr>
                             @endforelse
@@ -174,8 +182,8 @@
     </div>
 
     <!-- Recent History Sidebar -->
-    <div class="col-lg-4">
-        <div class="card shadow-sm border-0" style="border-radius: 12px;">
+    <div class="col-lg-4 d-flex flex-column">
+        <div class="card shadow-sm border-0 h-100" style="border-radius: 12px;">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold text-slate-800">History</h5>
                 <a href="{{ route('student.history') }}" class="text-primary fw-bold" style="font-size: 0.75rem; text-decoration: none;">
@@ -203,8 +211,14 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="2" class="text-center text-muted py-5 small">
-                                    No recent activity found.
+                                <td colspan="2" class="text-center py-5">
+                                    <div class="py-3">
+                                        <div class="mb-2">
+                                            <i class="ti ti-history-off fs-1 text-muted opacity-50"></i>
+                                        </div>
+                                        <h6 class="text-slate-600 fw-bold mb-1">No Recent Activity</h6>
+                                        <p class="text-muted small px-3 mb-0">Complete an exam to see your history here.</p>
+                                    </div>
                                 </td>
                             </tr>
                             @endforelse

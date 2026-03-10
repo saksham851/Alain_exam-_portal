@@ -40,82 +40,40 @@
                     </div>
                 @endif
 
-                <div class="row">
+                <div class="row justify-content-center">
                     <!-- Import Questions Section -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card border">
+                    <div class="col-md-8 mb-4">
+                        <div class="card border mb-0">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0"><i class="ti ti-file-import me-2"></i>Import Questions</h6>
                             </div>
                             <div class="card-body">
-                                <p class="text-muted small">Import questions into unpublished exams with specific sections and case studies.</p>
+                                <p class="text-muted small text-center mb-4">Import questions into unpublished exams with specific sections and case studies.</p>
                                 
                                 <form action="{{ route('admin.data.import-questions') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
-                                    <div class="mb-3">
-                                        <label class="form-label">Select CSV File</label>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Select CSV File</label>
                                         <input type="file" name="file" class="form-control" accept=".csv,.txt" required>
-                                        <small class="text-muted">Only CSV format supported</small>
+                                        <small class="text-muted">Only CSV (.csv or .txt) format supported</small>
                                     </div>
                                     
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="ti ti-upload me-2"></i>Import Questions
+                                    <div class="d-grid gap-2 mb-4">
+                                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                            <i class="ti ti-upload me-2"></i>Import Questions Now
                                         </button>
-                                        <a href="{{ route('admin.data.download-question-sample') }}" class="btn btn-outline-secondary">
-                                            <i class="ti ti-download me-2"></i>Download Sample CSV
+                                        <a href="{{ route('admin.data.download-question-sample') }}" class="btn btn-outline-info">
+                                            <i class="ti ti-download me-2"></i>Download Master CSV Template
                                         </a>
                                     </div>
                                 </form>
 
-                                <div class="mt-3">
-                                    <small class="text-muted">
-                                        <strong>CSV Format:</strong><br>
-                                        • Exam must be unpublished<br>
-                                        • Section must exist in exam<br>
-                                        • Case study is optional<br>
-                                        • Correct option: 1, 2, 3, or 4
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Import Case Studies Section -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card border">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="ti ti-file-import me-2"></i>Import Case Studies</h6>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted small">Import case studies into specific exam sections.</p>
-                                
-                                <form action="{{ route('admin.data.import-case-studies') }}" method="POST" enctype="multipart/form-data">
-                                    @csrf
-                                    <div class="mb-3">
-                                        <label class="form-label">Select CSV File</label>
-                                        <input type="file" name="file" class="form-control" accept=".csv,.txt" required>
-                                        <small class="text-muted">Only CSV format supported</small>
-                                    </div>
-                                    
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="ti ti-upload me-2"></i>Import Case Studies
-                                        </button>
-                                        <a href="{{ route('admin.data.download-case-study-sample') }}" class="btn btn-outline-secondary">
-                                            <i class="ti ti-download me-2"></i>Download Sample CSV
-                                        </a>
-                                    </div>
-                                </form>
-
-                                <div class="mt-3">
-                                    <small class="text-muted">
-                                        <strong>CSV Format:</strong><br>
-                                        • Exam must be unpublished<br>
-                                        • Section must exist in exam<br>
-                                        • Order number for sorting<br>
-                                        • Content can be detailed text
-                                    </small>
+                                <div class="bg-light p-3 rounded">
+                                    <h6 class="mb-2"><i class="ti ti-info-circle me-1"></i>Import Requirements:</h6>
+                                    <small class="text-muted d-block mb-1">• Exam must be in <strong>Unpublished</strong> status</small>
+                                    <small class="text-muted d-block mb-1">• Section Name must exactly match the exam structure</small>
+                                    <small class="text-muted d-block mb-1">• CSV must include <strong>Dual Tagging</strong> columns (total 16 columns)</small>
+                                    <small class="text-muted d-block mb-0">• Correct Option should be numeric (1-4)</small>
                                 </div>
                             </div>
                         </div>

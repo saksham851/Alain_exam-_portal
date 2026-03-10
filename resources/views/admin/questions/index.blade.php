@@ -24,7 +24,7 @@
                     All Questions 
                     <span class="badge bg-light-secondary ms-2">{{ $questions->total() }} Total</span>
                 </h5>
-                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                <button type="button" class="btn btn-primary btn-sm" onclick="handleAddQuestionClick()">
                     <i class="ti ti-plus me-1"></i> Add Question
                 </button>
             </div>
@@ -258,13 +258,14 @@
             
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover table-vcenter mb-0">
                         <thead>
                             <tr>
                                 <th style="width: 25%;">Question</th>
-                                <th style="width: 10%;">Groups</th>
+                                <th style="width: 20%;">Groups</th>
                                 <th style="width: 15%;">Case Study</th>
-                                <th style="width: 15%;">Source</th>
+                                <th style="width: 10%;">Source</th>
+                                <th style="width: 10%;">Type</th>
                                 <th style="width: 10%;">Options</th>
                                 <th class="text-end" style="width: 10%;">Actions</th>
                             </tr>
@@ -546,15 +547,21 @@
                                         <option value="">-- Select Target Exam First --</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="clone_target_case_study_id" class="form-label fw-bold">Target Case Study</label>
-                                    <select class="form-select form-select-sm" id="clone_target_case_study_id" name="target_case_study_id" required disabled>
+                                    <select class="form-select form-select-sm" id="clone_target_case_study_id" required disabled>
                                         <option value="">-- Select Target Section First --</option>
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <label for="clone_target_visit_id" class="form-label fw-bold">Target Visit</label>
+                                    <select class="form-select form-select-sm" id="clone_target_visit_id" name="target_visit_id" required disabled>
+                                        <option value="">-- Select Target Case Study First --</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="mt-2">
-                                <small class="text-muted">The selected questions will be added to this case study.</small>
+                            <div class="mt-2 text-center">
+                                <small class="text-muted"><i class="ti ti-info-circle me-1"></i> The selected questions will be added to this specific visit.</small>
                             </div>
                         </div>
                     </div>
@@ -586,8 +593,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-                    if (data.length > 0) {
-                        data.forEach(section => {
+                    // Handle both direct array or object with sections property
+                    const sections = data.sections || data;
+                    if (sections && sections.length > 0) {
+                        sections.forEach(section => {
                             sectionSelect.innerHTML += `<option value="${section.id}">${section.title}</option>`;
                         });
                         sectionSelect.disabled = false;
@@ -602,6 +611,36 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             sectionSelect.innerHTML = '<option value="">-- Select Exam First --</option>';
             sectionSelect.disabled = true;
+            return Promise.resolve();
+        }
+    }
+
+    // Helper to fetch visits
+    function fetchVisits(caseStudyId, visitSelect) {
+        visitSelect.innerHTML = '<option value="">Loading...</option>';
+        visitSelect.disabled = true;
+
+        if (caseStudyId) {
+            return fetch(`/admin/questions-ajax/visits/${caseStudyId}`)
+                .then(response => response.json())
+                .then(data => {
+                    visitSelect.innerHTML = '<option value="">-- Select Visit --</option>';
+                    if (data && data.length > 0) {
+                        data.forEach(visit => {
+                            visitSelect.innerHTML += `<option value="${visit.id}">${visit.title}</option>`;
+                        });
+                        visitSelect.disabled = false;
+                    } else {
+                        visitSelect.innerHTML = '<option value="">No visits found</option>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching visits:', error);
+                    visitSelect.innerHTML = '<option value="">Error loading visits</option>';
+                });
+        } else {
+            visitSelect.innerHTML = '<option value="">-- Select Case Study First --</option>';
+            visitSelect.disabled = true;
             return Promise.resolve();
         }
     }
@@ -851,6 +890,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tSection) {
         tSection.addEventListener('change', function() {
             fetchCaseStudies(this.value, tCaseStudy);
+            const tVisit = document.getElementById('clone_target_visit_id');
+            if(tVisit) {
+                tVisit.innerHTML = '<option value="">-- Select Target Case Study First --</option>';
+                tVisit.disabled = true;
+            }
+        });
+    }
+
+    if (tCaseStudy) {
+        tCaseStudy.addEventListener('change', function() {
+            const tVisit = document.getElementById('clone_target_visit_id');
+            if(tVisit) {
+                fetchVisits(this.value, tVisit);
+            }
         });
     }
 });
@@ -948,4 +1001,45 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+@php
+    $selectedExamId = request('exam');
+@endphp
+<script>
+    let selectedExamActive = {{ $selectedExamActive ? 'true' : 'false' }};
+    let selectedExamId = "{{ $selectedExamId }}";
+
+    function showLockedModal(action = 'modify') {
+        Swal.fire({
+            title: 'Exam is Published!',
+            text: `This exam is currently published and locked. You must unpublish the exam before you can ${action} it.`,
+            icon: 'lock',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            confirmButtonText: '<i class="ti ti-settings me-1"></i> Go to Exam Settings',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/exams/${selectedExamId}/edit`;
+            }
+        });
+    }
+
+    function handleAddQuestionClick() {
+        if (selectedExamActive) {
+            showLockedModal('add questions to');
+            return;
+        }
+        var modal = new bootstrap.Modal(document.getElementById('addQuestionModal'));
+        modal.show();
+    }
+
+    // Wrap the global showDeleteModal to check for active exam if needed
+    window.originalShowDeleteModal = window.showDeleteModal;
+    window.showDeleteModal = function(form, message) {
+        // Here we could try to find if the question in the form belongs to an active exam
+        // But the <td> buttons already handle this by disabling themselves.
+        // However, if we want a modal on click, we'd need to change the <td> buttons logic.
+        originalShowDeleteModal(form, message);
+    };
+</script>
 @endsection

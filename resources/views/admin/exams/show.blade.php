@@ -103,84 +103,120 @@
         <h5 class="mb-0 fw-bold text-dark">
             <i class="ti ti-checklist me-2 text-primary"></i> Standard Compliance Validation
         </h5>
-        @if(!$compliance['valid'])
-            <span class="badge bg-danger-subtle text-danger"><i class="ti ti-alert-triangle me-1"></i> Issues Found</span>
-        @else
-            <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i> Validated</span>
-        @endif
+        <div class="d-flex align-items-center gap-2">
+            @if(!$compliance['valid'])
+                <span class="badge bg-danger-subtle text-danger"><i class="ti ti-alert-triangle me-1"></i> Issues Found</span>
+            @else
+                <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i> Validated</span>
+            @endif
+            {{-- Expand/Collapse Toggle Button --}}
+            <button
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3"
+                id="complianceToggleBtn"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#complianceTableBody"
+                aria-expanded="false"
+                aria-controls="complianceTableBody"
+                onclick="toggleComplianceLabel(this)">
+                <i class="ti ti-eye" id="complianceToggleIcon"></i>
+                <span id="complianceToggleLabel">Show Table</span>
+            </button>
+        </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-bordered mb-0">
-                <thead class="bg-light fw-bold text-uppercase small text-muted">
-                    <tr>
-                        <th class="ps-4">Standard Areas</th>
-                        <th class="text-center" style="width: 100px;">Max Points</th>
-                        <th class="text-center" style="width: 100px;">Exam Total</th>
-                        @if(isset($compliance['sections']))
-                            @foreach($compliance['sections'] as $sec)
-                                <th class="text-center" style="width: 120px;">{{ $sec['name'] }}</th>
-                            @endforeach
-                        @endif
-                    </tr>
-                </thead>
-                <tbody>
-                    @php $currentCategory = null; @endphp
-                    @foreach($compliance['content_areas'] as $area)
-                        @if($currentCategory !== $area['category'])
-                            @php $currentCategory = $area['category']; @endphp
-                            <tr class="bg-light-subtle">
-                                <td colspan="{{ 3 + (isset($compliance['sections']) ? count($compliance['sections']) : 0) }}" class="ps-4 py-2 fw-bold text-primary text-uppercase fs-7">
-                                    {{ $currentCategory }}
-                                </td>
-                            </tr>
-                        @endif
+    {{-- Collapsible area (hidden by default) --}}
+    <div class="collapse" id="complianceTableBody">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0">
+                    <thead class="bg-light fw-bold text-uppercase small text-muted">
                         <tr>
-                            <td class="ps-4">{{ $area['name'] }}</td>
-                            <td class="text-center">{{ $area['allowed_points'] }}</td>
-                            <td class="text-center fw-bold {{ $area['valid'] ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                {{ $area['assigned_points'] }}
-                            </td>
+                            <th class="ps-4">Standard Areas</th>
+                            <th class="text-center" style="width: 100px;">Max Points</th>
+                            <th class="text-center" style="width: 100px;">Exam Total</th>
                             @if(isset($compliance['sections']))
                                 @foreach($compliance['sections'] as $sec)
-                                    <td class="text-center text-muted">
-                                        {{ $area['section_breakdown'][$sec['id']] ?? 0 }}
+                                    <th class="text-center" style="width: 120px;">{{ $sec['name'] }}</th>
+                                @endforeach
+                            @endif
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $currentCategory = null; @endphp
+                        @foreach($compliance['content_areas'] as $area)
+                            @if($currentCategory !== $area['category'])
+                                @php $currentCategory = $area['category']; @endphp
+                                <tr class="bg-light-subtle">
+                                    <td colspan="{{ 3 + (isset($compliance['sections']) ? count($compliance['sections']) : 0) }}" class="ps-4 py-2 fw-bold text-primary text-uppercase fs-7">
+                                        {{ $currentCategory }}
+                                    </td>
+                                </tr>
+                            @endif
+                            <tr>
+                                <td class="ps-4">{{ $area['name'] }}</td>
+                                <td class="text-center">{{ $area['allowed_points'] }}</td>
+                                <td class="text-center fw-bold {{ $area['valid'] ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
+                                    {{ $area['assigned_points'] }}
+                                </td>
+                                @if(isset($compliance['sections']))
+                                    @foreach($compliance['sections'] as $sec)
+                                        <td class="text-center text-muted">
+                                            {{ $area['section_breakdown'][$sec['id']] ?? 0 }}
+                                        </td>
+                                    @endforeach
+                                @endif
+                            </tr>
+                        @endforeach
+                        <!-- Total Row -->
+                        <tr class="fw-bold bg-light">
+                            <td class="ps-4 text-end">TOTAL</td>
+                            <td class="text-center">{{ collect($compliance['content_areas'])->sum('allowed_points') }}</td>
+                            <td class="text-center">{{ collect($compliance['content_areas'])->sum('assigned_points') }}</td>
+                            @if(isset($compliance['sections']))
+                                @foreach($compliance['sections'] as $sec)
+                                    <td class="text-center">
+                                        {{ collect($compliance['content_areas'])->sum(fn($a) => $a['section_breakdown'][$sec['id']] ?? 0) }}
                                     </td>
                                 @endforeach
                             @endif
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if(!$compliance['valid'] && !empty($compliance['errors']))
+            <div class="bg-danger-subtle text-danger p-3">
+                <h6 class="fw-bold"><i class="ti ti-alert-circle me-1"></i> Corrections Needed:</h6>
+                <ul class="mb-0 small">
+                    @foreach(array_slice($compliance['errors'], 0, 5) as $error)
+                        <li>{{ $error }}</li>
                     @endforeach
-                    <!-- Total Row -->
-                    <tr class="fw-bold bg-light">
-                        <td class="ps-4 text-end">TOTAL</td>
-                        <td class="text-center">{{ collect($compliance['content_areas'])->sum('allowed_points') }}</td>
-                        <td class="text-center">{{ collect($compliance['content_areas'])->sum('assigned_points') }}</td>
-                        @if(isset($compliance['sections']))
-                             @foreach($compliance['sections'] as $sec)
-                                    <td class="text-center">
-                                        {{ collect($compliance['content_areas'])->sum(fn($a) => $a['section_breakdown'][$sec['id']] ?? 0) }}
-                                    </td>
-                            @endforeach
-                        @endif
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                    @if(count($compliance['errors']) > 5)
+                        <li>+ {{ count($compliance['errors']) - 5 }} more issues...</li>
+                    @endif
+                </ul>
+            </div>
+        @endif
     </div>
-    @if(!$compliance['valid'] && !empty($compliance['errors']))
-        <div class="card-footer bg-danger-subtle text-danger">
-            <h6 class="fw-bold"><i class="ti ti-alert-circle me-1"></i> Corrections Needed:</h6>
-            <ul class="mb-0 small">
-                @foreach(array_slice($compliance['errors'], 0, 5) as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-                @if(count($compliance['errors']) > 5)
-                    <li>+ {{ count($compliance['errors']) - 5 }} more issues...</li>
-                @endif
-            </ul>
-        </div>
-    @endif
 </div>
+
+<script>
+function toggleComplianceLabel(btn) {
+    const label = document.getElementById('complianceToggleLabel');
+    const icon  = document.getElementById('complianceToggleIcon');
+    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+    // Note: Bootstrap toggles aria-expanded AFTER click, so current value is pre-toggle state
+    if (!isExpanded) {
+        // About to expand
+        label.textContent = 'Hide Table';
+        icon.className = 'ti ti-eye-off';
+    } else {
+        // About to collapse
+        label.textContent = 'Show Table';
+        icon.className = 'ti ti-eye';
+    }
+}
+</script>
 @endif
 
 <!-- Hierarchy Content -->
@@ -243,100 +279,137 @@
                                                 </div>
                                             @endif
 
-                                            <!-- Questions Table -->
-                                            @if($caseStudy->questions->count() > 0)
-                                                <div class="table-responsive border rounded-3 mb-3">
-                                                    <table class="table table-hover table-vcenter mb-0 table-fixed">
-                                                        <thead class="bg-body-tertiary">
-                                                            <tr>
-                                                                <th class="ps-4 py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 5%;">#</th>
-                                                                <th class="py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 50%;">Question Details</th>
-                                                                <th class="py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 10%;">Type</th>
-                                                                <th class="py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 15%;">Weights</th>
-                                                                <th class="pe-4 py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 20%;">Correct Answer</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @foreach($caseStudy->questions as $qIndex => $question)
-                                                                <tr>
-                                                                    <td class="ps-4 align-top pt-3">
-                                                                        <span class="text-secondary fw-medium">{{ $qIndex + 1 }}</span>
-                                                                    </td>
-                                                                    <td class="align-top pt-3 text-wrap">
-                                                                        <div class="d-flex flex-column">
-                                                                            <div class="fw-bold text-dark mb-2 text-break">{!! strip_tags($question->question_text) !!}</div>
-                                                                            <div>
-                                                                                <a class="btn btn-sm btn-light border btn-pill fs-7 py-1 px-3 text-decoration-none text-muted" data-bs-toggle="collapse" href="#qOptions{{ $question->id }}" role="button" aria-expanded="false">
-                                                                                    <i class="ti ti-list me-1"></i> View {{ $question->options->count() }} Options
-                                                                                </a>
-                                                                                <div class="collapse mt-2" id="qOptions{{ $question->id }}">
-                                                                                    <div class="card card-body bg-light-subtle border-0 p-3 small">
-                                                                                        <ul class="list-unstyled mb-0">
-                                                                                            @foreach($question->options as $opt)
-                                                                                                <li class="mb-2 d-flex align-items-start">
-                                                                                                    <div class="d-flex align-items-center justify-content-center me-2" style="height: 1.5em; min-width: 1.5em;">
-                                                                                                        @if($opt->is_correct)
-                                                                                                            <i class="ti ti-circle-check text-success fs-5"></i>
-                                                                                                        @else
-                                                                                                            <i class="ti ti-circle text-muted fs-5"></i>
-                                                                                                        @endif
-                                                                                                    </div>
-                                                                                                    <span class="{{ $opt->is_correct ? 'text-success fw-bold' : 'text-secondary' }} text-break" style="line-height: 1.5;">
-                                                                                                        {{ $opt->option_text }}
-                                                                                                    </span>
-                                                                                                </li>
-                                                                                            @endforeach
-                                                                                        </ul>
+                                            {{-- Loop through Visits --}}
+                                            @forelse($caseStudy->visits as $vIndex => $visit)
+                                                @php $visitCollapseId = 'visit-body-' . $visit->id; @endphp
+                                                <div class="mb-3 border rounded-3 overflow-hidden visit-card">
+
+                                                    {{-- Visit Header (Clickable Toggle) --}}
+                                                    <button
+                                                        class="w-100 text-start px-4 py-3 d-flex align-items-center gap-2 border-0 visit-toggle-btn"
+                                                        type="button"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#{{ $visitCollapseId }}"
+                                                        aria-expanded="false"
+                                                        aria-controls="{{ $visitCollapseId }}"
+                                                        style="background: linear-gradient(90deg, #f0f4ff 0%, #f8f9ff 100%); cursor:pointer;">
+                                                        <span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1 flex-shrink-0" style="font-size:11px;">
+                                                            Visit {{ $vIndex + 1 }}
+                                                        </span>
+                                                        <h6 class="mb-0 fw-bold text-dark flex-grow-1 text-start">{{ $visit->title }}</h6>
+                                                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                            <span class="badge bg-secondary-subtle text-secondary border fw-normal" style="font-size:11px;">
+                                                                {{ $visit->questions->count() }} Q
+                                                            </span>
+                                                            <i class="ti ti-chevron-down text-muted visit-chevron" style="transition: transform 0.25s ease; font-size:16px;"></i>
+                                                        </div>
+                                                    </button>
+
+                                                    {{-- Collapsible Content --}}
+                                                    <div class="collapse" id="{{ $visitCollapseId }}">
+
+                                                        {{-- Visit Description --}}
+                                                        @if($visit->description)
+                                                            <div class="px-4 py-3 bg-white border-bottom border-top">
+                                                                <div class="text-secondary small">{!! $visit->description !!}</div>
+                                                            </div>
+                                                        @endif
+
+                                                        {{-- Visit Questions --}}
+                                                        @if($visit->questions->count() > 0)
+                                                            <div class="table-responsive">
+                                                                <table class="table table-hover table-vcenter mb-0">
+                                                                    <thead class="bg-body-tertiary">
+                                                                        <tr>
+                                                                            <th class="ps-4 py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 5%;">#</th>
+                                                                            <th class="py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 50%;">Question Details</th>
+                                                                            <th class="py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 10%;">Type</th>
+                                                                            <th class="py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 15%;">Points</th>
+                                                                            <th class="pe-4 py-3 text-uppercase text-secondary fs-7 fw-bold" style="width: 20%;">Correct Answer</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach($visit->questions as $qIndex => $question)
+                                                                            <tr>
+                                                                                <td class="ps-4 align-top pt-3">
+                                                                                    <span class="text-secondary fw-medium">{{ $qIndex + 1 }}</span>
+                                                                                </td>
+                                                                                <td class="align-top pt-3 text-wrap">
+                                                                                    <div class="d-flex flex-column">
+                                                                                        <div class="fw-bold text-dark mb-2 text-break">{!! strip_tags($question->question_text) !!}</div>
+                                                                                        <div>
+                                                                                            <a class="btn btn-sm btn-light border btn-pill fs-7 py-1 px-3 text-decoration-none text-muted"
+                                                                                               data-bs-toggle="collapse" href="#qOptions{{ $question->id }}" role="button" aria-expanded="false">
+                                                                                                <i class="ti ti-list me-1"></i> View {{ $question->options->count() }} Options
+                                                                                            </a>
+                                                                                            <div class="collapse mt-2" id="qOptions{{ $question->id }}">
+                                                                                                <div class="card card-body bg-light-subtle border-0 p-3 small">
+                                                                                                    <ul class="list-unstyled mb-0">
+                                                                                                        @foreach($question->options as $opt)
+                                                                                                            <li class="mb-2 d-flex align-items-start">
+                                                                                                                <div class="d-flex align-items-center justify-content-center me-2" style="height: 1.5em; min-width: 1.5em;">
+                                                                                                                    @if($opt->is_correct)
+                                                                                                                        <i class="ti ti-circle-check text-success fs-5"></i>
+                                                                                                                    @else
+                                                                                                                        <i class="ti ti-circle text-muted fs-5"></i>
+                                                                                                                    @endif
+                                                                                                                </div>
+                                                                                                                <span class="{{ $opt->is_correct ? 'text-success fw-bold' : 'text-secondary' }} text-break" style="line-height: 1.5;">
+                                                                                                                    {{ $opt->option_text }}
+                                                                                                                </span>
+                                                                                                            </li>
+                                                                                                        @endforeach
+                                                                                                    </ul>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td class="align-top pt-3">
-                                                                        <span class="badge bg-secondary-subtle text-secondary border fw-medium px-2 py-1">
-                                                                            {{ ucfirst($question->question_type) }}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td class="align-top pt-3">
-                                                                        <div class="row g-2" style="width: 120px;">
-                                                                            <div class="col-6">
-                                                                                <div class="p-1 border rounded text-center bg-white">
-                                                                                    <div class="text-xs text-muted text-uppercase fw-bold">IG</div>
-                                                                                    <div class="fw-bold text-dark">{{ $question->ig_weight }}</div>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="col-6">
-                                                                                <div class="p-1 border rounded text-center bg-white">
-                                                                                    <div class="text-xs text-muted text-uppercase fw-bold">DM</div>
-                                                                                    <div class="fw-bold text-dark">{{ $question->dm_weight }}</div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td class="pe-4 align-top pt-3">
-                                                                        @php $correct = $question->options->firstWhere('is_correct', 1); @endphp
-                                                                        @if($correct)
-                                                                            <div class="p-2 bg-success-subtle text-success-emphasis rounded border border-success-subtle">
-                                                                                <div class="d-flex align-items-start">
-                                                                                    <i class="ti ti-check me-2 mt-1"></i>
-                                                                                    <span class="fw-medium small">{{ $correct->option_text }}</span>
-                                                                                </div>
-                                                                            </div>
-                                                                        @else
-                                                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="ti ti-alert-circle me-1"></i> Set Answer</span>
-                                                                        @endif
-                                                                    </td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </tbody>
-                                                    </table>
+                                                                                </td>
+                                                                                <td class="align-top pt-3">
+                                                                                    <span class="badge bg-secondary-subtle text-secondary border fw-medium px-2 py-1">
+                                                                                        {{ ucfirst($question->question_type) }}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="align-top pt-3">
+                                                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold px-3 py-2" style="font-size:13px;">
+                                                                                        {{ $question->max_question_points ?? 0 }}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="pe-4 align-top pt-3">
+                                                                                    @php $correct = $question->options->firstWhere('is_correct', 1); @endphp
+                                                                                    @if($correct)
+                                                                                        <div class="p-2 bg-success-subtle text-success-emphasis rounded border border-success-subtle">
+                                                                                            <div class="d-flex align-items-start">
+                                                                                                <i class="ti ti-check me-2 mt-1"></i>
+                                                                                                <span class="fw-medium small">{{ $correct->option_text }}</span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    @else
+                                                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                                                            <i class="ti ti-alert-circle me-1"></i> Set Answer
+                                                                                        </span>
+                                                                                    @endif
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        @else
+                                                            <div class="text-center py-4 text-muted bg-light">
+                                                                <i class="ti ti-list-details fs-2 mb-2 d-block opacity-50"></i>
+                                                                <span class="small">No questions in this visit.</span>
+                                                            </div>
+                                                        @endif
+
+                                                    </div>{{-- end collapse --}}
                                                 </div>
-                                            @else
+                                            @empty
                                                 <div class="text-center py-4 bg-light rounded border border-dashed text-muted">
-                                                    <i class="ti ti-list-details fs-2 mb-2 d-block opacity-50"></i>
-                                                    <span class="small">No questions added yet.</span>
+                                                    <i class="ti ti-calendar-off fs-2 mb-2 d-block opacity-50"></i>
+                                                    <span class="small">No visits added to this case study yet.</span>
                                                 </div>
-                                            @endif
+                                            @endforelse
                                         </div>
                                     </div>
                                 @endforeach
@@ -366,9 +439,9 @@
         
         <!-- Bottom Actions -->
         @if($exam->sections->count() > 0)
-        <div class="d-flex justify-content-center mt-5 mb-5">
-            <a href="{{ route('admin.exams.index') }}" class="btn btn-outline-primary btn-pill px-4">
-                Back to Exam List
+        <div class="d-flex justify-content-start mt-5 mb-5 pb-5">
+            <a href="{{ route('admin.exams.index') }}" class="btn btn-outline-secondary px-4">
+                <i class="ti ti-arrow-left me-1"></i> Back to Exam List
             </a>
         </div>
         @endif
@@ -384,5 +457,32 @@
     .accordion-button:not(.collapsed) .avatar { background-color: var(--bs-primary) !important; color: white !important; }
     .fs-7 { font-size: 0.85rem; }
     .text-xs { font-size: 0.75em; }
+
+    /* Visit Toggle Button */
+    .visit-toggle-btn { outline: none; }
+    .visit-toggle-btn:hover { background: linear-gradient(90deg, #e4eaff 0%, #f0f4ff 100%) !important; }
+    .visit-toggle-btn:focus { box-shadow: none; outline: none; }
+    .visit-card { transition: box-shadow 0.2s; }
+    .visit-card:hover { box-shadow: 0 2px 10px rgba(91,115,232,0.10); }
+    .visit-chevron { transition: transform 0.25s ease; }
+    .visit-chevron.rotated { transform: rotate(180deg); }
 </style>
+
+<script>
+// Rotate chevron on Visit collapse/expand
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[id^="visit-body-"]').forEach(function(collapseEl) {
+        var btn = document.querySelector('[data-bs-target="#' + collapseEl.id + '"]');
+        if (!btn) return;
+        var chevron = btn.querySelector('.visit-chevron');
+
+        collapseEl.addEventListener('show.bs.collapse', function() {
+            if (chevron) chevron.classList.add('rotated');
+        });
+        collapseEl.addEventListener('hide.bs.collapse', function() {
+            if (chevron) chevron.classList.remove('rotated');
+        });
+    });
+});
+</script>
 @endsection

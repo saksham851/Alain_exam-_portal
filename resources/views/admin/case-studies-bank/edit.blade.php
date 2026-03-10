@@ -59,15 +59,11 @@
                     <hr class="my-4">
 
                     <div class="row">
-                        <div class="col-md-8 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                             <input type="text" name="title" class="form-control" 
                                    value="{{ old('title', $caseStudy->title) }}" placeholder="Enter case study title" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label fw-bold">Order No <span class="text-danger">*</span></label>
-                            <input type="number" name="order_no" class="form-control" 
-                                   value="{{ old('order_no', $caseStudy->order_no) }}" min="1" required>
+                            <input type="hidden" name="order_no" value="{{ $caseStudy->order_no }}">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-bold">Content / Scenario</label>
@@ -110,18 +106,12 @@
                                 <input type="hidden" :name="'visits['+index+'][id]'" :value="visit.id">
                                 
                                 <div class="row g-3">
-                                    <div class="col-md-9">
+                                    <div class="col-md-12">
                                         <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Title <span class="text-danger">*</span></label>
+                                        <input type="hidden" :name="'visits['+index+'][order_no]'" x-model="visit.order_no">
                                         <div class="input-group">
                                             <span class="input-group-text bg-white text-muted border-end-0"><i class="ti ti-h-1"></i></span>
                                             <input type="text" :name="'visits['+index+'][title]'" class="form-control border-start-0 ps-0" x-model="visit.title" placeholder="e.g. Initial Consultation" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Order</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-white text-muted border-end-0"><i class="ti ti-sort-ascending"></i></span>
-                                            <input type="number" :name="'visits['+index+'][order_no]'" class="form-control border-start-0 ps-0" x-model="visit.order_no">
                                         </div>
                                     </div>
                                     <div class="col-md-12">

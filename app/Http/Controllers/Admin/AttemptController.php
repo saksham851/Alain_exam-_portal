@@ -86,45 +86,15 @@ class AttemptController extends Controller
 
     public function show($id)
     {
-        // Get attempt with all relationships
+        // Load the full attempt with all relationships needed by result.blade.php
         $attempt = ExamAttempt::with([
             'studentExam.student',
-            'studentExam.exam',
-            'answers.question.options'
+            'studentExam.exam.examStandard.categories.contentAreas',
+            'answers.question.options',
         ])->findOrFail($id);
 
-        // Transform data for view
-        $attemptData = (object)[
-            'id' => $attempt->id,
-            'student' => (object)[
-                'name' => $attempt->studentExam->student->first_name . ' ' . $attempt->studentExam->student->last_name,
-                'email' => $attempt->studentExam->student->email,
-            ],
-            'exam' => (object)[
-                'name' => $attempt->studentExam->exam->name,
-            ],
-            'ig_score' => $attempt->ig_score,
-            'dm_score' => $attempt->dm_score,
-            'total_score' => $attempt->total_score,
-            'is_passed' => $attempt->is_passed,
-            'started_at' => $attempt->started_at,
-            'ended_at' => $attempt->ended_at,
-            'created_at' => $attempt->created_at,
-            'tab_switch_count' => $attempt->tab_switch_count,
-        ];
-
-        // Get all answers
-        $answers = $attempt->answers->map(function($answer) {
-            return (object)[
-                'question_id' => $answer->question_id,
-                'question_text' => $answer->question->question_text,
-                'selected_options' => $answer->selected_options, 
-                'is_correct' => $answer->is_correct,
-                'options' => $answer->question->options,
-            ];
-        });
-
-        return view('admin.attempts.show', compact('attemptData', 'answers'));
+        // Reuse the same premium result view that students see
+        return view('exams.result', compact('attempt'));
     }
 
     public function byUser(Request $request, $userId)

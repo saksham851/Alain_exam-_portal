@@ -197,11 +197,23 @@
     }
 
     function removeCategory(btn) {
-        const card = btn.closest('.category-card');
-        if (card) {
-            card.remove();
-            updateCategoryNumbers();
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This will remove the category and all its content areas.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const card = btn.closest('.category-card');
+                if (card) {
+                    card.remove();
+                    updateCategoryNumbers();
+                }
+            }
+        });
     }
 
     function removeArea(btn, catIndex) {
@@ -216,9 +228,22 @@
             });
             return;
         }
-        btn.closest('.area-row').remove();
-        reindexAreas(catIndex);
-        updateTotal(catIndex);
+
+        Swal.fire({
+            title: 'Remove Content Area?',
+            text: "Are you sure you want to remove this content area?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                btn.closest('.area-row').remove();
+                reindexAreas(catIndex);
+                updateTotal(catIndex);
+            }
+        });
     }
 
     function reindexAreas(catIndex) {

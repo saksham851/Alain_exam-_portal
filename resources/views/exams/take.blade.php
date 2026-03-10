@@ -386,7 +386,7 @@
 
                     <div class="text-center py-5" x-show="!viewedCases.includes('{{ $slide['visit_id'] }}')">
                         <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm fw-bold" @click="viewedCases.push('{{ $slide['visit_id'] }}')">
-                            VIEW QUESTION & OPTIONS
+                            View Questions
                         </button>
                     </div>
 
@@ -430,7 +430,7 @@
                         <button type="button" class="btn btn-primary btn-action" x-show="currentIndex < totalSlides - 1" @click="nextSlide()">
                             Next <i class="ti ti-chevron-right ms-1"></i>
                         </button>
-                        <button type="button" class="btn btn-success btn-action" x-show="currentIndex === totalSlides - 1" @click="confirmSubmit('submit')">
+                        <button type="button" class="btn btn-success btn-action" x-show="currentIndex === totalSlides - 1" data-bs-toggle="modal" data-bs-target="#submitModal">
                             Finish Exam <i class="ti ti-check ms-1"></i>
                         </button>
                     </div>
@@ -450,8 +450,8 @@
                     <h3 class="fw-bold text-slate-800 mb-2">Quit Examination?</h3>
                     <p class="text-muted mb-4 lead" style="font-size: 1rem;">Are you sure you want to end your exam session? Your current progress will be submitted and you won't be able to return.</p>
                     <div class="d-grid gap-3 mt-4">
-                        <button type="button" class="btn btn-danger btn-lg py-3 rounded-3 fw-bold shadow-sm" @click="submitForm()">
-                            TERMINATE & SUBMIT
+                        <button type="button" class="btn btn-danger btn-lg py-3 rounded-3 fw-bold shadow-sm" @click="if(!isSubmitting) { isSubmitting = true; $el.disabled = true; showLoadingAndSubmit(); }">
+                            TERMINATE &amp; SUBMIT
                         </button>
                         <button type="button" class="btn btn-light btn-lg py-3 rounded-3 fw-bold text-slate-500" data-bs-dismiss="modal">
                             CANCEL, CONTINUE EXAM
@@ -462,6 +462,78 @@
         </div>
     </div>
 </div>
+
+    <!-- SUBMIT CONFIRMATION MODAL -->
+    <div class="modal fade" id="submitModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-body text-center p-5">
+                    <div class="avtar avtar-xl bg-light-success text-success mb-4" style="width: 80px; height: 80px; margin: 0 auto; font-size: 2rem;">
+                        <i class="ti ti-clipboard-check"></i>
+                    </div>
+                    <h3 class="fw-bold text-slate-800 mb-2">Submit Exam?</h3>
+                    <p class="text-muted mb-4 lead" style="font-size: 1rem;">Are you sure you want to submit your exam? Once submitted, you cannot make any changes.</p>
+                    <div class="d-grid gap-3 mt-4">
+                        <button type="button" class="btn btn-success btn-lg py-3 rounded-3 fw-bold shadow-sm" onclick="this.disabled=true; this.innerHTML='<span class=\'spinner-border spinner-border-sm me-2\'></span> SUBMITTING...'; showLoadingAndSubmitGlobal()">
+                            <i class="ti ti-check me-2"></i> YES, SUBMIT EXAM
+                        </button>
+                        <button type="button" class="btn btn-light btn-lg py-3 rounded-3 fw-bold text-slate-500" data-bs-dismiss="modal">
+                            CANCEL, CONTINUE EXAM
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULT LOADING SCREEN -->
+    <div id="resultLoadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); z-index:99999; justify-content:center; align-items:center; flex-direction:column;">
+        <div style="text-align:center; color:#fff; padding: 2rem;">
+            <!-- Animated Logo -->
+            <div style="margin-bottom: 2.5rem;">
+                <img src="{{ asset('assets/images/logo-new.png') }}" alt="Logo" style="height: 50px; filter: brightness(0) invert(1); opacity: 0.9;">
+            </div>
+            <!-- Spinner -->
+            <div style="position:relative; width:100px; height:100px; margin: 0 auto 2rem;">
+                <svg viewBox="0 0 100 100" style="width:100px; height:100px; animation: spin 1.8s linear infinite;">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#3b82f6" stroke-width="8"
+                            stroke-dasharray="264" stroke-dashoffset="180" stroke-linecap="round"/>
+                </svg>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+                    <i class="ti ti-file-analytics" style="font-size:2rem; color:#60a5fa;"></i>
+                </div>
+            </div>
+            <!-- Text -->
+            <h2 style="font-weight:800; font-size:1.6rem; margin-bottom:0.5rem; color:#fff;">Generating Your Result</h2>
+            <p style="color:rgba(255,255,255,0.6); font-size:1rem; margin-bottom:2rem;">Please wait while we evaluate your responses...</p>
+            <!-- Progress dots -->
+            <div style="display:flex; justify-content:center; gap:8px;">
+                <div style="width:10px; height:10px; background:#3b82f6; border-radius:50%; animation: bounce 1.2s ease-in-out 0s infinite;"></div>
+                <div style="width:10px; height:10px; background:#3b82f6; border-radius:50%; animation: bounce 1.2s ease-in-out 0.2s infinite;"></div>
+                <div style="width:10px; height:10px; background:#3b82f6; border-radius:50%; animation: bounce 1.2s ease-in-out 0.4s infinite;"></div>
+            </div>
+            <!-- Steps -->
+            <div style="margin-top:2.5rem; display:flex; flex-direction:column; gap:12px; max-width:300px; margin-left:auto; margin-right:auto;">
+                <div id="step1" style="display:flex; align-items:center; gap:12px; opacity:0.4; transition: opacity 0.5s;">
+                    <div style="width:28px; height:28px; border-radius:50%; background:rgba(59,130,246,0.3); display:flex; align-items:center; justify-content:center;"><i class="ti ti-check" style="color:#60a5fa; font-size:0.85rem;"></i></div>
+                    <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">Submitting answers</span>
+                </div>
+                <div id="step2" style="display:flex; align-items:center; gap:12px; opacity:0.4; transition: opacity 0.5s;">
+                    <div style="width:28px; height:28px; border-radius:50%; background:rgba(59,130,246,0.3); display:flex; align-items:center; justify-content:center;"><i class="ti ti-calculator" style="color:#60a5fa; font-size:0.85rem;"></i></div>
+                    <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">Calculating scores</span>
+                </div>
+                <div id="step3" style="display:flex; align-items:center; gap:12px; opacity:0.4; transition: opacity 0.5s;">
+                    <div style="width:28px; height:28px; border-radius:50%; background:rgba(59,130,246,0.3); display:flex; align-items:center; justify-content:center;"><i class="ti ti-chart-bar" style="color:#60a5fa; font-size:0.85rem;"></i></div>
+                    <span style="font-size:0.85rem; color:rgba(255,255,255,0.8);">Building your report</span>
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        </style>
+    </div>
 
     <!-- BLACK SCREEN BLOCKER -->
     <div id="screenshotBlocker" style="opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; z-index: 2147483647; transition: none;"></div>
@@ -579,12 +651,38 @@
                     if (this.boundHandleBeforeUnload) {
                         try { window.removeEventListener('beforeunload', this.boundHandleBeforeUnload); } catch(e) {}
                     }
-                    const form = document.getElementById('examForm');
-                    if (form) form.submit();
+                    // Show loading overlay
+                    const overlay = document.getElementById('resultLoadingOverlay');
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                        // Animate steps sequentially
+                        setTimeout(() => { const s = document.getElementById('step1'); if(s) s.style.opacity = '1'; }, 300);
+                        setTimeout(() => { const s = document.getElementById('step2'); if(s) s.style.opacity = '1'; }, 900);
+                        setTimeout(() => { const s = document.getElementById('step3'); if(s) s.style.opacity = '1'; }, 1500);
+                    }
+                    // Close any open modals first
+                    try {
+                        const modals = document.querySelectorAll('.modal.show');
+                        modals.forEach(m => { const bsModal = bootstrap.Modal.getInstance(m); if(bsModal) bsModal.hide(); });
+                    } catch(e) {}
+                    // Submit after brief delay so loading screen shows
+                    setTimeout(() => {
+                        const form = document.getElementById('examForm');
+                        if (form) form.submit();
+                    }, 800);
+                },
+
+                showLoadingAndSubmit() {
+                    // Close quit modal first, then show loading
+                    try {
+                        const quitModal = bootstrap.Modal.getInstance(document.getElementById('quitModal'));
+                        if (quitModal) quitModal.hide();
+                    } catch(e) {}
+                    setTimeout(() => { this.submitForm(); }, 300);
                 },
 
                 handleBeforeUnload(e) {
-                    if (this.isSubmitting) return;
+                    if (this.isSubmitting || window._examSubmitting) return;
                     e.preventDefault();
                     e.returnValue = ''; 
                 },
@@ -694,6 +792,42 @@
             document.getElementById('violationOverlay').style.display = 'none';
             try { document.documentElement.requestFullscreen().catch((e) => {}); } catch (e) {}
         });
+
+        // Global function for submit modal confirm button (outside Alpine context)
+        function showLoadingAndSubmitGlobal() {
+            // Close submit modal
+            try {
+                const submitModal = bootstrap.Modal.getInstance(document.getElementById('submitModal'));
+                if (submitModal) submitModal.hide();
+            } catch(e) {}
+
+            setTimeout(() => {
+                // Call Alpine component's submitForm() — it handles overlay + beforeunload removal + submit
+                try {
+                    const examEl = document.querySelector('[x-data]');
+                    if (examEl && window.Alpine) {
+                        Alpine.$data(examEl).submitForm();
+                        return;
+                    }
+                } catch(e) {
+                    console.warn('Alpine fallback used', e);
+                }
+
+                // Fallback: set global flag so beforeunload won't fire, then submit
+                window._examSubmitting = true;
+                const overlay = document.getElementById('resultLoadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    setTimeout(() => { const s = document.getElementById('step1'); if(s) s.style.opacity = '1'; }, 300);
+                    setTimeout(() => { const s = document.getElementById('step2'); if(s) s.style.opacity = '1'; }, 900);
+                    setTimeout(() => { const s = document.getElementById('step3'); if(s) s.style.opacity = '1'; }, 1500);
+                }
+                setTimeout(() => {
+                    const form = document.getElementById('examForm');
+                    if (form) form.submit();
+                }, 800);
+            }, 300);
+        }
     </script>
 
 <style>

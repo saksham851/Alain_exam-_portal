@@ -297,7 +297,16 @@ public function store(Request $request)
             $copiedCount = 0;
 
             foreach ($request->case_study_ids as $caseStudyId) {
-                $sourceCaseStudy = CaseStudy::with(['questions.options'])->findOrFail($caseStudyId);
+                $sourceCaseStudy = CaseStudy::with([
+                    'visits' => function($q) {
+                        $q->where('status', 1);
+                    },
+                    'visits.questions' => function($q) {
+                        $q->where('status', 1);
+                    },
+                    'visits.questions.options',
+                    'visits.questions.tags'
+                ])->findOrFail($caseStudyId);
 
                 // Create a deep clone of the case study
                 $newCaseStudy = $sourceCaseStudy->replicate();
@@ -312,15 +321,16 @@ public function store(Request $request)
                 $newCaseStudy->save();
 
                 // Clone all active visits and their questions
-                foreach ($sourceCaseStudy->visits->where('status', 1) as $sourceVisit) {
+                foreach ($sourceCaseStudy->visits as $sourceVisit) {
                     $newVisit = $sourceVisit->replicate();
                     $newVisit->case_study_id = $newCaseStudy->id;
                     $newVisit->save();
 
                     // Clone all questions for this visit
-                    foreach ($sourceVisit->questions->where('status', 1) as $sourceQuestion) {
+                    foreach ($sourceVisit->questions as $sourceQuestion) {
                         $newQuestion = $sourceQuestion->replicate();
                         $newQuestion->visit_id = $newVisit->id;
+                        $newQuestion->cloned_from_id = $sourceQuestion->id;
                         $newQuestion->save();
 
                         // Clone question options
@@ -328,6 +338,13 @@ public function store(Request $request)
                             $newOption = $sourceOption->replicate();
                             $newOption->question_id = $newQuestion->id;
                             $newOption->save();
+                        }
+
+                        // Clone question tags
+                        foreach ($sourceQuestion->tags as $sourceTag) {
+                            $newTag = $sourceTag->replicate();
+                            $newTag->question_id = $newQuestion->id;
+                            $newTag->save();
                         }
                     }
                 }
@@ -342,7 +359,7 @@ public function store(Request $request)
                 ->with('case_study_created_success', true)
                 ->with('selected_exam_id', $targetSection->exam_id)
                 ->with('selected_section_id', $targetSection->id)
-                ->with('success', "Successfully copied {$copiedCount} " . \Illuminate\Support\Str::plural('case study', $copiedCount) . " with all their questions to the selected section!");
+                ->with('success', "Successfully copied {$copiedCount} " . \Illuminate\Support\Str::plural('case study', $copiedCount) . " with all their visits and questions to the selected section!");
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -480,11 +497,11 @@ public function store(Request $request)
         $caseStudy = CaseStudy::with([
             'section.exam.category', 
             'visits' => function($q) {
-                $q->where('status', 1)->orderBy('order_no');
+                $q->where('visits.status', 1)->orderBy('order_no')
+                  ->with(['questions' => function($q2) {
+                      $q2->where('questions.status', 1)->with('options');
+                  }]);
             },
-            'questions' => function($q) {
-                $q->where('status', 1)->with('options');
-            }
         ])->findOrFail($id);
 
         return view('admin.case-studies-bank.show', compact('caseStudy'));
@@ -493,7 +510,7 @@ public function store(Request $request)
     public function destroy($id)
     {
          try {
-             $caseStudy = CaseStudy::with('section.exam', 'questions')->findOrFail($id);
+             $caseStudy = CaseStudy::with(['section.exam', 'questions', 'visits'])->findOrFail($id);
 
              if ($caseStudy->section && $caseStudy->section->exam && $caseStudy->section->exam->is_active == 1) {
                  if (request()->wantsJson()) {
@@ -507,10 +524,14 @@ public function store(Request $request)
              $saved = $caseStudy->save();
              
              if ($saved) {
-                 // Cascade soft delete: Deactivate related Questions
-                 foreach ($caseStudy->questions as $question) {
-                     $question->update(['status' => 0]);
-                 }
+                  // Cascade soft delete
+                  foreach ($caseStudy->visits as $visit) {
+                      $visit->update(['status' => 0]);
+                  }
+                  
+                  foreach ($caseStudy->questions as $question) {
+                      $question->update(['status' => 0]);
+                  }
 
                  if (request()->wantsJson()) {
                       return response()->json(['success' => true, 'message' => 'Case Study deleted successfully.']);

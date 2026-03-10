@@ -36,6 +36,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
+
+            @if($hasActiveExams)
+                <div class="alert alert-warning border-warning d-flex align-items-center mb-4" role="alert">
+                    <i class="ti ti-alert-triangle f-24 me-3"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Standard Locked</h6>
+                        <p class="mb-0 small">This standard is currently being used by <strong>active exams</strong>. You cannot add, remove, or modify categories/areas until those exams are deactivated.</p>
+                    </div>
+                </div>
+            @endif
             
             <!-- Basic Information -->
             <div class="card">
@@ -48,7 +58,8 @@
                             <div class="mb-3">
                                 <label class="form-label">Enter Standard Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
-                                       placeholder="Enter Standard Name" value="{{ old('name', $standard->name) }}" required>
+                                       placeholder="Enter Standard Name" value="{{ old('name', $standard->name) }}" required
+                                       {{ $hasActiveExams ? 'readonly' : '' }}>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -58,7 +69,8 @@
                             <div class="mb-3">
                                 <label class="form-label">Description (Optional)</label>
                                 <input type="text" name="description" class="form-control" 
-                                       placeholder="Brief description" value="{{ old('description', $standard->description) }}">
+                                       placeholder="Brief description" value="{{ old('description', $standard->description) }}"
+                                       {{ $hasActiveExams ? 'readonly' : '' }}>
                             </div>
                         </div>
                     </div>
@@ -69,7 +81,7 @@
             <div id="categoriesContainer"></div>
 
             <div class="mb-4">
-                <button type="button" class="btn btn-outline-primary" onclick="addCategory()">
+                <button type="button" class="btn btn-outline-primary" onclick="addCategory()" {{ $hasActiveExams ? 'disabled' : '' }}>
                     <i class="ti ti-folder-plus me-1"></i> Add Another Category
                 </button>
             </div>
@@ -81,7 +93,7 @@
                         <a href="{{ route('admin.exam-standards.index') }}" class="btn btn-secondary">
                             <i class="ti ti-arrow-left me-1"></i> Cancel
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" {{ $hasActiveExams ? 'disabled' : '' }}>
                             <i class="ti ti-check me-1"></i> Update Exam Standard
                         </button>
                     </div>
@@ -106,6 +118,7 @@
 <script>
     // Initialize data from Old Input or Database
     const initialCategories = @json($initialData);
+    const hasActiveExams = @json($hasActiveExams);
 
     let categoryCount = 0;
 
@@ -142,13 +155,13 @@
                 <div class="mb-3">
                     <label class="form-label">Enter Category Name <span class="text-danger">*</span></label>
                     <input type="text" name="categories[${index}][name]" class="form-control category-name-input" 
-                           placeholder="Enter Category Name" value="${catName}" required>
+                           placeholder="Enter Category Name" value="${catName}" required ${hasActiveExams ? 'readonly' : ''}>
                 </div>
                 
                 <label class="form-label">Content Areas <span class="text-danger">*</span></label>
                 <div class="areas-container" id="areas-${index}"></div>
                 
-                <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-area-btn" onclick="addArea(${index})">
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-area-btn" onclick="addArea(${index})" ${hasActiveExams ? 'disabled' : ''}>
                     <i class="ti ti-plus"></i> Add Content Area
                 </button>
 
@@ -185,14 +198,14 @@
             <input type="hidden" name="categories[${catIndex}][areas][${areaIndex}][id]" class="area-id-input" value="${areaId}">
             <div class="col-md-7">
                 <input type="text" name="categories[${catIndex}][areas][${areaIndex}][name]" 
-                       class="form-control area-name-input" placeholder="Area Name" value="${name}" required>
+                       class="form-control area-name-input" placeholder="Area Name" value="${name}" required ${hasActiveExams ? 'readonly' : ''}>
             </div>
             <div class="col-md-4">
                  <div class="input-group">
                     <span class="input-group-text">Pts</span>
                     <input type="number" name="categories[${catIndex}][areas][${areaIndex}][max_points]" 
                            class="form-control max-points-input" placeholder="Max" min="0" 
-                           value="${maxPoints}" required oninput="updateTotal(${catIndex})">
+                           value="${maxPoints}" required oninput="updateTotal(${catIndex})" ${hasActiveExams ? 'readonly' : ''}>
                  </div>
             </div>
             <div class="col-md-1">
@@ -206,14 +219,43 @@
     }
 
     function removeCategory(btn) {
-        const card = btn.closest('.category-card');
-        if (card) {
-            card.remove();
-            updateCategoryNumbers();
+        if (hasActiveExams) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action Blocked',
+                text: 'This standard is being used by an active exam and cannot be modified. Please deactivate the associated exam(s) first.'
+            });
+            return;
         }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This will remove the category and all its content areas. You'll need to save the standard to apply changes.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const card = btn.closest('.category-card');
+                if (card) {
+                    card.remove();
+                    updateCategoryNumbers();
+                }
+            }
+        });
     }
 
     function removeArea(btn, catIndex) {
+        if (hasActiveExams) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action Blocked',
+                text: 'This standard is being used by an active exam and cannot be modified. Please deactivate the associated exam(s) first.'
+            });
+            return;
+        }
+
         const container = btn.closest('.areas-container');
         if(!container) return;
 
@@ -225,9 +267,22 @@
             });
             return;
         }
-        btn.closest('.area-row').remove();
-        reindexAreas(catIndex);
-        updateTotal(catIndex);
+
+        Swal.fire({
+            title: 'Remove Content Area?',
+            text: "Are you sure you want to remove this content area?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                btn.closest('.area-row').remove();
+                reindexAreas(catIndex);
+                updateTotal(catIndex);
+            }
+        });
     }
 
     function reindexAreas(catIndex) {

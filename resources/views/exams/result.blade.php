@@ -179,7 +179,7 @@
     }
 
     .rp-donut-pct {
-        font-size: 1.9rem;
+        font-size: 1.5rem;
         font-weight: 900;
         color: #ffffff;
         line-height: 1;
@@ -197,7 +197,7 @@
     /* ── STAT STRIP ──────────────────────────────── */
     .rp-stats {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 0;
         background: #ffffff;
         border-radius: 18px;
@@ -556,8 +556,7 @@
                                 style="transition: stroke-dashoffset 1.5s cubic-bezier(.23,1,.32,1);"/>
                     </svg>
                     <div class="rp-donut-center">
-                        <span class="rp-donut-pct">{{ round($displayPercentage) }}<small style="font-size:1rem;font-weight:600;">%</small></span>
-                        <span class="rp-donut-label">Score</span>
+                        <span class="rp-donut-pct">{{ round($totalEarnedAggregated) }}<small style="font-size:0.65rem;font-weight:600; display:block; margin-top:1px;">pts</small></span>
                     </div>
                 </div>
             </div>
@@ -569,10 +568,6 @@
         <div class="rp-stat">
             <div class="rp-stat-val">{{ round($totalEarnedAggregated) }}</div>
             <div class="rp-stat-label">Points Earned</div>
-        </div>
-        <div class="rp-stat">
-            <div class="rp-stat-val neutral">{{ $passingThreshold }}</div>
-            <div class="rp-stat-label">Passing Threshold</div>
         </div>
         <div class="rp-stat">
             <div class="rp-stat-val neutral">{{ $totalMaxPoints }}</div>
@@ -611,9 +606,6 @@
                         {{-- Per-category progress bar --}}
                         <div class="rp-cat-progress">
                             <div class="rp-cat-progress-bar" style="width:{{ min(100, $catPct) }}%;"></div>
-                        </div>
-                        <div style="font-size:0.7rem; color:{{ $passed ? '#059669' : '#dc2626' }}; font-weight:600; margin-top:5px;">
-                            {{ $data['earned_points'] }} pts achieved · Target: {{ $data['threshold_points'] }} pts
                         </div>
                     </div>
 

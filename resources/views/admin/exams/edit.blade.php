@@ -140,12 +140,15 @@
                     @endphp
 
                     <!-- Overall Progress -->
-                    <div class="bg-light-subtle rounded-3 p-3 mb-4 border border-dashed border-primary-subtle">
-                        <div class="row align-items-center">
+                    <div class="bg-white rounded-3 p-4 mb-4 border border-light-subtle shadow-sm position-relative overflow-hidden">
+                        <!-- Decorative left border -->
+                        <div class="position-absolute top-0 bottom-0 start-0 {{ $isValidStatus ? 'bg-success' : 'bg-warning' }}" style="width: 4px;"></div>
+                        
+                        <div class="row align-items-center ps-2">
                             <div class="col">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="fw-semibold text-dark">Overall Exam Capacity</span>
-                                    <span class="badge {{ $isValidStatus ? 'bg-success' : 'bg-warning' }} rounded-pill px-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-bold text-dark fs-5">Overall Exam Capacity</span>
+                                    <span class="badge {{ $isValidStatus ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' }} rounded-pill px-3 py-2 fw-bold fs-6">
                                         @if($expectedTotal > 0)
                                             {{ $totalQuestions }} / {{ $expectedTotal }} Points ({{ $progressPercent }}%)
                                         @else
@@ -154,7 +157,7 @@
                                     </span>
                                 </div>
                                 @if($expectedTotal > 0)
-                                <div class="progress rounded-pill overflow-hidden shadow-none mb-2" style="height: 12px; background: rgba(0,0,0,0.05);">
+                                <div class="progress rounded-pill overflow-hidden shadow-none mb-3" style="height: 14px; background: rgba(0,0,0,0.04);">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated {{ $isValidStatus ? 'bg-success' : 'bg-warning' }}" 
                                          role="progressbar" 
                                          style="width: {{ min($progressPercent, 100) }}%;" 
@@ -164,94 +167,83 @@
                                     </div>
                                 </div>
                                 @endif
-                                <div class="d-flex align-items-center">
+                                <div class="d-flex align-items-center bg-light p-2 rounded-2">
                                     @if(!$isValidStatus)
-                                        <i class="ti ti-alert-triangle text-warning me-2 fs-5"></i>
-                                        <span class="small text-warning">
+                                        <i class="ti ti-alert-triangle text-warning me-2 fs-4"></i>
+                                        <span class="text-dark fw-medium">
                                             @if($expectedTotal > 0 && $expectedTotal != $totalQuestions)
                                                 @if($expectedTotal > $totalQuestions)
-                                                    Action required: Add {{ $expectedTotal - $totalQuestions }} more points
+                                                    Action required: <span class="text-warning fw-bold">Add {{ $expectedTotal - $totalQuestions }} more points</span>
                                                 @else
-                                                    Action required: Remove {{ $totalQuestions - $expectedTotal }} points
+                                                    Action required: <span class="text-danger fw-bold">Remove {{ $totalQuestions - $expectedTotal }} points</span>
                                                 @endif
                                             @else
                                                 Action required: <strong class="text-danger">Questions are not properly categorized</strong> (See breakdown below)
                                             @endif
                                         </span>
                                     @else
-                                        <i class="ti ti-circle-check text-success me-2 fs-5"></i>
-                                        <span class="small text-success fw-medium">All requirements met! This exam is ready to be published.</span>
+                                        <i class="ti ti-circle-check text-success me-2 fs-4"></i>
+                                        <span class="text-dark fw-bold">All requirements met! This exam is ready to be published.</span>
                                     @endif
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('admin.questions.index', ['exam_id' => $exam->id]) }}" class="btn btn-sm btn-primary px-3 rounded-pill">
+                                <a href="{{ route('admin.questions.index', ['exam_id' => $exam->id]) }}" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm">
                                     <i class="ti ti-settings me-1"></i> Manage Questions
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Compliance Guidance (New) -->
-                    @if(!$isValidStatus && !empty($validation['compliance_guidance']))
-                    <div class="mt-2 mb-4 p-3 bg-light-warning border border-warning-subtle rounded-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="text-warning-emphasis fw-bold mb-0">
-                                <i class="ti ti-bulb me-1"></i> Question Quantity Guide (To Achieve Compliance)
-                            </h6>
-                        </div>
-                        <ul class="list-unstyled mb-0 vstack gap-2">
-                            @foreach($validation['compliance_guidance'] as $guide)
-                            <li class="small d-flex align-items-center">
-                                <span class="badge bg-warning text-dark me-2">{{ $guide['count'] }} Qs</span>
-                                <span>
-                                    Add questions with: 
-                                    <strong class="text-primary">{{ $guide['cat1_area'] ?? 'Any Cat 1 Area' }}</strong> 
-                                    + 
-                                    <strong class="text-success">{{ $guide['cat2_area'] ?? 'Any Cat 2 Area' }}</strong>
-                                </span>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
+
 
                     <!-- Detailed Breakdown Content -->
                     <div id="progressDetails">
-                    <div class="row">
+                    <div class="row g-4">
                         @php
                             $groupedAreas = collect($validation['content_areas'])->groupBy('category');
                         @endphp
 
                         @foreach($groupedAreas as $categoryName => $areas)
-                        <div class="col-md-6 mb-4">
-                            <div class="h-100 p-3 bg-white border rounded-3 border-light-subtle">
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="ti ti-category-2 text-primary me-2 f-18"></i>
-                                    <h6 class="mb-0 fw-bold">{{ $categoryName }}</h6>
+                        <div class="col-md-6">
+                            <div class="h-100 bg-white border rounded-2 shadow-sm overflow-hidden">
+                                <div class="bg-light px-3 py-2 border-bottom d-flex align-items-center">
+                                    <div class="bg-white p-1 rounded-1 shadow-sm me-2 border border-light">
+                                        <i class="ti ti-category text-primary"></i>
+                                    </div>
+                                    <h6 class="mb-0 fw-bold text-dark fs-6">{{ $categoryName }}</h6>
                                 </div>
-                                <div class="vstack gap-3">
+                                <div class="p-3 vstack gap-3">
                                     @foreach($areas as $area)
                                     <div class="content-area-item">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <span class="small text-secondary fw-semibold">{{ $area['name'] }}</span>
-                                            <span class="small {{ $area['valid'] ? 'text-success' : 'text-danger' }} fw-bold">
-                                                {{ $area['current'] }} / {{ $area['required'] }}
-                                            </span>
+                                        <div class="d-flex justify-content-between align-items-end mb-2">
+                                            <span class="text-dark fw-bold" style="font-size: 14px;">{{ $area['name'] }}</span>
+                                            <div class="text-end">
+                                                <span class="fs-5 {{ $area['valid'] ? 'text-success' : 'text-danger' }} fw-bold lh-1">
+                                                    {{ $area['current'] }}
+                                                </span>
+                                                <span class="text-muted small fw-medium">/ {{ $area['required'] }}</span>
+                                            </div>
                                         </div>
-                                        <div class="progress rounded-pill" style="height: 6px; background: rgba(0,0,0,0.03);">
-                                            <div class="progress-bar {{ $area['valid'] ? 'bg-success' : 'bg-warning' }}" 
+                                        <div class="progress rounded-pill overflow-hidden" style="height: 8px; background: rgba(0,0,0,0.06);">
+                                            <div class="progress-bar {{ $area['valid'] ? 'bg-success' : 'bg-warning progress-bar-striped progress-bar-animated' }}" 
                                                  style="width: {{ $area['required'] > 0 ? min(($area['current'] / $area['required']) * 100, 100) : 0 }}%;"></div>
                                         </div>
-                                        <div class="d-flex justify-content-between mt-1">
-                                            <small class="text-muted opacity-75" style="font-size: 10px;">{{ $area['required'] }} points requirement</small>
+                                        <div class="d-flex justify-content-between mt-2 align-items-center">
+                                            <span class="badge bg-light text-muted border fw-normal" style="font-size: 11px;">{{ $area['required'] }} point requirement</span>
                                             @if(!$area['valid'])
-                                                <small class="text-warning fw-medium" style="font-size: 10px;">
-                                                    <i class="ti ti-arrow-move-right"></i> {{ $area['required'] - $area['current'] > 0 ? 'Need ' . ($area['required'] - $area['current']) . ' pts' : 'Exceeds by ' . ($area['current'] - $area['required']) . ' pts' }}
-                                                </small>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis fw-bold" style="font-size: 11px;">
+                                                    <i class="ti ti-alert-circle me-1"></i>
+                                                    {{ $area['required'] - $area['current'] > 0 ? 'Short by ' . ($area['required'] - $area['current']) . ' pts' : 'Exceeds by ' . ($area['current'] - $area['required']) . ' pts' }}
+                                                </span>
+                                            @else
+                                                <span class="text-success small fw-bold" style="font-size: 11px;"><i class="ti ti-check me-1"></i>Verified</span>
                                             @endif
                                         </div>
                                     </div>
+                                    @if(!$loop->last)
+                                        <hr class="my-0 border-light opacity-50">
+                                    @endif
                                     @endforeach
                                 </div>
                             </div>
@@ -290,12 +282,12 @@
                             </button>
                         </form>
                     @endif
-                    <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#examConfigurationBody" aria-expanded="false">
+                    <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle" type="button" data-bs-toggle="collapse" data-bs-target="#examConfigurationBody" aria-expanded="true">
                         <i class="ti ti-chevron-down"></i>
                     </button>
                 </div>
             </div>
-            <div class="collapse" id="examConfigurationBody">
+            <div class="collapse show" id="examConfigurationBody">
                 <div class="card-body">
                 <form action="{{ isset($exam) ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}" method="POST">
                     @csrf
@@ -680,6 +672,32 @@
 <script>
 let currentExamId = "{{ $exam->id }}";
 let activeSectionId = null;
+let isExamActive = {{ $exam->is_active ? 'true' : 'false' }};
+
+function showLockedModal(action = 'modify') {
+    Swal.fire({
+        title: 'Exam is Published!',
+        text: `This exam is currently published and locked. You must unpublish the exam before you can ${action} it.`,
+        icon: 'lock',
+        showCancelButton: true,
+        confirmButtonColor: '#ffc107',
+        confirmButtonText: '<i class="ti ti-eye-off me-1"></i> Unpublish Now',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show a simple loading state and submit directly
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Unpublishing exam, please wait.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            document.getElementById('status-toggle-form').submit();
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     loadExamSections().then(() => {
@@ -858,7 +876,7 @@ function renderSectionContent(caseStudies) {
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle" onclick="editCaseStudy(${cs.id})"><i class="ti ti-edit"></i></button>
-                    <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="addVisit(${cs.id})"><i class="ti ti-plus me-1"></i> Add Visit</button>
+                    <a href="/admin/case-studies-bank/${cs.id}" class="btn btn-sm btn-icon btn-light-info rounded-circle" title="View Case Study"><i class="ti ti-eye"></i></a>
                     <button class="btn btn-sm btn-icon btn-light-danger rounded-circle" onclick="deleteCaseStudy(${cs.id})"><i class="ti ti-trash"></i></button>
                 </div>
             </div>
@@ -946,14 +964,26 @@ function confirmStatusChange() {
 
 // Section CRUD
 function openCreateSectionModal() {
+    if (isExamActive) {
+        showLockedModal('add sections');
+        return;
+    }
     window.location.href = `/admin/sections/create?exam_id=${currentExamId}&return_url=${getReturnUrl()}`;
 }
 
 function editSection(id) {
+    if (isExamActive) {
+        showLockedModal('edit sections');
+        return;
+    }
     window.location.href = `/admin/sections/${id}/edit?return_url=${getReturnUrl()}`;
 }
 
 async function deleteSection(id) {
+    if (isExamActive) {
+        showLockedModal('delete sections');
+        return;
+    }
     const result = await Swal.fire({
         title: 'Are you sure?',
         text: "Section and its contents will be hidden.",
@@ -1061,6 +1091,10 @@ async function loadDeletedSections() {
 }
 
 async function restoreSection(id) {
+    if (isExamActive) {
+        showLockedModal('restore sections');
+        return;
+    }
     const result = await Swal.fire({
         title: 'Restore Section?',
         text: 'This section will be restored and visible again.',
@@ -1096,6 +1130,10 @@ async function restoreSection(id) {
 
 // Case Study CRUD
 function openCreateCaseStudyModal() {
+    if (isExamActive) {
+        showLockedModal('add case studies');
+        return;
+    }
     if (!activeSectionId) {
         Swal.fire('Select Section', 'Please select a section before adding a case study.', 'warning');
         return;
@@ -1104,10 +1142,18 @@ function openCreateCaseStudyModal() {
 }
 
 function editCaseStudy(id) {
+    if (isExamActive) {
+        showLockedModal('edit case studies');
+        return;
+    }
     window.location.href = `/admin/case-studies-bank/${id}/edit?return_url=${getReturnUrl()}`;
 }
 
 async function deleteCaseStudy(id) {
+    if (isExamActive) {
+        showLockedModal('delete case studies');
+        return;
+    }
     const result = await Swal.fire({
         title: 'Delete Case Study?',
         text: "This will remove all visits and questions inside.",
@@ -1151,6 +1197,10 @@ async function deleteCaseStudy(id) {
 // Visit CRUD - handled in the second script block below
 
 async function deleteVisit(id) {
+    if (isExamActive) {
+        showLockedModal('delete visits');
+        return;
+    }
     const result = await Swal.fire({
         title: 'Delete Visit?',
         text: "This will remove all questions inside.",
@@ -1194,8 +1244,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const isChecked = forceEditCheckbox.checked;
         
         formInputs.forEach(input => {
-            // Skip the back button, the status toggle button, and EXAM CODE (always readonly)
-            if (input.closest('.page-header') || input.id === 'addNewTypeBtn' || input.id === 'status-toggle-form' || input.name === 'exam_code') {
+            // Skip header buttons, the back button, the status toggle button, and EXAM CODE
+            if (input.closest('.page-header') || input.closest('#status-toggle-form') || input.id === 'addNewTypeBtn' || input.name === 'exam_code') {
                 return;
             }
 
@@ -1276,6 +1326,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 
 function addQuestion(visitId) {
+    if (isExamActive) {
+        showLockedModal('add questions');
+        return;
+    }
     window.location.href = `/admin/questions/create?visit_id=${visitId}&return_url=${getReturnUrl()}`;
 }
 
@@ -1358,6 +1412,10 @@ const visitModal = new bootstrap.Modal(document.getElementById('visitModal'));
 const visitForm = document.getElementById('visitForm');
 
 function addVisit(csId) {
+    if (isExamActive) {
+        showLockedModal('add visits');
+        return;
+    }
     visitForm.reset();
     document.getElementById('modal_visit_cs_id').value = csId;
     document.getElementById('modal_visit_id').value = '';
@@ -1366,6 +1424,10 @@ function addVisit(csId) {
 }
 
 async function editVisit(id) {
+    if (isExamActive) {
+        showLockedModal('edit visits');
+        return;
+    }
     try {
         const response = await fetch(`/admin/api/visits-detail/${id}`);
         const data = await response.json();
@@ -1437,10 +1499,18 @@ function getReturnUrl() {
 }
 
 function editQuestion(id) {
+    if (isExamActive) {
+        showLockedModal('edit questions');
+        return;
+    }
     window.location.href = `/admin/questions/${id}/edit?return_url=${getReturnUrl()}`;
 }
 
 async function deleteQuestion(id) {
+    if (isExamActive) {
+        showLockedModal('delete questions');
+        return;
+    }
     const result = await Swal.fire({
         title: 'Delete Question?',
         text: "This action cannot be undone.",

@@ -101,8 +101,6 @@
                         <thead>
                             <tr>
                                 <th>Exam Name</th>
-                                <th>Category</th>
-                                <th>Passing Scores</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -111,12 +109,6 @@
                             <tr>
                                 <td>
                                     <a href="{{ route('admin.exams.show', $exam->id) }}">{{ $exam->name }}</a>
-                                </td>
-                                <td>{{ $exam->category->name ?? 'N/A' }}</td>
-                                <td>
-                                    <small>
-                                        Overall: {{ $exam->passing_score_overall }} pts
-                                    </small>
                                 </td>
                                 <td>
                                     @if($exam->is_active)

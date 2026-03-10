@@ -210,12 +210,11 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Student</th>
+                                <th>Students</th>
                                 <th>Exam</th>
                                 <th>Score</th>
                                 <th>Duration</th>
                                 <th>Date</th>
-                                <th>Warnings</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -223,14 +222,9 @@
                             @forelse($attempts as $attempt)
                             <tr>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="avtar avtar-s bg-light-secondary text-secondary">
-                                            {{ strtoupper(substr($attempt->student_name ?? 'U', 0, 1)) }}
-                                        </div>
-                                        <div class="ms-3">
-                                            <h6 class="mb-0">{{ $attempt->student_name ?? 'Unknown User' }}</h6>
-                                            <small class="text-muted">{{ $attempt->student_email ?? '' }}</small>
-                                        </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ $attempt->student_name ?? 'Unknown User' }}</h6>
+                                        <small class="text-muted">{{ $attempt->student_email ?? '' }}</small>
                                     </div>
                                 </td>
                                 <td>{{ $attempt->exam_name ?? 'N/A' }}</td>
@@ -247,13 +241,6 @@
                                     <span class="text-muted fw-semibold">{{ $attempt->formatted_duration }}</span>
                                 </td>
                                 <td>{{ $attempt->created_at->format('M d, Y H:i') }}</td>
-                                <td>
-                                    @if($attempt->tab_switch_count > 0)
-                                        <span class="badge bg-light-warning text-warning">{{ $attempt->tab_switch_count }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
                                 <td class="text-end">
                                     <a href="{{ route($routePrefix . '.attempts.show', $attempt->id) }}" class="btn btn-icon btn-link-primary btn-sm">
                                         <i class="ti ti-eye"></i>

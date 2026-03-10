@@ -72,6 +72,8 @@ class VisitController extends Controller
         }
 
         $visit->update(['status' => 0]);
+        // Cascade soft delete to questions
+        $visit->questions()->update(['status' => 0]);
         return response()->json(['success' => true]);
     }
 }

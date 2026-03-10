@@ -106,9 +106,15 @@ class QuestionController extends Controller
         }
         
         $caseStudies = $caseStudiesQuery->orderBy('title')->get();
-        
-        return view('admin.questions.index', compact('questions', 'caseStudies', 'exams', 'examCategories', 'certificationTypes'));
+    
+    $selectedExamActive = false;
+    if ($request->filled('exam')) {
+        $selectedExamActive = Exam::where('id', $request->exam)->where('is_active', 1)->exists();
     }
+    
+    return view('admin.questions.index', compact('questions', 'caseStudies', 'exams', 'examCategories', 'certificationTypes', 'selectedExamActive'));
+}
+    
 
     public function create(Request $request)
     {

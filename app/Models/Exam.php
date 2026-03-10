@@ -70,9 +70,17 @@ class Exam extends Model
     // Custom helper to get all questions in this exam
     public function getAllQuestions()
     {
-        return Question::whereHas('visit.caseStudy.section', function($q) {
-            $q->where('exam_id', $this->id);
-        })->where('status', 1);
+        return Question::where('questions.status', 1)
+            ->whereHas('visit', function($q) {
+                $q->where('status', 1)
+                  ->whereHas('caseStudy', function($q) {
+                      $q->where('status', 1)
+                        ->whereHas('section', function($q) {
+                            $q->where('exam_id', $this->id)
+                              ->where('status', 1);
+                        });
+                  });
+            });
     }
 
     /**
@@ -105,11 +113,28 @@ class Exam extends Model
         // Calculate Uncategorized Questions
         $standardCategoryIds = $standard->categories->pluck('id')->toArray();
         $uncategorizedCount = 0;
-
         foreach ($questions as $q) {
             $hasValidTag = $q->tags->whereIn('score_category_id', $standardCategoryIds)->isNotEmpty();
             if (!$hasValidTag) {
                 $uncategorizedCount++;
+            }
+        }
+
+        // Calculate Uncategorized Questions Grouped by Category
+        $uncategorizedByCategory = [];
+        foreach ($standard->categories as $cat) {
+            $uncategorizedByCategory[$cat->id] = [];
+            $catAreaIds = $cat->contentAreas->pluck('id')->toArray();
+            
+            foreach ($questions as $q) {
+                $hasTagInCat = $q->tags->whereIn('content_area_id', $catAreaIds)->isNotEmpty();
+                if (!$hasTagInCat) {
+                    $uncategorizedByCategory[$cat->id][] = [
+                        'id' => $q->id,
+                        'text' => strip_tags($q->question_text),
+                        'tags_count' => $q->tags->count()
+                    ];
+                }
             }
         }
 
@@ -120,6 +145,7 @@ class Exam extends Model
                         'id' => $area->id,
                         'name' => $area->name,
                         'category' => $category->name,
+                        'category_id' => $category->id,
                         'required' => $area->max_points,
                         'allowed_points' => $area->max_points,
                         'current' => 0,
@@ -135,7 +161,8 @@ class Exam extends Model
                 'content_areas' => $contentAreasData,
                 'sections' => [],
                 'total_questions' => 0,
-                'uncategorized_count' => 0
+                'uncategorized_count' => 0,
+                'uncategorized_by_category' => []
             ];
         }
 
@@ -174,6 +201,7 @@ class Exam extends Model
                     'id' => $area->id,
                     'name' => $area->name,
                     'category' => $category->name,
+                    'category_id' => $category->id,
                     'required' => $maxPoints,
                     'allowed_points' => $maxPoints, // For show.blade.php compatibility
                     'current' => $assignedPoints,
@@ -185,47 +213,34 @@ class Exam extends Model
             }
         }
 
-        // MISSING ANALYSIS: Find pairs of missing points
+        // DYNAMIC GUIDANCE: List missing points for ALL content areas across ALL categories
         $guidance = [];
-        $cat1 = $standard->categories->where('category_number', 1)->first();
-        $cat2 = $standard->categories->where('category_number', 2)->first();
+        foreach ($contentAreasData as $area) {
+            if ($area['required'] > $area['current']) {
+                $need = $area['required'] - $area['current'];
+                $guidance[] = [
+                    'count' => $need,
+                    'category' => $area['category'],
+                    'area_name' => $area['name'],
+                    'message' => "Add {$need} points for '{$area['name']}' in '{$area['category']}'"
+                ];
+            }
+        }
 
-        if ($cat1 && $cat2) {
-            $cat1Gaps = collect($contentAreasData)->where('category', $cat1->name)->filter(fn($a) => $a['required'] > $a['current'])->values();
-            $cat2Gaps = collect($contentAreasData)->where('category', $cat2->name)->filter(fn($a) => $a['required'] > $a['current'])->values();
+        $grandTotalRequired = 0;
+        $grandTotalAchieved = 0;
+        $categorySummaries = [];
+
+        foreach ($contentAreasData as $area) {
+            $grandTotalRequired += $area['required'];
+            $grandTotalAchieved += $area['assigned_points'];
             
-            $tempCat1Gaps = $cat1Gaps->map(fn($a) => ['id' => $a['id'], 'name' => $a['name'], 'need' => $a['required'] - $a['current']])->toArray();
-            $tempCat2Gaps = $cat2Gaps->map(fn($a) => ['id' => $a['id'], 'name' => $a['name'], 'need' => $a['required'] - $a['current']])->toArray();
-
-            $i = 0; $j = 0;
-            while ($i < count($tempCat1Gaps) && $j < count($tempCat2Gaps)) {
-                $take = min($tempCat1Gaps[$i]['need'], $tempCat2Gaps[$j]['need']);
-                if ($take > 0) {
-                    $guidance[] = [
-                        'count' => $take,
-                        'cat1_area' => $tempCat1Gaps[$i]['name'],
-                        'cat2_area' => $tempCat2Gaps[$j]['name']
-                    ];
-                    $tempCat1Gaps[$i]['need'] -= $take;
-                    $tempCat2Gaps[$j]['need'] -= $take;
-                }
-                if ($tempCat1Gaps[$i]['need'] <= 0) $i++;
-                if (isset($tempCat2Gaps[$j]) && $tempCat2Gaps[$j]['need'] <= 0) $j++;
+            $catName = $area['category'];
+            if (!isset($categorySummaries[$catName])) {
+                $categorySummaries[$catName] = ['required' => 0, 'achieved' => 0];
             }
-
-            // Remaining Gaps (if any category needs more than the other)
-            while ($i < count($tempCat1Gaps)) {
-                if ($tempCat1Gaps[$i]['need'] > 0) {
-                    $guidance[] = ['count' => $tempCat1Gaps[$i]['need'], 'cat1_area' => $tempCat1Gaps[$i]['name'], 'cat2_area' => null];
-                }
-                $i++;
-            }
-            while ($j < count($tempCat2Gaps)) {
-                if ($tempCat2Gaps[$j]['need'] > 0) {
-                    $guidance[] = ['count' => $tempCat2Gaps[$j]['need'], 'cat1_area' => null, 'cat2_area' => $tempCat2Gaps[$j]['name']];
-                }
-                $j++;
-            }
+            $categorySummaries[$catName]['required'] += $area['required'];
+            $categorySummaries[$catName]['achieved'] += $area['assigned_points'];
         }
 
         return [
@@ -244,7 +259,12 @@ class Exam extends Model
                 ])
             ]),
             'total_questions' => $totalQuestionsCount,
-            'uncategorized_count' => $uncategorizedCount
+            'total_exam_points' => $grandTotalAchieved, // Sum of all category points
+            'grand_total_required' => $grandTotalRequired,
+            'grand_total_achieved' => $grandTotalAchieved,
+            'category_summaries' => $categorySummaries,
+            'uncategorized_count' => $uncategorizedCount,
+            'uncategorized_by_category' => $uncategorizedByCategory
         ];
     }
 }

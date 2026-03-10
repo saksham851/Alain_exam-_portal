@@ -196,7 +196,7 @@ class ExamController extends Controller
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'exam_standard_id' => $request->exam_standard_id,
-            'passing_score_overall' => 0,
+            'passing_score_overall' => 65,
             'total_questions' => $request->total_questions,
             'status' => 1,
             'is_active' => 0, // New exams start as inactive
@@ -311,7 +311,7 @@ class ExamController extends Controller
             'description' => $request->description,
             'duration_minutes' => $request->duration_minutes,
             'exam_standard_id' => $request->exam_standard_id,
-            'passing_score_overall' => 0,
+            'passing_score_overall' => 65,
             'total_questions' => $request->total_questions,
         ]);
 
@@ -451,7 +451,8 @@ class ExamController extends Controller
             'sections.caseStudies.visits.questions' => function($query) {
                 $query->where('questions.status', 1);
             },
-            'sections.caseStudies.visits.questions.options'
+            'sections.caseStudies.visits.questions.options',
+            'sections.caseStudies.visits.questions.tags'
         ])->findOrFail($id);
 
         // Filter to get only active sections
@@ -559,6 +560,15 @@ class ExamController extends Controller
                                 'is_correct' => $option->is_correct,
                             ]);
                         }
+
+                        // Clone all tags for this question
+                        foreach ($question->tags as $tag) {
+                            \App\Models\QuestionTag::create([
+                                'question_id' => $newQuestion->id,
+                                'score_category_id' => $tag->score_category_id,
+                                'content_area_id' => $tag->content_area_id,
+                            ]);
+                        }
                     }
                 }
             }
@@ -636,22 +646,26 @@ class ExamController extends Controller
 
         // If trying to PUBLISH (activate), run validation check
         if ($newStatus == 1) {
-            // 1. Check if exam has at least one section
-            if ($exam->sections->isEmpty()) {
-                return back()->with('error', 'Cannot publish: The exam must have at least one section.');
+            $activeSections = $exam->sections->where('status', 1);
+
+            // 1. Check if exam has at least one active section
+            if ($activeSections->isEmpty()) {
+                return back()->with('error', 'Cannot publish: The exam must have at least one active section.');
             }
 
-            // 2. Check each section for at least one case study
-            foreach ($exam->sections as $section) {
-                if ($section->caseStudies->isEmpty()) {
-                    return back()->with('error', "Cannot publish: '{$section->title}' must have at least one case study.");
+            // 2. Check each active section for at least one active case study
+            foreach ($activeSections as $section) {
+                $activeCaseStudies = $section->caseStudies->where('status', 1);
+
+                if ($activeCaseStudies->isEmpty()) {
+                    return back()->with('error', "Cannot publish: Section '{$section->title}' must have at least one active case study.");
                 }
 
-                // 3. Check each Case Study for at least one question
-                foreach ($section->caseStudies as $caseStudy) {
-                    if ($caseStudy->questions->isEmpty()) {
+                // 3. Check each Active Case Study for at least one active question
+                foreach ($activeCaseStudies as $caseStudy) {
+                    if ($caseStudy->questions->where('status', 1)->isEmpty()) {
                         $csTitle = $caseStudy->title ?? "Case Study";
-                        return back()->with('error', "Cannot publish: '{$csTitle}' in '{$section->title}' must have at least one question.");
+                        return back()->with('error', "Cannot publish: Case Study '{$csTitle}' in '{$section->title}' must have at least one active question. (Questions belong inside Visits)");
                     }
                 }
             }
@@ -706,6 +720,10 @@ class ExamController extends Controller
         
         if (!$exam->examStandard) {
             return response()->json(['success' => false, 'message' => 'No standard assigned to this exam.']);
+        }
+
+        if ($exam->is_active == 1) {
+            return response()->json(['success' => false, 'message' => 'Cannot auto-fix an active exam. Please unpublish it first.']);
         }
 
         $standard = $exam->examStandard;

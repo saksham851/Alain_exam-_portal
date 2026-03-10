@@ -609,31 +609,87 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if(comp.content_areas && comp.content_areas.length > 0) {
                         
-                        // Add Total Row
-                        const totalTr = document.createElement('tr');
-                        totalTr.innerHTML = `
-                            <td colspan="4" class="bg-primary-subtle text-primary border-bottom border-primary px-3 py-2 fw-bold">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span><i class="ti ti-chart-bar me-1"></i> Total Points in Exam: ${data.compliance.total_questions || 0}</span>
-                                    ${data.compliance.uncategorized_count > 0 ? `<span class="badge bg-danger"><i class="ti ti-alert-triangle me-1"></i> ${data.compliance.uncategorized_count} Uncategorized</span>` : ''}
+                        // Summary Stats Header (Professional Look)
+                        const summaryDiv = document.createElement('div');
+                        summaryDiv.className = 'bg-white rounded-3 border border-light-blue shadow-sm mb-4 overflow-hidden';
+                        
+                        let catBadges = '';
+                        if(data.compliance.category_summaries) {
+                            Object.keys(data.compliance.category_summaries).forEach(cat => {
+                                const stats = data.compliance.category_summaries[cat];
+                                const isCatPassed = stats.achieved >= stats.required;
+                                catBadges += `
+                                    <div class="px-3 py-2 border-end d-flex flex-column justify-content-center">
+                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 9px;">${cat}</div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="h5 mb-0 fw-bold ${isCatPassed ? 'text-success' : 'text-danger'}">${stats.achieved}</span>
+                                            <span class="small text-muted">/ ${stats.required} Pts</span>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        }
+
+                        summaryDiv.innerHTML = `
+                            <div class="d-flex align-items-stretch">
+                                ${catBadges}
+                                <div class="px-3 py-2 bg-light bg-opacity-50 flex-grow-1 d-flex align-items-center justify-content-between border-start">
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 9px;">Grand Total (Combined)</div>
+                                        <div class="h5 mb-0 fw-bold text-dark-blue">${data.compliance.grand_total_achieved} <small class="text-muted fw-normal">/ ${data.compliance.grand_total_required} pts</small></div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <div class="text-end">
+                                            <div class="small text-muted text-uppercase fw-bold mb-1" style="font-size: 9px;">Exam Items</div>
+                                            <div class="fw-bold text-dark">${data.compliance.total_questions} Qs</div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </td>
+                            </div>
                         `;
-                        tbody.appendChild(totalTr);
+                        
+                        const tableContainer = document.getElementById('complianceTableContainer');
+                        if(document.getElementById('complianceSummaryHeader')) {
+                            document.getElementById('complianceSummaryHeader').replaceWith(summaryDiv);
+                        } else {
+                            summaryDiv.id = 'complianceSummaryHeader';
+                            tableContainer.parentElement.insertBefore(summaryDiv, tableContainer);
+                        }
 
                         // Warning for Uncategorized
                         if(data.compliance.uncategorized_count > 0) {
                              const uncategorizedTr = document.createElement('tr');
-                             uncategorizedTr.innerHTML = `
-                                <td colspan="4" class="bg-warning-subtle text-warning-emphasis px-3 py-2 border-bottom">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <i class="ti ti-alert-triangle me-2"></i> <strong>Warning:</strong> ${data.compliance.uncategorized_count} questions are not assigned to any Content Area.
+                             
+                             let questionsHtml = `
+                                <div class="mt-2 vstack gap-2">
+                                    ${data.compliance.uncategorized_questions.slice(0, 10).map(q => `
+                                        <div class="p-2 border rounded bg-white small d-flex justify-content-between align-items-center shadow-sm">
+                                            <div class="text-truncate" style="max-width: 500px;">
+                                                <i class="ti ti-help text-muted me-1"></i>
+                                                <span class="text-dark fw-medium">${q.text}</span>
+                                            </div>
+                                            <a href="/admin/questions/${q.id}/edit?return_url=${encodeURIComponent(window.location.href)}" 
+                                               class="btn btn-xs btn-outline-primary fw-bold px-2 py-1" style="font-size: 10px;">
+                                               <i class="ti ti-tag me-1"></i>Fix Tags
+                                            </a>
                                         </div>
-                                        <button class="btn btn-sm btn-warning text-dark fw-bold" onclick="autoFixCompliance(window.currentExamId)">
-                                            <i class="ti ti-wand me-1"></i> Auto-Assign Questions
+                                    `).join('')}
+                                    ${data.compliance.uncategorized_questions.length > 10 ? `<div class="text-center py-1 small text-muted fw-bold">... and ${data.compliance.uncategorized_questions.length - 10} more questions need attention</div>` : ''}
+                                </div>
+                             `;
+
+                             uncategorizedTr.innerHTML = `
+                                <td colspan="4" class="bg-warning-subtle text-warning-emphasis px-3 py-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <i class="ti ti-alert-triangle me-1 fs-5"></i> 
+                                            <strong>Tagging Required:</strong> ${data.compliance.uncategorized_count} questions are not properly categorized.
+                                        </div>
+                                        <button class="btn btn-sm btn-warning text-dark fw-bold shadow-sm" onclick="autoFixCompliance(window.currentExamId)">
+                                            <i class="ti ti-wand me-1"></i> Auto-Assign Tags
                                         </button>
                                     </div>
+                                    ${questionsHtml}
                                 </td>
                              `;
                              tbody.appendChild(uncategorizedTr);
@@ -655,31 +711,87 @@ document.addEventListener('DOMContentLoaded', function() {
                              tbody.appendChild(headerTr);
 
                             // Render Items in Category
-                             grouped[category].forEach(area => {
-                                const tr = document.createElement('tr');
-                                const required = area.required !== undefined ? area.required : 'N/A';
-                                const percentage = area.percentage !== undefined ? area.percentage : 0;
-                                const current = area.current !== undefined ? area.current : 0;
-                                const areaPassed = area.valid; // Use the valid flag directly
-                                
-                                tr.innerHTML = `
-                                    <td class="ps-4 border-start border-3 border-light text-wrap" style="max-width: 300px;">
-                                        <span class="fw-bold text-dark">${area.name || 'Unknown Area'}</span>
-                                    </td>
-                                    <td>
-                                        <div class="small text-muted">Required: <span class="fw-bold">${required} pts</span></div>
-                                    </td>
-                                    <td>
-                                        <div class="h6 mb-0 ${areaPassed ? 'text-success' : 'text-danger'} fw-bold">${current} pts</div>
-                                    </td>
-                                    <td class="text-end">
-                                        ${areaPassed 
-                                            ? '<span class="badge bg-light-success text-success border border-success"><i class="ti ti-check me-1"></i> Pass</span>' 
-                                            : '<span class="badge bg-light-danger text-danger border border-danger"><i class="ti ti-x me-1"></i> Fail</span>'}
-                                    </td>
-                                `;
-                                tbody.appendChild(tr);
-                             });
+                              grouped[category].forEach(area => {
+                                 const tr = document.createElement('tr');
+                                 const required = area.required !== undefined ? area.required : 'N/A';
+                                 const current = area.current !== undefined ? area.current : 0;
+                                 const areaPassed = area.valid;
+                                 const catId = area.category_id;
+                                 
+                                 const fixables = (data.compliance.uncategorized_by_category && data.compliance.uncategorized_by_category[catId]) 
+                                                ? data.compliance.uncategorized_by_category[catId] 
+                                                : [];
+
+                                 tr.innerHTML = `
+                                     <td class="ps-4 py-3">
+                                         <div class="fw-bold text-dark fs-14 pb-1">${area.name || 'Unknown Area'}</div>
+                                         <span class="badge bg-secondary bg-opacity-10 text-secondary border-0" style="font-size: 10px;">${category}</span>
+                                     </td>
+                                     <td class="text-center">
+                                         <div class="small text-muted mb-1">Standard</div>
+                                         <div class="fw-bold text-dark fs-13">${required} pts</div>
+                                     </td>
+                                     <td class="text-center">
+                                         <div class="small text-muted mb-1">Achieved</div>
+                                         <div class="fw-bold fs-14 ${areaPassed ? 'text-success' : 'text-danger'}">${current} pts</div>
+                                     </td>
+                                     <td class="pe-4 text-end">
+                                         <div class="d-flex align-items-center justify-content-end gap-3">
+                                             ${!areaPassed && fixables.length > 0 ? `
+                                                 <button class="btn btn-sm btn-outline-primary fw-bold px-3 border-2" 
+                                                         style="font-size: 11px; border-radius: 6px;"
+                                                         onclick="toggleFixList('fix_row_${area.id}')">
+                                                     <i class="ti ti-adjustments-horizontal me-1"></i>Resolve Tags
+                                                 </button>
+                                             ` : ''}
+                                             ${areaPassed 
+                                                 ? '<span class="text-success fw-bold small"><i class="ti ti-circle-check me-1"></i>Verified</span>' 
+                                                 : '<span class="text-danger fw-bold small"><i class="ti ti-circle-x me-1"></i>Incomplete</span>'}
+                                         </div>
+                                     </td>
+                                 `;
+                                 tbody.appendChild(tr);
+
+                                 if(!areaPassed && fixables.length > 0) {
+                                     const fixTr = document.createElement('tr');
+                                     fixTr.id = `fix_row_${area.id}`;
+                                     fixTr.className = 'bg-light bg-opacity-50';
+                                     fixTr.style.display = 'none';
+                                     fixTr.innerHTML = `
+                                         <td colspan="4" class="px-4 py-3 border-bottom">
+                                             <div class="mb-3 d-flex align-items-center">
+                                                 <div class="vr me-2 text-primary opacity-25" style="width: 3px; border-radius: 2px;"></div>
+                                                 <h6 class="fw-bold text-muted small text-uppercase mb-0 ls-1">Untagged Questions for this Group</h6>
+                                             </div>
+                                             <div class="bg-white rounded border shadow-sm overflow-hidden">
+                                                 <div class="vstack">
+                                                     ${fixables.slice(0, 5).map(q => `
+                                                         <div class="p-3 d-flex justify-content-between align-items-center border-bottom last-border-0 hover-light">
+                                                             <div class="flex-grow-1 pe-4">
+                                                                 <div class="text-dark fw-medium small mb-1">${q.text}</div>
+                                                                 <div class="d-flex align-items-center gap-2">
+                                                                    <span class="text-muted" style="font-size: 11px;">
+                                                                        <i class="ti ti-help-circle me-1"></i>Awaiting Category Assignment
+                                                                    </span>
+                                                                 </div>
+                                                             </div>
+                                                             <a href="/admin/questions/${q.id}/edit?return_url=${encodeURIComponent(window.location.href)}" 
+                                                                class="btn btn-sm btn-light border fw-bold text-primary px-3" 
+                                                                style="font-size: 11px;">Fix Tagging</a>
+                                                         </div>
+                                                     `).join('')}
+                                                     ${fixables.length > 5 ? `
+                                                         <div class="p-2 bg-light text-center small text-muted fw-bold">
+                                                            <i class="ti ti-dots me-1"></i> Plus ${fixables.length - 5} other questions need tags
+                                                         </div>
+                                                     ` : ''}
+                                                 </div>
+                                             </div>
+                                         </td>
+                                     `;
+                                     tbody.appendChild(fixTr);
+                                 }
+                              });
                         });
                     }
                 }
@@ -690,6 +802,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 contentArea.style.display = 'block';
                 contentArea.innerHTML = '<div class="alert alert-danger">Error fetching compliance data. Please try again.</div>';
             });
+    }
+
+    function toggleFixList(rowId) {
+        const row = document.getElementById(rowId);
+        if(row) {
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+        }
     }
 
     function autoFixCompliance(examId) {
@@ -921,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-secondary" id="compliancePublishBtn" disabled onclick="if(window.currentPublishForm) window.currentPublishForm.submit()">
+                <button type="button" class="btn btn-secondary" id="compliancePublishBtn" disabled onclick="this.disabled=true; this.innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span> Publishing...'; if(window.currentPublishForm) window.currentPublishForm.submit()">
                     <i class="ti ti-lock me-1"></i> Cannot Publish
                 </button>
             </div>

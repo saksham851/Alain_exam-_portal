@@ -15,6 +15,63 @@
 </div>
 <!-- [ breadcrumb ] end -->
 
+<style>
+.categories-collapse {
+    display: none;
+    margin-top: 8px;
+}
+.categories-collapse.show {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.toggle-categories-btn {
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #5b73e8;
+    background-color: #eef0fd;
+}
+.toggle-categories-btn:hover {
+    background-color: #d8dcfb;
+    color: #3d55d4;
+}
+.toggle-categories-btn .toggle-icon {
+    transition: transform 0.25s ease;
+    font-size: 13px;
+}
+.toggle-categories-btn.expanded .toggle-icon {
+    transform: rotate(180deg);
+}
+.category-card {
+    border: 1px solid #e0e3f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background-color: #f8f9ff;
+    min-width: 150px;
+    transition: box-shadow 0.2s;
+}
+.category-card:hover {
+    box-shadow: 0 2px 8px rgba(91, 115, 232, 0.12);
+}
+.categories-count-badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background-color: #e8eafc;
+    color: #5b73e8;
+    font-weight: 600;
+}
+</style>
+
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -34,8 +91,7 @@
                         <thead>
                             <tr>
                                 <th>Standard Name</th>
-                                <th>Score Category 1</th>
-                                <th>Score Category 2</th>
+                                <th>Score Categories</th>
                                 <th>Exams Using</th>
                                 <th class="text-end" style="width: 100px;">Actions</th>
                             </tr>
@@ -50,14 +106,31 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <strong>{{ $standard->category1->name ?? 'N/A' }}</strong>
-                                    <br>
-                                    <small class="text-muted">{{ $standard->category1 ? $standard->category1->contentAreas->count() : 0 }} content areas</small>
-                                </td>
-                                <td>
-                                    <strong>{{ $standard->category2->name ?? 'N/A' }}</strong>
-                                    <br>
-                                    <small class="text-muted">{{ $standard->category2 ? $standard->category2->contentAreas->count() : 0 }} content areas</small>
+                                    @php $catCount = $standard->categories->count(); @endphp
+
+                                    {{-- Toggle Button --}}
+                                    <button 
+                                        class="toggle-categories-btn" 
+                                        onclick="toggleCategories(this, 'cats-{{ $standard->id }}')"
+                                        title="Click to expand/collapse categories">
+                                        <i class="ti ti-layout-list toggle-icon"></i>
+                                        <span class="btn-label">Show {{ $catCount }} {{ Str::plural('Category', $catCount) }}</span>
+                                        <i class="ti ti-chevron-down toggle-icon"></i>
+                                    </button>
+
+                                    {{-- Collapsible Categories --}}
+                                    <div class="categories-collapse" id="cats-{{ $standard->id }}">
+                                        @foreach($standard->categories as $category)
+                                            <div class="category-card">
+                                                <div class="fw-bold small text-uppercase text-muted">Category {{ $category->category_number }}</div>
+                                                <div class="fw-bold small">{{ $category->name }}</div>
+                                                <div class="small text-muted">
+                                                    <i class="ti ti-layers-subtract" style="font-size:11px;"></i>
+                                                    {{ $category->contentAreas->count() }} content areas
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="badge bg-light-info">{{ $standard->exams->count() }} exams</span>
@@ -102,7 +175,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4">
+                                <td colspan="4" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="ti ti-file-off f-40 mb-2"></i>
                                         <p>No exam standards found. Create your first standard!</p>
@@ -117,5 +190,26 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleCategories(btn, targetId) {
+    const target = document.getElementById(targetId);
+    const isExpanded = btn.classList.contains('expanded');
+    const label = btn.querySelector('.btn-label');
+    const catCount = target.querySelectorAll('.category-card').length;
+
+    if (isExpanded) {
+        // Collapse
+        target.classList.remove('show');
+        btn.classList.remove('expanded');
+        label.textContent = 'Show ' + catCount + ' ' + (catCount === 1 ? 'Category' : 'Categories');
+    } else {
+        // Expand
+        target.classList.add('show');
+        btn.classList.add('expanded');
+        label.textContent = 'Hide ' + catCount + ' ' + (catCount === 1 ? 'Category' : 'Categories');
+    }
+}
+</script>
 
 @endsection

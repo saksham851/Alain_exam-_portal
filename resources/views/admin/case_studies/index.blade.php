@@ -600,11 +600,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // It might return object directly or array
                         // Looking at controller: return response()->json($sections);
                         
-                        if (data && data.length > 0) {
+                        const sections = data.sections || data;
+                        if (sections && Array.isArray(sections) && sections.length > 0) {
                             if(sectionsContainer) {
                                 sectionsContainer.style.display = 'flex'; // row
                                 
-                                data.forEach(sec => {
+                                sections.forEach(sec => {
                                     const checkboxId = `sec_source_${sec.id}`;
                                     const html = `
                                         <div class="col-md-6">
