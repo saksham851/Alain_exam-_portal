@@ -449,15 +449,32 @@
                                     questionSections[currentIndex] === questionSections[currentIndex - 1] && 
                                     visitIds[currentIndex] === visitIds[currentIndex - 1]" 
                             @click="prevSlide()">
-                       <i class="ti ti-chevron-left me-1"></i> Previous
+                       <i class="ti ti-chevron-left me-1"></i> Go Back
                     </button>
                     
                     <div class="ms-auto d-flex gap-2">
-                        <button type="button" class="btn btn-primary btn-action" x-show="currentIndex < totalSlides - 1" @click="nextSlide()">
-                            Next <i class="ti ti-chevron-right ms-1"></i>
+                        <!-- Next button (for non-last question of visit) -->
+                        <button type="button" class="btn btn-primary btn-action" 
+                                x-show="currentIndex < totalSlides - 1 && !isLastQuestionOfVisit()" 
+                                @click="nextSlide()">
+                            Continue <i class="ti ti-chevron-right ms-1"></i>
                         </button>
-                        <button type="button" class="btn btn-success btn-action" x-show="currentIndex === totalSlides - 1" data-bs-toggle="modal" data-bs-target="#submitModal">
-                            Finish Exam <i class="ti ti-check ms-1"></i>
+                        
+                        <!-- Submit button (for last question of visit, except final question) -->
+                        <button type="button" class="btn btn-success btn-action" 
+                                x-show="currentIndex < totalSlides - 1 && isLastQuestionOfVisit()" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#visitSubmitModal">
+                            Submit <i class="ti ti-check ms-1"></i>
+                        </button>
+                        
+                        <!-- Finish exam button (final question) -->
+                        <button type="button" class="btn btn-success btn-action" 
+                                x-show="currentIndex === totalSlides - 1" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#visitSubmitModal"
+                                @click="isLastQuestionOfExam = true">
+                            Submit <i class="ti ti-check ms-1"></i>
                         </button>
                     </div>
                 </div>
@@ -488,6 +505,26 @@
         </div>
     </div>
 </div>
+
+    <!-- VISIT SUBMISSION MODAL -->
+    <div class="modal fade" id="visitSubmitModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-body text-center p-5">
+                    <h3 class="fw-bold text-slate-800 mb-3">Submit This Session?</h3>
+                    <p class="text-muted mb-4 lead" style="font-size: 1rem;">You are about to submit your answers for this session. Once submitted, your answers are final and you will not be able to return to this portion of the exam.</p>
+                    <div class="d-grid gap-3 mt-4">
+                        <button type="button" class="btn btn-success btn-lg py-3 rounded-3 fw-bold shadow-sm" onclick="handleVisitSubmit()">
+                            <i class="ti ti-check me-2"></i> SUBMIT
+                        </button>
+                        <button type="button" class="btn btn-light btn-lg py-3 rounded-3 fw-bold text-slate-600" onclick="handleVisitGoBack()">
+                            GO BACK
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- SUBMIT CONFIRMATION MODAL -->
     <div class="modal fade" id="submitModal" tabindex="-1" aria-hidden="true">
@@ -567,12 +604,75 @@
     <!-- AlpineJS Logic -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
+        // Global functions for modal buttons (outside Alpine context)
+        function handleVisitSubmit() {
+            // Hide the modal
+            const visitModal = document.getElementById('visitSubmitModal');
+            if (visitModal) {
+                const modal = bootstrap.Modal.getInstance(visitModal);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            
+            // Get Alpine component and navigate
+            setTimeout(() => {
+                const examEl = document.querySelector('[x-data*="examWizard"]');
+                if (examEl && window.Alpine) {
+                    const alpineData = Alpine.$data(examEl);
+                    if (alpineData) {
+                        // Check if this is the last question of exam
+                        if (alpineData.isLastQuestionOfExam) {
+                            alpineData.isLastQuestionOfExam = false;
+                            // Submit entire exam
+                            alpineData.submitForm();
+                        } else {
+                            // Just move to next slide (next visit)
+                            alpineData.nextSlide();
+                        }
+                    }
+                }
+            }, 200);
+        }
+
+        function handleVisitGoBack() {
+            // Hide the modal
+            const visitModal = document.getElementById('visitSubmitModal');
+            if (visitModal) {
+                const modal = bootstrap.Modal.getInstance(visitModal);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+            
+            // Reset the flag
+            const examEl = document.querySelector('[x-data*="examWizard"]');
+            if (examEl && window.Alpine) {
+                const alpineData = Alpine.$data(examEl);
+                if (alpineData) {
+                    alpineData.isLastQuestionOfExam = false;
+                }
+            }
+            
+            // Get Alpine component and navigate back
+            setTimeout(() => {
+                const examEl = document.querySelector('[x-data*="examWizard"]');
+                if (examEl && window.Alpine) {
+                    const alpineData = Alpine.$data(examEl);
+                    if (alpineData) {
+                        alpineData.prevSlide();
+                    }
+                }
+            }, 200);
+        }
+
         function examWizard(totalSlides, questionSections, visitIds) {
             return {
                 currentIndex: 0,
                 totalSlides: totalSlides,
                 questionSections: questionSections,
                 visitIds: visitIds,
+                isLastQuestionOfExam: false,
                 expiryTimestamp: {{ \Carbon\Carbon::parse($attempt->started_at)->addMinutes($exam->duration_minutes)->timestamp }} * 1000,
                 now: new Date().getTime(),
                 
@@ -592,6 +692,27 @@
                            this.currentSectionId = parseInt(slide.getAttribute('data-section-id'));
                         }
                     });
+                },
+
+                isLastQuestionOfVisit() {
+                    // Check if current question is the last one in its visit
+                    if (this.currentIndex >= this.totalSlides - 1) return false; // Last question of exam
+                    
+                    const currentVisitId = this.visitIds[this.currentIndex];
+                    const nextVisitId = this.visitIds[this.currentIndex + 1];
+                    
+                    // If next question is in a different visit, current is last of its visit
+                    return currentVisitId !== nextVisitId;
+                },
+
+                visitSubmit() {
+                    // Close modal and move to next slide
+                    try {
+                        const visitModal = bootstrap.Modal.getInstance(document.getElementById('visitSubmitModal'));
+                        if (visitModal) visitModal.hide();
+                    } catch(e) {}
+                    
+                    setTimeout(() => { this.nextSlide(); }, 300);
                 },
 
                 init() {

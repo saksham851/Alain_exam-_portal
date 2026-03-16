@@ -9,7 +9,7 @@
             <div class="card-body p-0">
                 <div class="d-flex flex-column flex-md-row align-items-stretch">
                     <!-- Name & ID Section -->
-                    <div class="bg-primary d-flex align-items-center px-4 py-2" style="min-width: 220px; background: linear-gradient(135deg, #01284E 0%, #001a33 100%);">
+                    <div class="bg-primary d-flex align-items-center px-4 py-2" style="min-width: 220px;">
                         <div class="avtar avtar-m bg-white bg-opacity-25 text-white rounded-circle me-3">
                             <i class="ti ti-user fs-4"></i>
                         </div>
@@ -59,7 +59,7 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <h6 class="mb-0 fw-bold text-muted small text-uppercase">Total Enrolled</h6>
-                    <div class="bg-light-primary text-primary rounded p-1" style="background: rgba(1, 51, 102, 0.08) !important;"><i class="ti ti-book fs-5"></i></div>
+                    <div class="bg-light text-primary rounded p-1"><i class="ti ti-book fs-5"></i></div>
                 </div>
                 <h3 class="mb-0 fw-bold text-dark">{{ $stats['enrolled'] }}</h3>
             </div>
@@ -71,7 +71,7 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <h6 class="mb-0 fw-bold text-muted small text-uppercase">Success Rate</h6>
-                    <div class="bg-light-info text-info rounded p-1"><i class="ti ti-activity fs-5"></i></div>
+                    <div class="bg-light text-info rounded p-1"><i class="ti ti-activity fs-5"></i></div>
                 </div>
                 <h3 class="mb-0 fw-bold text-dark">{{ round($stats['success_rate']) }}%</h3>
             </div>
@@ -83,7 +83,7 @@
             <div class="card-body p-3">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <h6 class="mb-0 fw-bold text-muted small text-uppercase">Passed Exams</h6>
-                    <div class="bg-light-success text-success rounded p-1" style="background: rgba(0, 139, 139, 0.08) !important;"><i class="ti ti-trophy fs-5"></i></div>
+                    <div class="bg-light text-success rounded p-1"><i class="ti ti-trophy fs-5"></i></div>
                 </div>
                 <h3 class="mb-0 fw-bold text-dark">{{ $stats['passed_exams'] }}</h3>
             </div>

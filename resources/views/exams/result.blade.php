@@ -89,25 +89,17 @@
 
     /* ── HERO BANNER ─────────────────────────────── */
     .rp-hero {
-        border-radius: 24px;
+        border-radius: 16px;
         overflow: hidden;
         margin-bottom: 1.5rem;
         position: relative;
-        background: {{ $overallPassed ? 'linear-gradient(135deg, #01284E 0%, #008B8B 100%)' : 'linear-gradient(135deg, #01284E 0%, #6b1a1a 100%)' }};
-        box-shadow: 0 32px 64px rgba(1, 40, 78, 0.25);
-    }
-
-    .rp-hero::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
-        pointer-events: none;
+        background: #01284E;
+        box-shadow: 0 10px 30px rgba(1, 40, 78, 0.15);
     }
 
     .rp-hero-inner {
         position: relative;
-        padding: 2.5rem 2.5rem 2rem;
+        padding: 2rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -129,7 +121,7 @@
         text-transform: uppercase;
         margin-bottom: 1rem;
         backdrop-filter: blur(10px);
-        {{ $overallPassed ? 'background: rgba(0,139,139,0.2); border: 1px solid rgba(0,139,139,0.5); color: #80eaea;' : 'background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5;' }}
+        {{ $overallPassed ? 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;' : 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;' }}
     }
 
     .rp-exam-name {
@@ -224,7 +216,7 @@
         font-size: 2rem;
         font-weight: 800;
         line-height: 1.1;
-        background: {{ $overallPassed ? 'linear-gradient(135deg, #01284E, #008B8B)' : 'linear-gradient(135deg, #01284E, #ef4444)' }};
+        background: {{ $overallPassed ? '#008B8B' : '#ef4444' }};
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -258,7 +250,7 @@
     .rp-section-icon {
         width: 36px; height: 36px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #01284E, #008B8B);
+        background: #01284E;
         display: flex; align-items: center; justify-content: center;
         color: white; font-size: 1rem;
         flex-shrink: 0;
@@ -295,10 +287,10 @@
 
     .rp-cat-card {
         background: #ffffff;
-        border-radius: 20px;
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e5e7eb;
+        transition: transform 0.2s;
         display: flex;
         flex-direction: column;
         height: 100%;
@@ -312,22 +304,12 @@
     .rp-cat-header {
         padding: 1.25rem 1.5rem 1rem;
         position: relative;
-        overflow: hidden;
+        background: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
     }
 
-    .rp-cat-header::after {
-        content: '';
-        position: absolute;
-        right: -20px; top: -20px;
-        width: 100px; height: 100px;
-        border-radius: 50%;
-        opacity: 0.08;
-    }
-
-    .rp-cat-header.pass  { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
-    .rp-cat-header.fail  { background: linear-gradient(135deg, #fff1f2, #ffe4e6); }
-    .rp-cat-header.pass::after  { background: #10b981; }
-    .rp-cat-header.fail::after  { background: #ef4444; }
+    .rp-cat-header.pass  { border-top: 4px solid #10b981; }
+    .rp-cat-header.fail  { border-top: 4px solid #ef4444; }
 
     .rp-cat-num {
         font-size: 0.65rem;
@@ -340,8 +322,8 @@
         display: inline-block;
     }
 
-    .rp-cat-header.pass .rp-cat-num { background: #dcfce7; color: #15803d; }
-    .rp-cat-header.fail .rp-cat-num { background: #ffe4e6; color: #be123c; }
+    .rp-cat-header.pass .rp-cat-num { background: rgba(16, 185, 129, 0.1); color: #15803d; }
+    .rp-cat-header.fail .rp-cat-num { background: rgba(239, 68, 68, 0.1); color: #be123c; }
 
     .rp-cat-name {
         font-size: 0.95rem;
@@ -400,8 +382,8 @@
         transition: width 1s cubic-bezier(.23,1,.32,1);
     }
 
-    .rp-cat-header.pass .rp-cat-progress-bar { background: linear-gradient(90deg, #10b981, #059669); }
-    .rp-cat-header.fail .rp-cat-progress-bar { background: linear-gradient(90deg, #f87171, #ef4444); }
+    .rp-cat-header.pass .rp-cat-progress-bar { background: #10b981; }
+    .rp-cat-header.fail .rp-cat-progress-bar { background: #ef4444; }
 
     /* Content areas body */
     .rp-areas-body {

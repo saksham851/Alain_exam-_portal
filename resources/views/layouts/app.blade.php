@@ -55,11 +55,11 @@
                 --bs-primary-rgb: 1, 40, 78;
                 --primary: #01284E;
                 
-                --bs-success: #008B8B; /* Teal */
-                --bs-success-rgb: 0, 139, 139;
+                --bs-success: #10b981; /* Standard Green */
+                --bs-success-rgb: 16, 185, 129;
                 
-                --bs-warning: #E6B325; /* Gold/Yellow */
-                --bs-warning-rgb: 230, 179, 37;
+                --bs-warning: #f59e0b; /* Standard Amber */
+                --bs-warning-rgb: 245, 158, 11;
                 
                 --bs-info: #0056b3;
                 
@@ -94,11 +94,11 @@
 
             .bg-success { background-color: var(--bs-success) !important; }
             .text-success { color: var(--bs-success) !important; }
-            .bg-light-success { background-color: rgba(0, 139, 139, 0.1) !important; color: var(--bs-success) !important; }
+            .bg-light-success { background-color: rgba(16, 185, 129, 0.1) !important; color: var(--bs-success) !important; }
 
             .bg-warning { background-color: var(--bs-warning) !important; }
             .text-warning { color: var(--bs-warning) !important; }
-            .bg-light-warning { background-color: rgba(230, 179, 37, 0.1) !important; color: var(--bs-warning) !important; }
+            .bg-light-warning { background-color: rgba(245, 158, 11, 0.1) !important; color: var(--bs-warning) !important; }
 
             /* Sidebar Enhancements */
             .pc-sidebar .pc-link:hover, .pc-sidebar .pc-item.active > .pc-link {
