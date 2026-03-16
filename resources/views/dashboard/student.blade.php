@@ -9,7 +9,7 @@
             <div class="card-body p-0">
                 <div class="d-flex flex-column flex-md-row align-items-stretch">
                     <!-- Name & ID Section -->
-                    <div class="bg-primary d-flex align-items-center px-4 py-2" style="min-width: 220px;">
+                    <div class="d-flex align-items-center px-4 py-2" style="min-width: 220px; background-color: #01284E !important;">
                         <div class="avtar avtar-m bg-white bg-opacity-25 text-white rounded-circle me-3">
                             <i class="ti ti-user fs-4"></i>
                         </div>
