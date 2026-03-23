@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ExamController; // Ensure this is imported
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\CaseStudyController;
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\GhlController\GoHighLevelController;
 use App\Http\Controllers\SuperAdmin\AdminManagementController;
 
 /*
@@ -25,6 +26,10 @@ use App\Http\Controllers\SuperAdmin\AdminManagementController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
+// GoHighLevel Authentication Routes
+Route::get('/gohighlevel/initiate', [GoHighLevelController::class, 'initiate'])->name('ghl.initiate');
+Route::get('/getAccessToken', [GoHighLevelController::class, 'callback'])->name('ghl.callback');
 
 // Auth Routes (Guest only)
 Route::middleware('guest')->group(function () {

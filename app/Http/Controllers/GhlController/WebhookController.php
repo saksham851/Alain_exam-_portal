@@ -260,9 +260,6 @@ class WebhookController extends Controller
             $recordData = [
                 'name' => $data['name'] ?? '',
                 'email' => $data['email'] ?? '',
-                'phone' => $data['phone'] ?? '',
-                'ig_score' => $data['ig_score'] ?? 0,
-                'dm_score' => $data['dm_score'] ?? 0,
                 'total_score' => $data['total_score'] ?? 0,
                 'attempts' => $data['attempts'] ?? 1,
                 'status' => $data['status'] ?? '',

@@ -4,38 +4,23 @@ namespace App\Http\Controllers\GhlController;
 
 class GhlConfig
 {
-    public const VERSION_ID = '693a42c5c515cfdbdf604462';
-    
-    public const APP_URL = 'https://app.gohighlevel.com/v2/location/';
-    
-    public const AUTH_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation';
-    
-    public const TOKEN_URL = 'https://services.leadconnectorhq.com/oauth/token';
+    public const VERSION_ID = '69c137b46e68ff865b4cd1b5';
 
+    public const APP_URL = 'https://app.gohighlevel.com/v2/location/';
+
+    public const AUTH_URL = 'https://marketplace.gohighlevel.com/oauth/chooselocation';
+
+    public const TOKEN_URL = 'https://services.leadconnectorhq.com/oauth/token';
     public const SCOPES = [
-        'businesses.readonly',
-        'businesses.write',
-        'contacts.readonly',
         'contacts.write',
-        'objects/schema.readonly',
+        'contacts.readonly',
         'objects/schema.write',
-        'objects/record.readonly',
+        'objects/schema.readonly',
         'objects/record.write',
-        'associations.write',
-        'associations.readonly',
-        'associations/relation.readonly',
-        'associations/relation.write',
-        'locations/customValues.readonly',
+        'objects/record.readonly',
         'locations.readonly',
         'locations/customFields.readonly',
-        'locations/customFields.write',
-        'locations/customValues.write',
-        'locations/tasks.readonly',
-        'locations/tasks.write',
-        'locations/templates.readonly',
-        'locations/tags.write',
-        'locations/tags.readonly',
-        // 'custom-menu-link.write'
+        'locations/customFields.write'
     ];
 
     public const DEFAULTS = [
@@ -47,15 +32,15 @@ class GhlConfig
     ];
 
     public const API_BASE_URL = 'https://services.leadconnectorhq.com';
-    
+
     public const API_VERSION = '2021-07-28';
-    
+
     public const OBJECT_KEY = 'custom_objects.exam_portal_result';
 
     public const ENDPOINTS = [
         'objects' => '/objects/',
         'custom_fields' => '/custom-fields/',
         'custom_folders' => '/custom-fields/folder',
-        'custom_menus' => '/custom-menus',
+        'custom_menus' => '/locations/{locationId}/custom-menus',
     ];
 }

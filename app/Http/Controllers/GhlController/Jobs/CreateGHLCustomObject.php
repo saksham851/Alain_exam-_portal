@@ -30,7 +30,7 @@ class CreateGHLCustomObject implements ShouldQueue
     {
         // Refresh token if needed
         $accessToken = $tokenService->getAccessToken($this->token->location_id);
-        
+
         if (!$accessToken) {
             Log::error("Failed to retrieve valid access token for location: {$this->token->location_id} in CreateGHLCustomObject job.");
             return;
@@ -47,7 +47,7 @@ class CreateGHLCustomObject implements ShouldQueue
             'plural' => 'Exam Portal Results',
         ];
         $description = 'Stores exam results from the portal';
-        
+
         // Primary Property (Used in Create)
         $primaryPropDetails = [
             'key' => "{$objectKey}.name",
@@ -82,17 +82,21 @@ class CreateGHLCustomObject implements ShouldQueue
             // Try to get the actual key assigned by GHL
             if (isset($responseData['key'])) {
                 $finalObjectKey = $responseData['key'];
-            } else if (isset($responseData['data']['key'])) {
-                 $finalObjectKey = $responseData['data']['key'];
-            } else if (isset($responseData['objectKey'])) {
-                 $finalObjectKey = $responseData['objectKey'];
-            } else if (isset($responseData['data']['objectKey'])) {
-                 $finalObjectKey = $responseData['data']['objectKey'];
             }
-            
+            else if (isset($responseData['data']['key'])) {
+                $finalObjectKey = $responseData['data']['key'];
+            }
+            else if (isset($responseData['objectKey'])) {
+                $finalObjectKey = $responseData['objectKey'];
+            }
+            else if (isset($responseData['data']['objectKey'])) {
+                $finalObjectKey = $responseData['data']['objectKey'];
+            }
+
             Log::info("Custom Object Created. Final Key: {$finalObjectKey}");
-            
-        } else {
+
+        }
+        else {
             Log::warning("Custom Object creation returned status {$createResponse->status()}. Response: " . $createResponse->body());
             Log::info("Object may already exist. Proceeding with folder creation using key: {$finalObjectKey}");
         }
@@ -100,17 +104,18 @@ class CreateGHLCustomObject implements ShouldQueue
         // Wait a bit for the object to be fully registered
         Log::info("Waiting 2 seconds before folder creation...");
         sleep(2);
-        
+
         // 2. Create Custom Folder for the Custom Object (Always attempt, even if object already exists)
         Log::info("Now calling createCustomFolder method...");
         $folderId = $this->createCustomFolder($accessToken, $locationId, $finalObjectKey, $version);
-        
+
         // 3. Create Custom Fields in the Folder
         if ($folderId) {
             Log::info("Folder created successfully with ID: {$folderId}. Now creating custom fields...");
             sleep(1); // Small delay to ensure folder is registered
             $this->createCustomFields($accessToken, $locationId, $finalObjectKey, $folderId, $version);
-        } else {
+        }
+        else {
             Log::error("Folder ID not available. Skipping custom fields creation.");
         }
 
@@ -125,9 +130,10 @@ class CreateGHLCustomObject implements ShouldQueue
     protected function createCustomFolder($accessToken, $locationId, $objectKey, $version)
     {
         Log::info("Parameters - LocationId: {$locationId}, ObjectKey: {$objectKey}");
-        
-        $folderUrl = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['custom_folders'];
-        
+
+        $endpoint = str_replace('{locationId}', $locationId, GhlConfig::ENDPOINTS['custom_folders']);
+        $folderUrl = GhlConfig::API_BASE_URL . $endpoint;
+
         $folderBody = [
             'objectKey' => $objectKey,
             'name' => 'Exam Portal Fields',
@@ -151,13 +157,14 @@ class CreateGHLCustomObject implements ShouldQueue
         if ($folderResponse->successful()) {
             $folderData = $folderResponse->json();
             Log::info("Custom Folder Created Successfully: " . json_encode($folderData));
-            
+
             // Extract folder ID if available
             $folderId = $folderData['folder']['id'] ?? $folderData['id'] ?? 'unknown';
             Log::info("Folder ID: {$folderId}");
-            
+
             return $folderId;
-        } else {
+        }
+        else {
             Log::error("Failed to create Custom Folder. Status {$folderResponse->status()}: " . $folderResponse->body());
             return null;
         }
@@ -169,9 +176,10 @@ class CreateGHLCustomObject implements ShouldQueue
     protected function createCustomFields($accessToken, $locationId, $objectKey, $folderId, $version)
     {
         Log::info("Creating fields for object: {$objectKey} in folder: {$folderId}");
-        
-        $fieldsUrl = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['custom_fields'];
-        
+
+        $endpoint = str_replace('{locationId}', $locationId, GhlConfig::ENDPOINTS['custom_fields']);
+        $fieldsUrl = GhlConfig::API_BASE_URL . $endpoint;
+
         // Define all custom fields
         $fields = [
 
@@ -181,27 +189,6 @@ class CreateGHLCustomObject implements ShouldQueue
                 'fieldKey' => "{$objectKey}.email",
                 'description' => 'Email address',
                 'placeholder' => 'Enter email',
-            ],
-            [
-                'name' => 'Phone',
-                'dataType' => 'PHONE',
-                'fieldKey' => "{$objectKey}.phone",
-                'description' => 'Phone number',
-                'placeholder' => 'Enter phone number',
-            ],
-            [
-                'name' => 'IG Score',
-                'dataType' => 'NUMERICAL',
-                'fieldKey' => "{$objectKey}.ig_score",
-                'description' => 'IG Score',
-                'placeholder' => 'Enter IG score',
-            ],
-            [
-                'name' => 'DM Score',
-                'dataType' => 'NUMERICAL',
-                'fieldKey' => "{$objectKey}.dm_score",
-                'description' => 'DM Score',
-                'placeholder' => 'Enter DM score',
             ],
             [
                 'name' => 'Total Score',
@@ -264,10 +251,11 @@ class CreateGHLCustomObject implements ShouldQueue
                 $successCount++;
                 $responseData = $fieldResponse->json();
                 Log::info("✓ Field '{$field['name']}' created successfully. Response: " . $fieldResponse->body());
-                
+
                 // Store field ID for later use in table configuration
                 $field['id'] = $responseData['id'] ?? $responseData['customField']['id'] ?? null;
-            } else {
+            }
+            else {
                 $failCount++;
                 Log::error("✗ Failed to create field '{$field['name']}'. Status {$fieldResponse->status()}: " . $fieldResponse->body());
             }
@@ -278,7 +266,7 @@ class CreateGHLCustomObject implements ShouldQueue
 
         Log::info("=== CUSTOM FIELDS CREATION COMPLETE ===");
         Log::info("Success: {$successCount}, Failed: {$failCount}");
-        
+
         // After creating all fields, configure the table view to show them by default
         if ($successCount > 0) {
             Log::info("Configuring table view to show fields by default...");
@@ -293,16 +281,15 @@ class CreateGHLCustomObject implements ShouldQueue
     protected function configureTableView($accessToken, $locationId, $objectKey, $version)
     {
         Log::info("=== CONFIGURING TABLE VIEW ===");
-        
+
         // Update the object schema to include the fields in default view
         $schemaUrl = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['objects'] . $objectKey;
-        
+
         $schemaBody = [
             'locationId' => $locationId,
             'displayProperties' => [
                 "{$objectKey}.name",
                 "{$objectKey}.email",
-                "{$objectKey}.phone",
                 "{$objectKey}.total_score",
                 "{$objectKey}.status",
                 "{$objectKey}.exam_name",
@@ -321,7 +308,8 @@ class CreateGHLCustomObject implements ShouldQueue
 
         if ($schemaResponse->successful()) {
             Log::info("✓ Table view configured successfully. Response: " . $schemaResponse->body());
-        } else {
+        }
+        else {
             Log::warning("Table view configuration returned status {$schemaResponse->status()}: " . $schemaResponse->body());
             Log::info("Fields are created but may need manual configuration in GHL UI.");
         }
@@ -333,13 +321,14 @@ class CreateGHLCustomObject implements ShouldQueue
     protected function createMenuLink($accessToken, $locationId, $version)
     {
         Log::info("=== CREATING MENU LINK ===");
-        
+
         // Construct the custom menu URL (correct endpoint from GHL API docs)
-        $menuUrl = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['custom_menus'];
-        
+        $endpoint = str_replace('{locationId}', $locationId, GhlConfig::ENDPOINTS['custom_menus']);
+        $menuUrl = GhlConfig::API_BASE_URL . $endpoint;
+
         // Get the exam portal URL from environment or use placeholder
         $examPortalUrl = env('EXAM_PORTAL_URL', 'https://example.com');
-        
+
         // Request body according to official GHL API documentation
         $menuLinkBody = [
             'title' => 'Exam Portal',
@@ -375,13 +364,14 @@ class CreateGHLCustomObject implements ShouldQueue
         if ($menuLinkResponse->successful()) {
             $menuLinkData = $menuLinkResponse->json();
             Log::info("✓ Custom Menu 'Exam Portal' created successfully: " . json_encode($menuLinkData));
-            
+
             // Extract menu link ID if available for future reference
             $menuLinkId = $menuLinkData['id'] ?? $menuLinkData['customMenu']['id'] ?? 'unknown';
             Log::info("Custom Menu ID: {$menuLinkId}");
-            
+
             return $menuLinkId;
-        } else {
+        }
+        else {
             Log::error("✗ Failed to create Custom Menu. Status {$menuLinkResponse->status()}: " . $menuLinkResponse->body());
             return null;
         }

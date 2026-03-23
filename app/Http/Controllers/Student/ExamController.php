@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\StudentExam;
 use Illuminate\Http\Request;
+use App\Http\Controllers\GhlController\Services\GHLRecordService;
 
 class ExamController extends Controller
 {
@@ -252,26 +253,35 @@ class ExamController extends Controller
             ]);
         });
         
-        // Send Webhook Notification
+        // Prepare data for GoHighLevel Custom Object
         try {
             $user = auth()->user();
             $payload = [
                 "name" => $user->first_name . ' ' . $user->last_name,
                 "email" => $user->email,
-                "phone" => $user->phone ?? "",
                 "total_score" => $attempt->total_score,
                 "is_passed" => $attempt->is_passed,
                 "breakdown" => $attempt->category_breakdown,
                 "attempts" => $studentExam->attempts_used,
-                "status" => "completed",
+                "status" => $attempt->is_passed ? 'Pass' : 'Fail',
                 "exam_name" => $studentExam->exam->name,
             ];
 
-            // Use Http facade to send the webhook
-            \Illuminate\Support\Facades\Http::post('https://webhook.site/4f8b5dd3-8d7d-4526-8f62-9edd16b21ead', $payload);
+            // Trigger GHL Record Service to create record in GHL
+            $ghlService = app(GHLRecordService::class);
+            $result = $ghlService->createRecord($payload);
+            
+            if ($result['success']) {
+                \Illuminate\Support\Facades\Log::info('GHL Record Created Successfully for: ' . $user->email);
+            } else {
+                \Illuminate\Support\Facades\Log::error('GHL Record Creation Failed: ' . ($result['message'] ?? 'Unknown error'));
+            }
+
+            // Optional: Also keep the webhook.site call for debugging if needed
+            // \Illuminate\Support\Facades\Http::post('https://webhook.site/4f8b5dd3-8d7d-4526-8f62-9edd16b21ead', $payload);
+
         } catch (\Exception $e) {
-            // Log error silently so it doesn't crash the user experience
-            \Illuminate\Support\Facades\Log::error('Exam Completion Webhook Failed: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error triggering GHL recording: ' . $e->getMessage());
         }
 
         // Email notification removed as per request

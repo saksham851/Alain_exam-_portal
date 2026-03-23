@@ -114,36 +114,17 @@ class GHLRecordService
                     'data' => $responseData
                 ];
             } else {
-                // Check for invalid phone number error and retry without phone
-                $responseBody = $response->body();
-                if ($response->status() === 400 && str_contains($responseBody, 'Invalid phone number')) {
-                    Log::warning('GHL record creation failed due to invalid phone. Retrying without phone.', [
-                        'omitted_phone' => $properties['phone'] ?? 'unknown'
-                    ]);
-                    
-                    // Remove phone from properties and request body
-                    unset($properties['phone']);
-                    $requestBody['properties'] = $properties;
-                    
-                    // Retry the request
-                    $response = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $accessToken,
-                        'Version' => $version,
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                    ])->post($recordUrl, $requestBody);
-                    
-                    if ($response->successful()) {
-                        $responseData = $response->json();
-                        Log::info('GHL record created successfully (retry without phone):', $responseData);
-                        
-                        return [
-                            'success' => true,
-                            'message' => 'Record created successfully (phone omitted)',
-                            'data' => $responseData
-                        ];
-                    }
-                }
+            // Handle 400 Bad Request
+            if ($response->status() === 400) {
+                Log::error('Failed to create GHL record. Status: ' . $response->status() . ', Response: ' . $response->body());
+                
+                return [
+                    'success' => false,
+                    'message' => 'Failed to create record in GHL',
+                    'status' => $response->status(),
+                    'error' => $response->body()
+                ];
+            }
 
                 Log::error('Failed to create GHL record. Status: ' . $response->status() . ', Response: ' . $response->body());
                 
@@ -181,13 +162,9 @@ class GHLRecordService
         Log::info('mapToCustomFields - Object key:', ['objectKey' => $objectKey]);
 
         // Map each field to its corresponding GHL custom field key
-        // GHL expects simple field names, not the full object.fieldname format
         $fieldMapping = [
             'name' => 'name',
             'email' => 'email',
-            'phone' => 'phone',
-            'ig_score' => 'ig_score',
-            'dm_score' => 'dm_score',
             'total_score' => 'total_score',
             'attempts' => 'attempts',
             'status' => 'status',
@@ -196,12 +173,7 @@ class GHLRecordService
 
         foreach ($fieldMapping as $dataKey => $fieldKey) {
             if (isset($data[$dataKey]) && $data[$dataKey] !== null && $data[$dataKey] !== '') {
-                // Special handling for phone number
-                if ($dataKey === 'phone') {
-                    $customFields[$fieldKey] = $this->formatPhoneNumber($data[$dataKey]);
-                } else {
-                    $customFields[$fieldKey] = $data[$dataKey];
-                }
+                $customFields[$fieldKey] = $data[$dataKey];
                 Log::info("Mapped field: {$dataKey} => {$fieldKey}", ['value' => $customFields[$fieldKey]]);
             } else {
                 Log::warning("Skipped field: {$dataKey}", [
@@ -218,25 +190,6 @@ class GHLRecordService
         return $customFields;
     }
 
-    /**
-     * Format phone number to E.164 or acceptable format for GHL
-     * 
-     * @param string $phone
-     * @return string
-     */
-    protected function formatPhoneNumber($phone)
-    {
-        // Remove known invalid characters but keep +
-        $cleaned = preg_replace('/[^0-9+]/', '', $phone);
-        
-        // Ensure it starts with + if it has country code digits but missing +
-        // This is a best-effort guess. GHL requires +[countryCode][number]
-        if (!empty($cleaned) && $cleaned[0] !== '+') {
-            $cleaned = '+' . $cleaned;
-        }
-        
-        return $cleaned;
-    }
 
     /**
      * Update an existing record in GHL Custom Object
