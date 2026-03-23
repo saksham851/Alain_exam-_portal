@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Exam;
 use App\Models\StudentExam;
 use App\Http\Controllers\GhlController\Services\GHLRecordService;
+use App\Http\Controllers\GhlController\Jobs\ProcessGHLRecord;
 
 class WebhookController extends Controller
 {
@@ -268,32 +269,14 @@ class WebhookController extends Controller
             
             Log::info('Prepared record data for GHL:', $recordData);
             
-            // Create the record in GHL Custom Object
-            $ghlService = app(GHLRecordService::class);
-            $locationId = $data['location_id'] ?? null; // Optional: can be passed in webhook
+            // Dispatch background job for GHL record creation
+            $locationId = $data['location_id'] ?? null;
+            ProcessGHLRecord::dispatch($recordData, $locationId);
             
-            $result = $ghlService->createRecord($recordData, $locationId);
-            
-            if ($result['success']) {
-                Log::info('Exam completion record created successfully in GHL');
-                
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Exam completion record created successfully',
-                    'ghl_response' => $result['data'] ?? null
-                ], 200);
-            } else {
-                Log::error('Failed to create exam completion record in GHL', [
-                    'error' => $result['message'] ?? 'Unknown error'
-                ]);
-                
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create record in GHL',
-                    'error' => $result['message'] ?? 'Unknown error',
-                    'details' => $result['error'] ?? null
-                ], 500);
-            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Exam completion received and queued for GHL'
+            ], 200);
             
         } catch (\Throwable $e) {
             Log::error('Exam completion webhook processing error: ' . $e->getMessage());

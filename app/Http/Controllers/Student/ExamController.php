@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StudentExam;
 use Illuminate\Http\Request;
 use App\Http\Controllers\GhlController\Services\GHLRecordService;
+use App\Http\Controllers\GhlController\Jobs\ProcessGHLRecord;
 
 class ExamController extends Controller
 {
@@ -267,15 +268,11 @@ class ExamController extends Controller
                 "exam_name" => $studentExam->exam->name,
             ];
 
-            // Trigger GHL Record Service to create record in GHL
-            $ghlService = app(GHLRecordService::class);
-            $result = $ghlService->createRecord($payload);
+            // Dispatch background job to create record in GHL
+            // This handles high concurrency by processing GHL API calls sequentially in the background
+            ProcessGHLRecord::dispatch($payload);
             
-            if ($result['success']) {
-                \Illuminate\Support\Facades\Log::info('GHL Record Created Successfully for: ' . $user->email);
-            } else {
-                \Illuminate\Support\Facades\Log::error('GHL Record Creation Failed: ' . ($result['message'] ?? 'Unknown error'));
-            }
+            \Illuminate\Support\Facades\Log::info('Exam Completion GHL Job Dispatched for: ' . $user->email);
 
             // Optional: Also keep the webhook.site call for debugging if needed
             // \Illuminate\Support\Facades\Http::post('https://webhook.site/4f8b5dd3-8d7d-4526-8f62-9edd16b21ead', $payload);
