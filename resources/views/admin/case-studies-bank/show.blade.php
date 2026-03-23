@@ -91,12 +91,6 @@
 
     <div class="card-body p-4">
         {{-- Scenario Content --}}
-        @if($caseStudy->content)
-            <div class="p-3 bg-light-subtle border-start border-4 border-primary rounded-end mb-4">
-                <h6 class="text-uppercase text-muted fs-7 fw-bold mb-2">Case Study Scenario</h6>
-                <div class="text-dark text-break" style="line-height: 1.8;">{!! $caseStudy->content !!}</div>
-            </div>
-        @endif
 
         {{-- Meta details (Section/Exam) --}}
         <div class="row g-3">
@@ -152,11 +146,6 @@
                         Visit {{ $vIndex + 1 }}
                     </div>
                     <div class="fw-bold text-dark" style="font-size: 14px;">{{ $visit->title }}</div>
-                    @if($visit->description)
-                        <div class="text-muted small text-truncate" style="max-width: 500px; font-size: 12px;">
-                            {{ Str::limit(strip_tags($visit->description), 80) }}
-                        </div>
-                    @endif
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -172,14 +161,6 @@
             <div class="card-body p-0">
 
                 {{-- Visit Description --}}
-                @if($visit->description)
-                <div class="px-4 py-3 border-bottom bg-light-subtle">
-                    <div class="text-muted small fw-bold text-uppercase mb-1" style="letter-spacing: 1px; font-size: 10px;">
-                        <i class="ti ti-notes me-1"></i> Session Context / Description
-                    </div>
-                    <div class="text-secondary" style="line-height: 1.7; font-size: 14px;">{!! $visit->description !!}</div>
-                </div>
-                @endif
 
                 {{-- Questions Table --}}
                 @if($visit->questions->count() > 0)

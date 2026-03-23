@@ -168,7 +168,8 @@ class SectionController extends Controller
             return redirect($request->return_url)->with('success', 'Section created successfully!');
         }
 
-        return redirect()->route('admin.sections.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.sections.index')
             ->with('section_created_success', true)
             ->with('created_exam_id', $request->exam_id)
             ->with('created_section_id', $section->id);
@@ -230,7 +231,8 @@ class SectionController extends Controller
             return redirect($request->return_url)->with('success', 'Section updated successfully.');
         }
 
-        return redirect()->route('admin.sections.index')->with('success', 'Section updated successfully.');
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.sections.index')->with('success', 'Section updated successfully.');
     }
 
     public function ajaxDestroy($id)
@@ -310,7 +312,8 @@ class SectionController extends Controller
         $section = Section::with(['exam.category', 'caseStudies.questions.options'])->find($id);
 
         if (!$section) {
-            return redirect()->route('admin.sections.index')->with('error', 'Section not found');
+            $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+            return redirect()->route($prefix . '.sections.index')->with('error', 'Section not found');
         }
 
         return view('admin.sections.show', compact('section'));

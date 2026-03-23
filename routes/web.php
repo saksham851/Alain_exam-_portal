@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ExamController; // Ensure this is imported
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\CaseStudyController;
 use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\SuperAdmin\AdminManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/', [AuthenticatedSessionController::class, 'store'])->name('login.post');
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::get('/reset-password/{token}', [\App\Http\Controllers\Auth\NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'store'])->name('password.store');
 });
 
 // Authenticated Routes
@@ -45,6 +48,9 @@ Route::middleware(['auth'])->group(function () {
         }
         if ($user->role === 'manager') {
             return redirect()->route('manager.dashboard');
+        }
+        if ($user->role === 'superadmin') {
+            return redirect()->route('superadmin.admins.index');
         }
         return redirect()->route('admin.dashboard');
     })->name('dashboard');
@@ -81,10 +87,61 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/students/{id}/assigned-exams', [UserController::class, 'getAssignedExams'])->name('students.assigned-exams');
         Route::get('/students/{studentId}/exam/{examId}/attempts', [UserController::class, 'getStudentExamAttempts'])->name('students.exam-attempts');
         
-        // Attempts (View Only)
-        Route::get('/attempts', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('attempts.index');
-        Route::get('/attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
-        Route::get('/attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');
+        // Exams Management (Limited)
+        Route::resource('exams', ExamController::class);
+        Route::get('exams/{id}/validate-compliance', [ExamController::class, 'validateCompliance'])->name('exams.validate-compliance');
+        Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
+        
+        // Sections
+        Route::resource('sections', SectionController::class);
+        
+        // Questions Management
+        Route::resource('questions', QuestionController::class);
+        
+        // Case Studies Bank
+        Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function() {
+            Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy'])->name('destroy');
+        });
+
+        // Exam Categories (View Only)
+        Route::get('exam-categories', [ExamCategoryController::class, 'index'])->name('exam-categories.index');
+
+        // AJAX Routes for dynamic dropdowns
+        Route::get('questions-ajax/case-studies/{examId}', [SectionController::class, 'getSections']);
+        Route::get('questions-ajax/sub-case-studies/{sectionId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getCaseStudiesBySection']);
+        Route::get('questions-ajax/questions/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByCaseStudy']);
+        Route::get('questions-ajax/visits/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getVisits']);
+        Route::get('questions-ajax/questions-by-visit/{visitId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByVisit']);
+
+        // API Routes for Sections (used in exam edit page)
+        Route::get('api/sections/{examId}', [SectionController::class, 'getSections']);
+        Route::get('api/sections/{examId}/deleted', [SectionController::class, 'getDeletedSections']);
+        Route::get('api/sections/{sectionId}/content', [SectionController::class, 'getSectionContent']);
+        Route::get('api/sections-ajax/{id}', [SectionController::class, 'show']);
+        Route::delete('api/sections-ajax/{id}', [SectionController::class, 'ajaxDestroy']);
+        Route::patch('api/sections-ajax/{id}/restore', [SectionController::class, 'ajaxRestore']);
+
+        // API Routes for Exam Builder (Case Studies, Visits, Questions)
+        Route::delete('api/case-studies/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy']);
+        
+        Route::get('api/visits-detail/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxShow']);
+        Route::post('api/visits', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxStore']);
+        Route::put('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxUpdate']);
+        Route::delete('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxDestroy']);
+
+        Route::delete('api/questions/{id}', [\App\Http\Controllers\Admin\QuestionController::class, 'destroy']);
+
+        // Note: manager group intentionally excludes:
+        // - exams.publish
+        // - exams.activate
+        // - attempts (Results)
+        // - users.manage-attempts
     });
 
     // Admin Routes
@@ -192,6 +249,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
         Route::get('attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');
 
+    });
+
+    // Super Admin Routes
+    Route::middleware(['superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+        Route::get('admins', [AdminManagementController::class, 'index'])->name('admins.index');
+        Route::post('admins/invite', [AdminManagementController::class, 'invite'])->name('admins.invite');
+        Route::patch('admins/{id}/deactivate', [AdminManagementController::class, 'deactivate'])->name('admins.deactivate');
+        Route::patch('admins/{id}/activate', [AdminManagementController::class, 'activate'])->name('admins.activate');
+        Route::delete('admins/{id}', [AdminManagementController::class, 'destroy'])->name('admins.destroy');
+        Route::post('admins/{id}/resend', [AdminManagementController::class, 'resendInvite'])->name('admins.resend');
     });
 
     // Session Keep Alive

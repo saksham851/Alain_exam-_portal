@@ -65,10 +65,6 @@
                                    value="{{ old('title', $caseStudy->title) }}" placeholder="Enter case study title" required>
                             <input type="hidden" name="order_no" value="{{ $caseStudy->order_no }}">
                         </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold">Content / Scenario</label>
-                            <textarea id="editor" name="content" class="form-control" rows="4">{{ old('content', $caseStudy->content) }}</textarea>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -114,10 +110,10 @@
                                             <input type="text" :name="'visits['+index+'][title]'" class="form-control border-start-0 ps-0" x-model="visit.title" placeholder="e.g. Initial Consultation" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
-                                        <textarea :name="'visits['+index+'][description]'" class="form-control" rows="2" x-model="visit.description" placeholder="Brief description of this visit scenario..."></textarea>
-                                    </div>
+                                     <div class="col-md-12">
+                                         <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Content / Description</label>
+                                         <textarea :name="'visits['+index+'][description]'" class="form-control" rows="3" x-model="visit.description" placeholder="Brief description of this visit scenario..."></textarea>
+                                     </div>
                                 </div>
                             </div>
                         </template>
@@ -231,8 +227,6 @@
                 // Initialize visits if null
                 if (!this.visits) this.visits = [];
 
-                ClassicEditor.create(document.querySelector('#editor'))
-                    .catch(error => { console.error(error); });
                 
                 // Scroll to visit if hash is present
                 this.$nextTick(() => {

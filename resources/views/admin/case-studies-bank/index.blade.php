@@ -653,10 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                            title="{{ $isActiveExam ? 'View' : 'Edit' }} this visit">
                                                                             <span class="badge bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 28px; height: 28px; font-size: 11px;">{{ $loop->iteration }}</span>
                                                                             <div class="overflow-hidden">
-                                                                                <h6 class="mb-0 fw-bold hover-primary text-truncate">{{ $visit->title }}</h6>
-                                                                                @if($visit->description)
-                                                                                    <div class="text-muted small text-truncate" style="font-size: 10px;">{{ Str::limit(strip_tags($visit->description), 50) }}</div>
-                                                                                @endif
+                                                                                 <h6 class="mb-0 fw-bold hover-primary text-truncate">{{ $visit->title }}</h6>
                                                                             </div>
                                                                             <i class="ti ti-external-link ms-auto text-muted small opacity-50"></i>
                                                                         </a>

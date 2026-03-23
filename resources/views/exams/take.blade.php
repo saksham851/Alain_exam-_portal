@@ -365,57 +365,43 @@
             @foreach($questionsList as $index => $slide)
                 <div x-show="currentIndex === {{ $index }}" class="slide-container" data-section-id="{{ $slide['section_id'] }}">
                     
-                    @if(!empty(strip_tags($slide['sub_content'] ?? '')))
+                    @if(!empty(strip_tags($slide['case_title'] ?? '')))
                     <div class="case-study-box">
-                        <div class="case-title-area" @click="isCaseExpanded = !isCaseExpanded">
+                        <div class="case-title-area">
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-file-text text-primary fs-5 me-2"></i>
                                 <h6 class="mb-0 fw-bold text-slate-700">{{ $slide['case_title'] }}</h6>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;" x-text="isCaseExpanded ? 'COLLAPSE' : 'EXPAND'"></span>
-                                <i class="ti fs-5 transition-all" :class="isCaseExpanded ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
-                            </div>
-                        </div>
-                        <div x-show="isCaseExpanded" x-transition.opacity>
-                            <div class="card-body p-4 bg-white">
-                                <div class="text-slate-700" style="font-size: 1.05rem; line-height: 1.7;">
-                                    {!! $slide['sub_content'] !!}
-                                </div>
                             </div>
                         </div>
                     </div>
                     @endif
 
-                    @if(!empty(strip_tags($slide['visit_content'] ?? '')))
+                    @if(!empty(strip_tags($slide['visit_title'] ?? '')))
                     <div class="case-study-box mt-3">
                         <div class="case-title-area bg-light" @click="isVisitExpanded = !isVisitExpanded">
                             <div class="d-flex align-items-center">
                                 <i class="ti ti-notes text-secondary fs-5 me-2"></i>
                                 <h6 class="mb-0 fw-bold text-slate-700">{{ $slide['visit_title'] }}</h6>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;" x-text="isVisitExpanded ? 'COLLAPSE' : 'EXPAND'"></span>
-                                <i class="ti fs-5 transition-all" :class="isVisitExpanded ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
-                            </div>
+                            <i class="ti fs-5 text-muted transition-transform" :class="isVisitExpanded ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
                         </div>
-                        <div x-show="isVisitExpanded" x-transition.opacity>
-                            <div class="card-body p-4 bg-white">
-                                <div class="text-slate-700" style="font-size: 1.05rem; line-height: 1.7;">
-                                    {!! $slide['visit_content'] !!}
+                        <div x-show="isVisitExpanded" x-collapse>
+                            @if(!empty(strip_tags($slide['visit_content'] ?? '')))
+                                <div class="p-4 border-top bg-white">
+                                    <div class="text-slate-600 leading-relaxed">{!! $slide['visit_content'] !!}</div>
                                 </div>
-                            </div>
+                            @endif
                         </div>
                     </div>
                     @endif
 
-                    <div class="text-center py-5" x-show="!viewedCases.includes('{{ $slide['visit_id'] }}')">
-                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-sm fw-bold d-inline-flex align-items-center gap-2" @click="viewedCases.push('{{ $slide['visit_id'] }}')">
+                    <div class="text-center py-5" x-show="!viewedCases.includes({{ $slide['visit_id'] }}) && !completedVisitIds.includes({{ $slide['visit_id'] }})">
+                        <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-sm fw-bold d-inline-flex align-items-center gap-2" @click="viewedCases.push({{ $slide['visit_id'] }})">
                             View Questions <i class="ti ti-chevron-right"></i>
                         </button>
                     </div>
 
-                    <div class="question-card" x-show="viewedCases.includes('{{ $slide['visit_id'] }}')" x-transition.opacity>
+                    <div class="question-card" x-show="viewedCases.includes({{ $slide['visit_id'] }}) && !completedVisitIds.includes({{ $slide['visit_id'] }})" x-transition.opacity>
                         <div class="question-head">
                             <span class="q-badge">Question {{ $index + 1 }}</span>
                             <h2 class="question-text">{!! $slide['question']->question_text !!}</h2>
@@ -445,9 +431,7 @@
                 <div class="action-inner">
                     <!-- Can only go back if the previous question is in the same section -->
                     <button type="button" class="btn btn-light btn-action" 
-                            x-show="currentIndex > 0 && 
-                                    questionSections[currentIndex] === questionSections[currentIndex - 1] && 
-                                    visitIds[currentIndex] === visitIds[currentIndex - 1]" 
+                            x-show="currentIndex > 0" 
                             @click="prevSlide()">
                        <i class="ti ti-chevron-left me-1"></i> Go Back
                     </button>
@@ -622,6 +606,12 @@
                     const alpineData = Alpine.$data(examEl);
                     if (alpineData) {
                         // Check if this is the last question of exam
+                        // Mark current visit as completed
+                        const currentVisitId = alpineData.visitIds[alpineData.currentIndex];
+                        if (!alpineData.completedVisitIds.includes(currentVisitId)) {
+                            alpineData.completedVisitIds.push(currentVisitId);
+                        }
+
                         if (alpineData.isLastQuestionOfExam) {
                             alpineData.isLastQuestionOfExam = false;
                             // Submit entire exam
@@ -672,6 +662,7 @@
                 totalSlides: totalSlides,
                 questionSections: questionSections,
                 visitIds: visitIds,
+                completedVisitIds: [],
                 isLastQuestionOfExam: false,
                 expiryTimestamp: {{ \Carbon\Carbon::parse($attempt->started_at)->addMinutes($exam->duration_minutes)->timestamp }} * 1000,
                 now: new Date().getTime(),
@@ -773,24 +764,55 @@
                 nextSlide() {
                     if (this.currentIndex < this.totalSlides - 1) {
                         const oldSecId = this.currentSectionId;
-                        this.currentIndex++;
+                        const currentVisitId = this.visitIds[this.currentIndex];
+                        
+                        // If we are on a completed visit, jump to the first question of the NEXT visit
+                        if (this.completedVisitIds.includes(currentVisitId)) {
+                            let idx = this.currentIndex;
+                            while (idx < this.totalSlides && this.visitIds[idx] === currentVisitId) {
+                                idx++;
+                            }
+                            if (idx < this.totalSlides) {
+                                this.currentIndex = idx;
+                            } else {
+                                // Fallback just in case
+                                this.currentIndex++;
+                            }
+                        } else {
+                            this.currentIndex++;
+                        }
+                        
+                        // Expansion state for the new current slide
+                        // If it's a completed visit, keep it collapsed (initially hidden)
+                        this.isVisitExpanded = !this.completedVisitIds.includes(this.visitIds[this.currentIndex]);
                         this.isCaseExpanded = true;
-                        this.isVisitExpanded = true;
+                        
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },
 
                 prevSlide() {
                     if (this.currentIndex > 0) {
-                        // Safety check: Don't allow going back to a different section or visit
-                        if (this.questionSections[this.currentIndex] !== this.questionSections[this.currentIndex - 1] ||
-                            this.visitIds[this.currentIndex] !== this.visitIds[this.currentIndex - 1]) {
-                            return;
-                        }
                         const oldSecId = this.currentSectionId;
-                        this.currentIndex--;
+                        const currentVisitId = this.visitIds[this.currentIndex];
+                        const prevVisitId = this.visitIds[this.currentIndex - 1];
+                        
+                        if (currentVisitId === prevVisitId) {
+                            // Moving within the same visit, just go back one question
+                            this.currentIndex--;
+                        } else {
+                            // Moving to a previous visit. Jump to the first question of that visit.
+                            let idx = this.currentIndex - 1;
+                            const targetVisitId = this.visitIds[idx];
+                            while (idx > 0 && this.visitIds[idx - 1] === targetVisitId) {
+                                idx--;
+                            }
+                            this.currentIndex = idx;
+                        }
+                        
+                        // If we returned to a completed visit, it should be initially hidden (collapsed)
+                        this.isVisitExpanded = !this.completedVisitIds.includes(this.visitIds[this.currentIndex]);
                         this.isCaseExpanded = true;
-                        this.isVisitExpanded = true;
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }
                 },

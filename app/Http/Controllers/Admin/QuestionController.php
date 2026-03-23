@@ -339,7 +339,8 @@ class QuestionController extends Controller
                 return redirect($request->return_url)->with('success', $message);
             }
 
-            return redirect()->route('admin.questions.index')
+            $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+            return redirect()->route($prefix . '.questions.index')
                 ->with('question_created_success', true)
                 ->with('selected_exam_id', $visit->caseStudy->section->exam_id)
                 ->with('selected_section_id', $visit->caseStudy->section_id)
@@ -443,7 +444,8 @@ class QuestionController extends Controller
             return redirect($request->return_url)->with('success', 'Question updated successfully!');
         }
 
-        return redirect()->route('admin.questions.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.questions.index')
             ->with('success', 'Question updated successfully!');
     }
 
@@ -636,7 +638,8 @@ class QuestionController extends Controller
             
             DB::commit();
 
-            return redirect()->route('admin.questions.index')
+            $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+            return redirect()->route($prefix . '.questions.index')
                 ->with('question_created_success', true)
                 ->with('selected_exam_id', $targetVisit->caseStudy->section->exam_id)
                 ->with('selected_section_id', $targetVisit->caseStudy->section_id)
@@ -715,7 +718,8 @@ class QuestionController extends Controller
             $msg .= " ($skipped duplicates skipped)";
         }
 
-        return redirect()->route('admin.questions.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.questions.index')
             ->with('success', $msg);
     }
 

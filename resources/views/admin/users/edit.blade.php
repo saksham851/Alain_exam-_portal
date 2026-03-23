@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    $role = auth()->user()->role;
+    $prefix = ($role === 'manager') ? 'manager.students' : 'admin.users';
+@endphp
+
 @section('content')
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
@@ -9,7 +14,11 @@
         <div class="page-header-title">
           <h5 class="m-b-10">{{ isset($user) ? 'Edit Student' : 'Add Student' }}</h5>
         </div>
-
+        <ul class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ route(($role === 'manager' ? 'manager' : 'admin') . '.dashboard') }}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{{ route($prefix . '.index') }}">Students</a></li>
+          <li class="breadcrumb-item" aria-current="page">{{ isset($user) ? 'Edit Student' : 'Add Student' }}</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -23,7 +32,7 @@
                 <h5>Student Details</h5>
             </div>
             <div class="card-body">
-                <form action="{{ isset($user) ? route('admin.users.update', $user->id) : route('admin.users.store') }}" method="POST">
+                <form action="{{ isset($user) ? route($prefix . '.update', $user->id) : route($prefix . '.store') }}" method="POST">
                     @csrf
                     @if(isset($user))
                         @method('PUT')
@@ -75,7 +84,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="ti ti-check me-1"></i> {{ isset($user) ? 'Update Student' : 'Create Student' }}
                         </button>
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
+                        <a href="{{ route($prefix . '.index') }}" class="btn btn-secondary">
                             <i class="ti ti-x me-1"></i> Cancel
                         </a>
                     </div>

@@ -4,35 +4,31 @@
 
 <div class="row mb-4">
     <!-- Stats Cards -->
-    <div class="col-md-4">
+    <div class="col-md-6">
         <a href="{{ route('manager.students.index') }}" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body pt-3 px-3 pb-2">
-                    <h6 class="mb-2 f-w-400 text-muted">Total Students</h6>
-                    <h4 class="mb-2">{{ number_format($totalStudents) }} <span class="badge bg-light-primary border border-primary"><i class="ti ti-users"></i></span></h4>
-                    <p class="mb-0 text-muted text-sm">Registered users</p>
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body pt-3 px-3 pb-2 text-center">
+                    <div class="bg-light-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="ti ti-users fs-3 text-primary"></i>
+                    </div>
+                    <h6 class="mb-1 f-w-400 text-muted">Total Students</h6>
+                    <h4 class="mb-1 font-weight-bold">{{ number_format($totalStudents) }}</h4>
+                    <p class="mb-0 text-muted small">Registered users</p>
                 </div>
             </div>
         </a>
     </div>
 
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body pt-3 px-3 pb-2">
-                <h6 class="mb-2 f-w-400 text-muted">Total Exams</h6>
-                <h4 class="mb-2">{{ $totalExams }} <span class="badge bg-light-success border border-success"><i class="ti ti-book"></i></span></h4>
-                <p class="mb-0 text-muted text-sm">Available exams</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <a href="{{ route('manager.attempts.index') }}" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body pt-3 px-3 pb-2">
-                    <h6 class="mb-2 f-w-400 text-muted">Total Attempts</h6>
-                    <h4 class="mb-2">{{ $totalAttempts }} <span class="badge bg-light-danger border border-danger"><i class="ti ti-trending-up"></i></span></h4>
-                    <p class="mb-0 text-muted text-sm">All time</p>
+    <div class="col-md-6">
+        <a href="{{ route('manager.exams.index') }}" class="text-decoration-none">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body pt-3 px-3 pb-2 text-center">
+                    <div class="bg-light-success rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="ti ti-book fs-3 text-success"></i>
+                    </div>
+                    <h6 class="mb-1 f-w-400 text-muted">Total Exams</h6>
+                    <h4 class="mb-1 font-weight-bold">{{ $totalExams }}</h4>
+                    <p class="mb-0 text-muted small">Created in the portal</p>
                 </div>
             </div>
         </a>
@@ -42,10 +38,10 @@
 <div class="row">
     <!-- Recent Activity Table -->
     <div class="col-md-12">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Activity</h5>
-                <a href="{{ route('manager.attempts.index') }}" class="btn btn-sm btn-light-primary">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold">Recently Created Exams</h5>
+                <a href="{{ route('manager.exams.index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
                     <i class="ti ti-eye me-1"></i> View All
                 </a>
             </div>
@@ -54,36 +50,39 @@
                 <div class="table-responsive">
                     <table class="table table-hover table-borderless mb-0">
                         <thead>
-                            <tr>
-                                <th>STUDENT</th>
-                                <th>EXAM</th>
-                                <th>SCORE</th>
+                            <tr class="bg-light">
+                                <th class="ps-4">EXAM NAME</th>
+                                <th>CATEGORY</th>
                                 <th>STATUS</th>
-                                <th class="text-end">TIME</th>
+                                <th class="text-end pe-4">CREATED</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($recentAttempts as $attempt)
+                            @forelse($recentExams as $exam)
                             <tr>
-                                <td>
-                                    <a href="{{ route('manager.students.show', $attempt->studentExam->student->id) }}" class="text-muted">
-                                        {{ $attempt->studentExam->student->first_name }} {{ $attempt->studentExam->student->last_name }}
-                                    </a>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary-subtle rounded p-2 me-3">
+                                            <i class="ti ti-file-text text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 font-weight-bold">{{ $exam->name }}</h6>
+                                            <small class="text-muted">{{ $exam->exam_code }}</small>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td>{{ $attempt->studentExam->exam->name }}</td>
-                                <td>{{ round($attempt->total_score, 1) }}%</td>
+                                <td>{{ $exam->category->name ?? 'N/A' }}</td>
                                 <td>
-                                    <span class="d-flex align-items-center gap-2">
-                                        <i class="fas fa-circle {{ $attempt->is_passed ? 'text-success' : 'text-danger' }} f-10 m-r-5"></i>
-                                        {{ $attempt->is_passed ? 'Passed' : 'Failed' }}
+                                    <span class="badge {{ $exam->is_active ? 'bg-success' : 'bg-secondary' }} rounded-pill px-2">
+                                        {{ $exam->is_active ? 'Published' : 'Draft' }}
                                     </span>
                                 </td>
-                                <td class="text-end">{{ $attempt->ended_at->diffForHumans() }}</td>
+                                <td class="text-end pe-4">{{ $exam->created_at->diffForHumans() }}</td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    No recent attempts found. Students haven't attempted any exams yet.
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    No exams found yet. Start creating your first exam!
                                 </td>
                             </tr>
                             @endforelse
@@ -98,18 +97,27 @@
 <div class="row mt-4">
     <!-- Quick Actions -->
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>Quick Actions</h5>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold">Management Quick Actions</h5>
             </div>
             <div class="card-body">
-                <div class="d-flex gap-2 flex-wrap">
-                    <a href="{{ route('manager.students.index') }}" class="btn btn-light-primary">
-                        <i class="ti ti-users me-2"></i> View Students
-                    </a>
-                    <a href="{{ route('manager.attempts.index') }}" class="btn btn-light-info">
-                        <i class="ti ti-chart-bar me-2"></i> View All Results
-                    </a>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                         <a href="{{ route('manager.exams.create') }}" class="btn btn-primary w-100 py-2 rounded-3">
+                            <i class="ti ti-plus me-2"></i> Create New Exam
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('manager.students.index') }}" class="btn btn-light-info w-100 py-2 rounded-3">
+                            <i class="ti ti-users me-2"></i> View Students
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('manager.exams.index') }}" class="btn btn-light-secondary w-100 py-2 rounded-3">
+                            <i class="ti ti-list me-2"></i> All Exams
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

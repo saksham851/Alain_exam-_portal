@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    $role = auth()->user()->role;
+    $routePrefix = ($role === 'manager') ? 'manager.exams' : 'admin.exams';
+@endphp
+
 @section('content')
 <!-- Page Header -->
 <!-- Page Header -->
@@ -11,10 +16,10 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="{{ route('admin.exams.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route($routePrefix . '.index') }}" class="btn btn-outline-secondary">
                     <i class="ti ti-arrow-left me-1"></i> Back to Exams
                 </a>
-                <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-primary d-none d-sm-inline-block">
+                <a href="{{ route($routePrefix . '.edit', $exam->id) }}" class="btn btn-primary d-none d-sm-inline-block">
                     <i class="ti ti-edit me-1"></i> Edit Exam
                 </a>
             </div>
@@ -269,15 +274,15 @@ function toggleComplianceLabel(btn) {
                                             <div class="bg-secondary-subtle text-secondary rounded p-1 me-3">
                                                 <i class="ti ti-file-text"></i>
                                             </div>
-                                            <h6 class="mb-0 fw-bold text-dark">Case Study {{ $csIndex + 1 }}: {{ $caseStudy->title }}</h6>
+                                            <h6 class="mb-0 fw-bold text-dark">
+                                                @if(str_contains(strtolower($caseStudy->title), 'case study'))
+                                                    {{ $caseStudy->title }}
+                                                @else
+                                                    Case Study {{ $csIndex + 1 }}: {{ $caseStudy->title }}
+                                                @endif
+                                            </h6>
                                         </div>
                                         <div class="card-body p-4">
-                                            @if($caseStudy->content)
-                                                <div class="p-3 mb-4 bg-light-subtle border-start border-4 border-primary rounded-end">
-                                                    <h6 class="text-uppercase text-muted fs-7 fw-bold mb-2">Case Study Scenario</h6>
-                                                    <div class="text-dark opacity-100 text-break">{!! $caseStudy->content !!}</div>
-                                                </div>
-                                            @endif
 
                                             {{-- Loop through Visits --}}
                                             @forelse($caseStudy->visits as $vIndex => $visit)
@@ -430,7 +435,7 @@ function toggleComplianceLabel(btn) {
                 <div class="text-center py-5">
                     <img src="{{ asset('assets/images/no-data.svg') }}" alt="No Data" style="max-width: 200px;" class="mb-4 opacity-75">
                     <h4 class="text-muted">This exam has no content yet</h4>
-                    <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-primary mt-3">
+                    <a href="{{ route($routePrefix . '.edit', $exam->id) }}" class="btn btn-primary mt-3">
                         <i class="ti ti-plus me-1"></i> Add Content
                     </a>
                 </div>
@@ -440,7 +445,7 @@ function toggleComplianceLabel(btn) {
         <!-- Bottom Actions -->
         @if($exam->sections->count() > 0)
         <div class="d-flex justify-content-start mt-5 mb-5 pb-5">
-            <a href="{{ route('admin.exams.index') }}" class="btn btn-outline-secondary px-4">
+            <a href="{{ route($routePrefix . '.index') }}" class="btn btn-outline-secondary px-4">
                 <i class="ti ti-arrow-left me-1"></i> Back to Exam List
             </a>
         </div>

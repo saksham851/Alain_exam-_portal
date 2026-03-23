@@ -1,5 +1,11 @@
 @extends('layouts.app')
 
+@php
+    $role = auth()->user()->role;
+    $routePrefix = ($role === 'manager') ? 'manager.exams' : 'admin.exams';
+    $baseUrl = ($role === 'manager') ? 'manager' : 'admin';
+@endphp
+
 @section('content')
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
@@ -8,6 +14,11 @@
       <div class="col-md-12">
         <div class="page-header-title">
           <h5 class="m-b-10">{{ isset($exam) ? 'Edit Exam' : 'Create Exam' }}</h5>
+          <ul class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ route($baseUrl . '.dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ route($routePrefix . '.index') }}">Exams</a></li>
+            <li class="breadcrumb-item" aria-current="page">{{ isset($exam) ? 'Edit Exam' : 'Create Exam' }}</li>
+          </ul>
         </div>
 
       </div>
@@ -188,7 +199,7 @@
                                 </div>
                             </div>
                             <div class="col-auto">
-                                <a href="{{ route('admin.questions.index', ['exam_id' => $exam->id]) }}" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm">
+                                <a href="{{ route(($role === 'manager' ? 'manager' : 'admin') . '.questions.index', ['exam_id' => $exam->id]) }}" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm">
                                     <i class="ti ti-settings me-1"></i> Manage Questions
                                 </a>
                             </div>
@@ -272,7 +283,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    @if(isset($exam))
+                    @if(isset($exam) && auth()->user()->role !== 'manager')
                          <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" id="status-toggle-form" class="m-0">
                             @csrf
                             @method('PUT')
@@ -289,7 +300,7 @@
             </div>
             <div class="collapse show" id="examConfigurationBody">
                 <div class="card-body">
-                <form action="{{ isset($exam) ? route('admin.exams.update', $exam->id) : route('admin.exams.store') }}" method="POST">
+                    <form action="{{ isset($exam) ? route($routePrefix . '.update', $exam->id) : route($routePrefix . '.store') }}" method="POST">
                     @csrf
                     @if(isset($exam))
                         @method('PUT')
@@ -550,11 +561,11 @@
                     </script>
 
                     <div class="mt-4 pt-4 border-top d-flex justify-content-between align-items-center mb-3 px-3">
-                        <a href="{{ route('admin.exams.index') }}" class="btn btn-link text-secondary text-decoration-none">
+                        <a href="{{ route($routePrefix . '.index') }}" class="btn btn-link text-secondary text-decoration-none">
                             <i class="ti ti-arrow-left me-1"></i> Back to List
                         </a>
                         <div class="d-flex gap-2">
-                             <a href="{{ route('admin.exams.index') }}" class="btn btn-light-secondary px-4">Cancel</a>
+                             <a href="{{ route($routePrefix . '.index') }}" class="btn btn-light-secondary px-4">Cancel</a>
                              <button type="submit" class="btn btn-primary px-4 shadow-sm" id="submitBtn">
                                  <i class="ti {{ isset($exam) ? 'ti-device-floppy' : 'ti-plus' }} me-2"></i>
                                  {{ isset($exam) ? 'Save Changes' : 'Create Exam' }}
@@ -673,6 +684,7 @@
 let currentExamId = "{{ $exam->id }}";
 let activeSectionId = null;
 let isExamActive = {{ $exam->is_active ? 'true' : 'false' }};
+const rolePrefix = "{{ $baseUrl }}";
 
 function showLockedModal(action = 'modify') {
     Swal.fire({
@@ -749,7 +761,7 @@ async function loadExamSections() {
     container.innerHTML = '';
 
     try {
-        const response = await fetch(`/admin/api/sections/${currentExamId}`);
+        const response = await fetch(`/${rolePrefix}/api/sections/${currentExamId}`);
         const data = await response.json();
         
         loading.style.display = 'none';
@@ -830,7 +842,7 @@ async function loadSectionContent(sectionId) {
     try {
         // We'll need a new API endpoint for this or reuse existing ones
         // For now, let's assume we have one or I'll create it
-        const response = await fetch(`/admin/api/sections/${sectionId}/content`);
+        const response = await fetch(`/${rolePrefix}/api/sections/${sectionId}/content`);
         const data = await response.json();
         
         loading.style.display = 'none';
@@ -876,7 +888,7 @@ function renderSectionContent(caseStudies) {
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle" onclick="editCaseStudy(${cs.id})"><i class="ti ti-edit"></i></button>
-                    <a href="/admin/case-studies-bank/${cs.id}" class="btn btn-sm btn-icon btn-light-info rounded-circle" title="View Case Study"><i class="ti ti-eye"></i></a>
+                    <a href="/${rolePrefix}/case-studies-bank/${cs.id}" class="btn btn-sm btn-icon btn-light-info rounded-circle" title="View Case Study"><i class="ti ti-eye"></i></a>
                     <button class="btn btn-sm btn-icon btn-light-danger rounded-circle" onclick="deleteCaseStudy(${cs.id})"><i class="ti ti-trash"></i></button>
                 </div>
             </div>
@@ -968,7 +980,7 @@ function openCreateSectionModal() {
         showLockedModal('add sections');
         return;
     }
-    window.location.href = `/admin/sections/create?exam_id=${currentExamId}&return_url=${getReturnUrl()}`;
+    window.location.href = `/${rolePrefix}/sections/create?exam_id=${currentExamId}&return_url=${getReturnUrl()}`;
 }
 
 function editSection(id) {
@@ -976,7 +988,7 @@ function editSection(id) {
         showLockedModal('edit sections');
         return;
     }
-    window.location.href = `/admin/sections/${id}/edit?return_url=${getReturnUrl()}`;
+    window.location.href = `/${rolePrefix}/sections/${id}/edit?return_url=${getReturnUrl()}`;
 }
 
 async function deleteSection(id) {
@@ -995,7 +1007,7 @@ async function deleteSection(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`/admin/api/sections-ajax/${id}`, {
+            const response = await fetch(`/${rolePrefix}/api/sections-ajax/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1048,7 +1060,7 @@ async function loadDeletedSections() {
     container.innerHTML = '';
 
     try {
-        const response = await fetch(`/admin/api/sections/${currentExamId}/deleted`);
+        const response = await fetch(`/${rolePrefix}/api/sections/${currentExamId}/deleted`);
         const data = await response.json();
         loading.style.display = 'none';
 
@@ -1106,7 +1118,7 @@ async function restoreSection(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`/admin/api/sections-ajax/${id}/restore`, {
+            const response = await fetch(`/${rolePrefix}/api/sections-ajax/${id}/restore`, {
                 method: 'PATCH',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1138,7 +1150,7 @@ function openCreateCaseStudyModal() {
         Swal.fire('Select Section', 'Please select a section before adding a case study.', 'warning');
         return;
     }
-    window.location.href = `/admin/case-studies-bank/create?exam_id=${currentExamId}&section_id=${activeSectionId}&return_url=${getReturnUrl()}`;
+    window.location.href = `/${rolePrefix}/case-studies-bank/create?exam_id=${currentExamId}&section_id=${activeSectionId}&return_url=${getReturnUrl()}`;
 }
 
 function editCaseStudy(id) {
@@ -1146,7 +1158,7 @@ function editCaseStudy(id) {
         showLockedModal('edit case studies');
         return;
     }
-    window.location.href = `/admin/case-studies-bank/${id}/edit?return_url=${getReturnUrl()}`;
+    window.location.href = `/${rolePrefix}/case-studies-bank/${id}/edit?return_url=${getReturnUrl()}`;
 }
 
 async function deleteCaseStudy(id) {
@@ -1165,7 +1177,7 @@ async function deleteCaseStudy(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`/admin/api/case-studies/${id}`, {
+            const response = await fetch(`/${rolePrefix}/api/case-studies/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1212,7 +1224,7 @@ async function deleteVisit(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`/admin/api/visits/${id}`, {
+            const response = await fetch(`/${rolePrefix}/api/visits/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1330,7 +1342,7 @@ function addQuestion(visitId) {
         showLockedModal('add questions');
         return;
     }
-    window.location.href = `/admin/questions/create?visit_id=${visitId}&return_url=${getReturnUrl()}`;
+    window.location.href = `/${rolePrefix}/questions/create?visit_id=${visitId}&return_url=${getReturnUrl()}`;
 }
 
 function addModalOption(text = '', isCorrect = false) {
@@ -1429,7 +1441,7 @@ async function editVisit(id) {
         return;
     }
     try {
-        const response = await fetch(`/admin/api/visits-detail/${id}`);
+        const response = await fetch(`/${rolePrefix}/api/visits-detail/${id}`);
         const data = await response.json();
         if (data.success) {
             const v = data.visit;
@@ -1457,7 +1469,7 @@ visitForm.addEventListener('submit', async function(e) {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
 
-    const url = id ? `/admin/api/visits/${id}` : `/admin/api/visits`;
+    const url = id ? `/${rolePrefix}/api/visits/${id}` : `/${rolePrefix}/api/visits`;
     const method = id ? 'PUT' : 'POST';
 
     try {
@@ -1503,7 +1515,7 @@ function editQuestion(id) {
         showLockedModal('edit questions');
         return;
     }
-    window.location.href = `/admin/questions/${id}/edit?return_url=${getReturnUrl()}`;
+    window.location.href = `/${rolePrefix}/questions/${id}/edit?return_url=${getReturnUrl()}`;
 }
 
 async function deleteQuestion(id) {
@@ -1522,7 +1534,7 @@ async function deleteQuestion(id) {
 
     if (result.isConfirmed) {
         try {
-            const response = await fetch(`/admin/api/questions/${id}`, {
+            const response = await fetch(`/${rolePrefix}/api/questions/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

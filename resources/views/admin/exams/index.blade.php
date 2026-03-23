@@ -1,5 +1,11 @@
 @extends('layouts.app')
 
+@php
+    $role = auth()->user()->role;
+    $routePrefix = ($role === 'manager') ? 'manager.exams' : 'admin.exams';
+    $baseUrl = ($role === 'manager') ? 'manager' : 'admin';
+@endphp
+
 @section('content')
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
@@ -21,9 +27,15 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">All Exams <span class="badge bg-light-secondary text-secondary ms-2 small">{{ \App\Models\Exam::where('status', 1)->count() }} Total</span></h5>
+                @if(auth()->user()->role !== 'manager')
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createExamModal">
                     <i class="ti ti-plus me-1"></i> Create Exam
                 </button>
+                @else
+                <a href="{{ route('manager.exams.create') }}" class="btn btn-primary btn-sm">
+                    <i class="ti ti-plus me-1"></i> Create Exam
+                </a>
+                @endif
             </div>
 
 <!-- Create Exam Modal -->
@@ -56,6 +68,7 @@
                     </div>
 
                     <!-- Option 2: Clone -->
+                    @if(auth()->user()->role !== 'manager')
                     <div class="col-md-6">
                         @if($allExams->isNotEmpty())
                             <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneExamModal">
@@ -83,6 +96,7 @@
                             </div>
                         @endif
                     </div>
+                    @endif
                 </div>
             </div>
 </div>
@@ -175,7 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (examId) {
                 // Update form action
-                cloneExamForm.action = `/admin/exams/${examId}/clone`;
+                const prefix = "{{ auth()->user()->role === 'manager' ? 'manager' : 'admin' }}";
+                cloneExamForm.action = `/${prefix}/exams/${examId}/clone`;
             } else {
                 cloneExamForm.action = '';
             }
@@ -186,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
-                <form method="GET" action="{{ route('admin.exams.index') }}" id="filterForm">
+                <form method="GET" action="{{ route($routePrefix . '.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
                         <!-- Search -->
                         <div class="col-md-3">
@@ -253,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <!-- Buttons -->
                         <div class="col-md-1">
                             <div class="d-flex gap-1 justify-content-end">
-                                <a href="{{ route('admin.exams.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
+                                <a href="{{ route($routePrefix . '.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
                                 </a>
                             </div>
@@ -386,55 +401,61 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <i class="ti ti-dots-vertical f-18"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
+                                            @php
+                                                $prefix = ($role === 'manager') ? 'manager.exams' : 'admin.exams';
+                                            @endphp
                                             @if($exam->status == 1)
                                                 <li>
-                                                    <a class="dropdown-item" href="{{ route('admin.exams.show', $exam->id) }}">
+                                                    <a class="dropdown-item" href="{{ route($prefix . '.show', $exam->id) }}">
                                                         <i class="ti ti-eye me-2"></i>View Exam
                                                     </a>
                                                 </li>
                                                 <li>
-                                                    <a class="dropdown-item" href="{{ route('admin.exams.edit', $exam->id) }}">
+                                                    <a class="dropdown-item" href="{{ route($prefix . '.edit', $exam->id) }}">
                                                         <i class="ti ti-edit me-2"></i>Edit Exam
                                                     </a>
                                                 </li>
-                                                @if($exam->is_active == 0)
-                                                    <li>
-                                                        <form action="{{ route('admin.exams.publish', $exam->id) }}" method="POST" class="d-block" id="publishForm{{ $exam->id }}">
-                                                            @csrf
-                                                            <button type="button" class="dropdown-item" onclick="showPublishModal(document.getElementById('publishForm{{ $exam->id }}'), {{ $exam->id }})">
-                                                                <i class="ti ti-upload me-2"></i>Publish Exam
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                @endif
-                                                <li>
-                                                    @if($exam->is_active == 1)
+                                                @if(auth()->user()->role !== 'manager')
+                                                    @if($exam->is_active == 0)
                                                         <li>
-                                                            <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" class="d-block" id="unpublishForm{{ $exam->id }}">
-                                                                @csrf @method('PUT')
-                                                                <button type="button" class="dropdown-item text-danger" onclick="showUnpublishModal(document.getElementById('unpublishForm{{ $exam->id }}'))">
-                                                                    <i class="ti ti-eye-off me-2"></i>Unpublish Exam
+                                                            <form action="{{ route('admin.exams.publish', $exam->id) }}" method="POST" class="d-block" id="publishForm{{ $exam->id }}">
+                                                                @csrf
+                                                                <button type="button" class="dropdown-item" onclick="showPublishModal(document.getElementById('publishForm{{ $exam->id }}'), {{ $exam->id }})">
+                                                                    <i class="ti ti-upload me-2"></i>Publish Exam
                                                                 </button>
                                                             </form>
                                                         </li>
-                                                        <li>
-                                                            <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Published exam - cannot delete">
-                                                                <button class="dropdown-item disabled" type="button" style="pointer-events: none;">
+                                                    @endif
+                                                    <li>
+                                                        @if($exam->is_active == 1)
+                                                            <li>
+                                                                <form action="{{ route('admin.exams.toggle-status', $exam->id) }}" method="POST" class="d-block" id="unpublishForm{{ $exam->id }}">
+                                                                    @csrf @method('PUT')
+                                                                    <button type="button" class="dropdown-item text-danger" onclick="showUnpublishModal(document.getElementById('unpublishForm{{ $exam->id }}'))">
+                                                                        <i class="ti ti-eye-off me-2"></i>Unpublish Exam
+                                                                    </button>
+                                                                </form>
+                                                            </li>
+                                                            <li>
+                                                                <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Published exam - cannot delete">
+                                                                    <button class="dropdown-item disabled" type="button" style="pointer-events: none;">
+                                                                        <i class="ti ti-trash me-2"></i>Delete Exam
+                                                                    </button>
+                                                                </span>
+                                                            </li>
+                                                        @else
+                                                            {{-- Standard Delete triggers soft delete via controller --}}
+                                                            <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-block" id="deleteForm{{ $exam->id }}">
+                                                                @csrf @method('DELETE')
+                                                                <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')">
                                                                     <i class="ti ti-trash me-2"></i>Delete Exam
                                                                 </button>
-                                                            </span>
-                                                        </li>
-                                                    @else
-                                                        {{-- Standard Delete triggers soft delete via controller --}}
-                                                        <form action="{{ route('admin.exams.destroy', $exam->id) }}" method="POST" class="d-block" id="deleteForm{{ $exam->id }}">
-                                                            @csrf @method('DELETE')
-                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('deleteForm{{ $exam->id }}'), 'Are you sure you want to delete this exam?')">
-                                                                <i class="ti ti-trash me-2"></i>Delete Exam
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                </li>
+                                                            </form>
+                                                        @endif
+                                                    </li>
+                                                @endif
                                             @else
+                                                @if(auth()->user()->role !== 'manager')
                                                 <li>
                                                     <form action="{{ route('admin.exams.activate', $exam->id) }}" method="POST" class="d-block" id="activateForm{{ $exam->id }}">
                                                         @csrf @method('PATCH')
@@ -443,6 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         </button>
                                                     </form>
                                                 </li>
+                                                @endif
                                             @endif
                                         </ul>
                                     </div>
@@ -534,7 +556,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const contentArea = document.getElementById('complianceContent');
         const publishBtn = document.getElementById('compliancePublishBtn');
         
-        fetch(`/admin/exams/${examId}/validate-compliance`)
+        fetch(`/{{ $baseUrl }}/exams/${examId}/validate-compliance`)
             .then(response => response.json())
             .then(data => {
                 loadingSpinner.style.display = 'none';
@@ -656,13 +678,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             tableContainer.parentElement.insertBefore(summaryDiv, tableContainer);
                         }
 
-                        // Warning for Uncategorized
+                         // Warning for Uncategorized
                         if(data.compliance.uncategorized_count > 0) {
                              const uncategorizedTr = document.createElement('tr');
+                             const uncatQuestions = data.compliance.uncategorized_questions || [];
                              
                              let questionsHtml = `
                                 <div class="mt-2 vstack gap-2">
-                                    ${data.compliance.uncategorized_questions.slice(0, 10).map(q => `
+                                    ${uncatQuestions.slice(0, 10).map(q => `
                                         <div class="p-2 border rounded bg-white small d-flex justify-content-between align-items-center shadow-sm">
                                             <div class="text-truncate" style="max-width: 500px;">
                                                 <i class="ti ti-help text-muted me-1"></i>
@@ -674,7 +697,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </a>
                                         </div>
                                     `).join('')}
-                                    ${data.compliance.uncategorized_questions.length > 10 ? `<div class="text-center py-1 small text-muted fw-bold">... and ${data.compliance.uncategorized_questions.length - 10} more questions need attention</div>` : ''}
+                                    ${uncatQuestions.length > 10 ? `<div class="text-center py-1 small text-muted fw-bold">... and ${uncatQuestions.length - 10} more questions need attention</div>` : ''}
                                 </div>
                              `;
 

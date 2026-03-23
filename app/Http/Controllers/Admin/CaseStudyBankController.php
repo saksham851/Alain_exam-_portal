@@ -264,7 +264,8 @@ public function store(Request $request)
             return redirect($returnUrl)->with('success', $message);
         }
         
-        return redirect()->route('admin.case-studies-bank.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.case-studies-bank.index')
             ->with('case_study_created_success', true)
             ->with('selected_exam_id', $section->exam_id)
             ->with('selected_section_id', $request->section_id)
@@ -354,8 +355,9 @@ public function store(Request $request)
 
             DB::commit();
 
+            $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
             return redirect()
-                ->route('admin.case-studies-bank.index')
+                ->route($prefix . '.case-studies-bank.index')
                 ->with('case_study_created_success', true)
                 ->with('selected_exam_id', $targetSection->exam_id)
                 ->with('selected_section_id', $targetSection->id)
@@ -484,7 +486,8 @@ public function store(Request $request)
                 return redirect($request->return_url)->with('success', 'Case Study and Visits updated successfully.');
             }
             
-            return redirect()->route('admin.case-studies-bank.index')->with('success', 'Case Study and Visits updated successfully.');
+            $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+            return redirect()->route($prefix . '.case-studies-bank.index')->with('success', 'Case Study and Visits updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();

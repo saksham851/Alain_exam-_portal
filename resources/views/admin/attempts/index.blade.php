@@ -1,5 +1,5 @@
 @php
-  $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+  $routePrefix = (auth()->user()->role === 'manager') ? 'manager' : 'admin';
 @endphp
 @extends('layouts.app')
 

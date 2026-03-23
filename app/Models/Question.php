@@ -25,15 +25,33 @@ class Question extends Model
         return $this->belongsTo(Visit::class);
     }
 
+    /**
+     * Get the case study this question belongs to (via visit).
+     * Uses hasOneThrough so it can also be eager-loaded.
+     */
     public function caseStudy()
     {
-        // Helper to access parent case study
-        return $this->visit ? $this->visit->caseStudy() : null;
+        return $this->hasOneThrough(
+            CaseStudy::class,
+            Visit::class,
+            'id',        // visits.id
+            'id',        // case_studies.id
+            'visit_id',  // questions.visit_id
+            'case_study_id' // visits.case_study_id
+        );
     }
 
-    public function section()
+    /**
+     * Helper to get the section this question belongs to.
+     * Not a relationship - use ->getSection() to access.
+     */
+    public function getSection()
     {
-        return $this->visit && $this->visit->caseStudy ? $this->visit->caseStudy->section() : null;
+        if ($this->relationLoaded('visit') && $this->visit
+            && $this->visit->relationLoaded('caseStudy') && $this->visit->caseStudy) {
+            return $this->visit->caseStudy->section;
+        }
+        return $this->visit?->caseStudy?->section;
     }
 
     public function options()

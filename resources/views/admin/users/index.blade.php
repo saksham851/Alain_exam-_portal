@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    $role = auth()->user()->role;
+    $prefix = ($role === 'manager') ? 'manager.students' : 'admin.users';
+@endphp
+
 @section('content')
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
@@ -28,7 +33,7 @@
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
-                <form method="GET" action="{{ route('admin.users.index') }}" id="filterForm">
+                <form method="GET" action="{{ route($prefix . '.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
                         <!-- Search -->
                         <div class="col-md-3">
@@ -76,7 +81,7 @@
                         <!-- Buttons -->
                         <div class="col-md-3">
                             <div class="d-flex gap-1 justify-content-end">
-                                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
+                                <a href="{{ route($prefix . '.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Reset">
                                     <i class="ti ti-rotate"></i>
                                 </a>
                             </div>
@@ -183,6 +188,7 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if(auth()->user()->role !== 'manager')
                                     <button type="button" 
                                             class="badge bg-light-info text-info border-0" 
                                             data-bs-toggle="modal" 
@@ -191,6 +197,11 @@
                                             style="cursor: pointer;">
                                         {{ $user->studentExams->sum('attempts_allowed') - $user->studentExams->sum('attempts_used') }} / {{ $user->studentExams->sum('attempts_allowed') }} left
                                     </button>
+                                    @else
+                                    <span class="badge bg-light-info text-info border-0">
+                                        {{ $user->studentExams->sum('attempts_allowed') - $user->studentExams->sum('attempts_used') }} / {{ $user->studentExams->sum('attempts_allowed') }} left
+                                    </span>
+                                    @endif
                                 </td>
                                 <td class="text-end">
                                     <div class="dropdown">
@@ -203,15 +214,17 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.users.show', $user->id) }}">
+                                                <a class="dropdown-item" href="{{ route($prefix . '.show', $user->id) }}">
                                                     <i class="ti ti-eye me-2"></i>View Profile
                                                 </a>
                                             </li>
+                                            @if(auth()->user()->role !== 'manager')
                                             <li>
                                                 <a class="dropdown-item" href="{{ route('admin.attempts.by-user', $user->id) }}">
                                                     <i class="ti ti-trophy me-2"></i>View Result
                                                 </a>
                                             </li>
+                                            @endif
                                         </ul>
                                     </div>
                                 </td>
@@ -317,7 +330,9 @@ function quickAdjustAttempts(studentId, examId, adjustment, examName) {
 }
 </script>
 
+@if(auth()->user()->role !== 'manager')
 @include('admin.users.partials.manage_attempts_modal')
+@endif
 
 <script>
 // Initialize Bootstrap tooltips

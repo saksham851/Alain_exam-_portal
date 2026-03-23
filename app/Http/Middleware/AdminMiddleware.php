@@ -15,8 +15,8 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated and is an admin
-        if (auth()->check() && auth()->user()->role === 'admin') {
+        // Check if user is authenticated and is an admin or superadmin
+        if (auth()->check() && in_array(auth()->user()->role, ['admin', 'superadmin'])) {
             return $next($request);
         }
 

@@ -106,17 +106,22 @@ class Exam extends Model
         $errors = [];
         $contentAreasData = [];
         
-        // Load all active questions in this exam with their tags
-        $questions = $this->getAllQuestions()->with(['tags'])->get();
+        // Load all active questions in this exam with their tags and relationship chain
+        $questions = $this->getAllQuestions()->with(['tags', 'visit.caseStudy'])->get();
         $totalQuestionsCount = $questions->count();
 
         // Calculate Uncategorized Questions
         $standardCategoryIds = $standard->categories->pluck('id')->toArray();
         $uncategorizedCount = 0;
+        $uncategorizedQuestions = [];
         foreach ($questions as $q) {
             $hasValidTag = $q->tags->whereIn('score_category_id', $standardCategoryIds)->isNotEmpty();
             if (!$hasValidTag) {
                 $uncategorizedCount++;
+                $uncategorizedQuestions[] = [
+                    'id'   => $q->id,
+                    'text' => strip_tags($q->question_text),
+                ];
             }
         }
 
@@ -162,6 +167,7 @@ class Exam extends Model
                 'sections' => [],
                 'total_questions' => 0,
                 'uncategorized_count' => 0,
+                'uncategorized_questions' => [],
                 'uncategorized_by_category' => []
             ];
         }
@@ -184,8 +190,8 @@ class Exam extends Model
                         $points = $q->max_question_points;
                         $assignedPoints += $points;
                         
-                        // Map to section
-                        $secId = $q->caseStudy->section_id ?? null;
+                        // Map to section via eager-loaded visit->caseStudy chain
+                        $secId = $q->visit?->caseStudy?->section_id ?? null;
                         if ($secId && isset($sectionBreakdown[$secId])) {
                             $sectionBreakdown[$secId] += $points;
                         }
@@ -259,11 +265,12 @@ class Exam extends Model
                 ])
             ]),
             'total_questions' => $totalQuestionsCount,
-            'total_exam_points' => $grandTotalAchieved, // Sum of all category points
+            'total_exam_points' => $grandTotalAchieved,
             'grand_total_required' => $grandTotalRequired,
             'grand_total_achieved' => $grandTotalAchieved,
             'category_summaries' => $categorySummaries,
             'uncategorized_count' => $uncategorizedCount,
+            'uncategorized_questions' => $uncategorizedQuestions,
             'uncategorized_by_category' => $uncategorizedByCategory
         ];
     }

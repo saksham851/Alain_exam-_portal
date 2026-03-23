@@ -97,11 +97,6 @@
                                                            x-model="study.title" required @click.stop>
                                                     <input type="hidden" :name="'existing_case_studies['+study.id+'][order_no]'" x-model="study.order_no">
                                                 </div>
-                                                <div class="col-md-12 mb-3">
-                                                    <label class="form-label fw-bold small text-uppercase text-secondary">Content / Scenario</label>
-                                                    <textarea :id="'existing_editor_'+study.id" :name="'existing_case_studies['+study.id+'][content]'" 
-                                                              class="form-control" rows="4" x-model="study.content" @click.stop></textarea>
-                                                </div>
 
                                                 <!-- Existing Visits for this Case Study -->
                                                 <div class="col-md-12 mt-4">
@@ -150,10 +145,10 @@
                                                                                            x-model="visit.title" class="form-control" required @click.stop>
                                                                                 </div>
                                                                                 <div class="col-md-12">
-                                                                                    <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
-                                                                                    <textarea :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][description]'"
-                                                                                              x-model="visit.description" class="form-control" rows="3" placeholder="Optional" @click.stop></textarea>
-                                                                                </div>
+                                                      <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Content / Description</label>
+                                                      <textarea :name="'existing_case_studies['+study.id+'][visits]['+vIdx+'][description]'"
+                                                                x-model="visit.description" class="form-control" rows="3" placeholder="Enter visit specific content here..." @click.stop></textarea>
+                                                  </div>
                                                                             </div>
 
                                                                             <!-- Existing Questions Dropdown -->
@@ -238,10 +233,10 @@
                                                                                        x-model="nv.title" class="form-control" required placeholder="e.g. Follow-up">
                                                                             </div>
                                                                             <div class="col-md-12">
-                                                                                <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
-                                                                                <textarea :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][description]'"
-                                                                                          x-model="nv.description" class="form-control" rows="3" placeholder="Optional"></textarea>
-                                                                            </div>
+                                                  <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Content / Description</label>
+                                                  <textarea :name="'existing_case_studies['+study.id+'][new_visits]['+nvIdx+'][description]'"
+                                                            x-model="nv.description" class="form-control" rows="3" placeholder="Enter visit specific content here..."></textarea>
+                                              </div>
                                                                         </div>
                                                                     </div>
                                                                 </template>
@@ -284,11 +279,6 @@
                                         <input type="text" :name="'case_studies['+index+'][title]'" class="form-control" 
                                                x-model="caseStudy.title" placeholder="Enter case study title" required>
                                         <input type="hidden" :name="'case_studies['+index+'][order_no]'" x-model="caseStudy.order_no">
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label class="form-label fw-bold">Content / Scenario</label>
-                                        <textarea :id="'editor_'+index" :name="'case_studies['+index+'][content]'" 
-                                                  class="form-control" rows="4" x-model="caseStudy.content"></textarea>
                                     </div>
 
                                     <!-- Visits Section -->
@@ -337,11 +327,11 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-md-12">
-                                                        <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Description</label>
-                                                        <textarea :name="'case_studies['+index+'][visits]['+vIndex+'][description]'"
-                                                                  x-model="visit.description" class="form-control" 
-                                                                  rows="2" placeholder="Description for this visit..."></textarea>
-                                                    </div>
+                                                          <label class="form-label small fw-bold text-secondary text-uppercase mb-1">Visit Content / Description</label>
+                                                          <textarea :name="'case_studies['+index+'][visits]['+vIndex+'][description]'"
+                                                                    x-model="visit.description" class="form-control" 
+                                                                    rows="3" placeholder="Enter visit specific content here..."></textarea>
+                                                      </div>
                                                 </div>
                                             </div>
                                         </template>
@@ -439,18 +429,6 @@
                 if(this.selectedExamId) {
                     this.fetchSections();
                 }
-
-                // Init existing editors if data is present on load
-                if (this.existingCaseStudies.length > 0) {
-                    this.$nextTick(() => {
-                        this.existingCaseStudies.forEach((study, index) => {
-                            this.initExistingEditor(study.id);
-                        });
-                    });
-                }
-                
-                // Init new case study editor
-                this.$nextTick(() => { this.initEditor(0); });
             },
 
             addCaseStudy() {
@@ -480,7 +458,7 @@
                 this.recalculateOrders();
 
                 this.$nextTick(() => {
-                    this.initEditor(this.caseStudies.length - 1);
+                    // Item added, recalculate orders
                 });
             },
 
@@ -524,31 +502,8 @@
             },
 
             removeCaseStudy(index) {
-                const editorKey = index; 
-
-                if(editors[editorKey]) {
-                    editors[editorKey].destroy()
-                        .then(() => { delete editors[editorKey]; })
-                        .catch(e => console.error(e));
-                }
-
-                // Destroy all subsequent editors because indices will shift
-                for(let i = index + 1; i < this.caseStudies.length; i++) {
-                     if(editors[i]) {
-                        editors[i].destroy().then(() => { delete editors[i]; }).catch(e => console.error(e));
-                     }
-                }
-
                 this.caseStudies.splice(index, 1);
-                
                 this.recalculateOrders();
-
-                this.$nextTick(() => {
-                     // Re-init editors for shifted items
-                     this.caseStudies.forEach((_, i) => {
-                         this.initEditor(i);
-                     });
-                });
             },
 
             recalculateOrders() {
@@ -593,16 +548,6 @@
                         }
 
                         if (result.success) {
-                            // Destroy editor
-                            if(existingEditors[id]) {
-                                existingEditors[id].destroy()
-                                    .then(() => { delete existingEditors[id]; })
-                                    .catch(e => {
-                                        console.error(e);
-                                        delete existingEditors[id];
-                                    });
-                            }
-                            
                             // Remove from view
                             this.existingCaseStudies.splice(index, 1);
                             
@@ -620,57 +565,6 @@
                 });
             },
 
-            initEditor(index) {
-                const elId = 'editor_' + index;
-                this.$nextTick(() => {
-                    const el = document.getElementById(elId);
-                    if(el) {
-                        if(editors[index]) return;
-
-                        if(el.nextSibling && el.nextSibling.classList && el.nextSibling.classList.contains('ck-editor')) {
-                             el.nextSibling.remove();
-                             el.style.display = 'block';
-                        }
-
-                        ClassicEditor.create(el)
-                            .then(editor => {
-                                editors[index] = editor;
-                                editor.model.document.on('change:data', () => {
-                                    this.caseStudies[index].content = editor.getData();
-                                });
-                                editor.setData(this.caseStudies[index].content);
-                            })
-                            .catch(error => { console.error(error); });
-                    }
-                });
-            },
-
-            initExistingEditor(id) {
-                const elId = 'existing_editor_' + id;
-                this.$nextTick(() => {
-                    const el = document.getElementById(elId);
-                    if(el) {
-                         if(existingEditors[id]) return;
-
-                         if(el.nextSibling && el.nextSibling.classList && el.nextSibling.classList.contains('ck-editor')) {
-                             el.nextSibling.remove();
-                             el.style.display = 'block';
-                        }
-
-                        ClassicEditor.create(el)
-                            .then(editor => {
-                                existingEditors[id] = editor;
-                                editor.model.document.on('change:data', () => {
-                                    const study = this.existingCaseStudies.find(s => s.id === id);
-                                    if(study) study.content = editor.getData();
-                                });
-                                const study = this.existingCaseStudies.find(s => s.id === id);
-                                if(study) editor.setData(study.content);
-                            })
-                            .catch(error => { console.error(error); });
-                    }
-                });
-            },
 
             async fetchSections() {
                 if(!this.selectedExamId) {
@@ -718,13 +612,6 @@
                          visits: cs.visits.map(v => ({...v, isOpen: false, isQuestionsOpen: false})) // Visits also default closed
                     }));
                     
-                    // Initialize editors for updated list
-                    this.$nextTick(() => {
-                        this.existingCaseStudies.forEach(study => {
-                            this.initExistingEditor(study.id);
-                        });
-                    });
-
                     // Recalculate orders for new items
                     this.recalculateOrders();
 

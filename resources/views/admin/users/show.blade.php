@@ -1,5 +1,12 @@
 @extends('layouts.app')
 
+@php
+    $role = auth()->user()->role;
+    $userPrefix = ($role === 'manager') ? 'manager.students' : 'admin.users';
+    $examPrefix = ($role === 'manager') ? 'manager.exams'    : 'admin.exams';
+    $baseUrl = ($role === 'manager') ? 'manager' : 'admin';
+@endphp
+
 @section('content')
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
@@ -10,8 +17,8 @@
           <h5 class="m-b-10">Student Details</h5>
         </div>
         <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Students</a></li>
+          <li class="breadcrumb-item"><a href="{{ route($baseUrl . '.dashboard') }}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{{ route($userPrefix . '.index') }}">Students</a></li>
           <li class="breadcrumb-item" aria-current="page">View Student</li>
         </ul>
       </div>
@@ -31,12 +38,14 @@
                 <h5 class="mb-1">{{ $user->first_name }} {{ $user->last_name }}</h5>
                 <p class="text-muted mb-3">{{ $user->email }}</p>
                 
+                @if(auth()->user()->role !== 'manager')
                 <div class="d-grid gap-2">
                     <button type="button" class="btn btn-primary" 
                             onclick="openManageAttemptsModal({{ $user->id }}, '{{ $user->first_name }} {{ $user->last_name }}', '{{ $user->email }}')">
                         <i class="ti ti-adjustments me-1"></i> Manage Attempts
                     </button>
                 </div>
+                @endif
             </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item px-3">
@@ -93,7 +102,7 @@
                                         </div>
                                         <div>
                                             @if($studentExam->exam)
-                                                <a href="{{ route('admin.exams.show', $studentExam->exam->id) }}" class="text-decoration-none fw-semibold text-dark">
+                                                <a href="{{ route($examPrefix . '.show', $studentExam->exam->id) }}" class="text-decoration-none fw-semibold text-dark">
                                                     {{ $studentExam->exam->name }}
                                                 </a>
                                             @else
@@ -134,10 +143,11 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.exams.show', $studentExam->exam_id) }}">
+                                                <a class="dropdown-item" href="{{ route($examPrefix . '.show', $studentExam->exam_id) }}">
                                                     <i class="ti ti-eye me-2"></i>View Exam
                                                 </a>
                                             </li>
+                                            @if(auth()->user()->role !== 'manager')
                                             <li>
                                                 @if($studentExam->attempts_used > 0)
                                                     <a class="dropdown-item" href="{{ route('admin.attempts.by-user', ['userId' => $user->id, 'exam_id' => $studentExam->exam_id]) }}">
@@ -149,6 +159,7 @@
                                                     </span>
                                                 @endif
                                             </li>
+                                            @endif
                                         </ul>
                                     </div>
                                 </td>

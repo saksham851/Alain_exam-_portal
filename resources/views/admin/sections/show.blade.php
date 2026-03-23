@@ -109,7 +109,7 @@
                         <div class="bg-secondary-subtle text-secondary rounded p-1 me-3">
                             <i class="ti ti-file-text"></i>
                         </div>
-                        <h6 class="mb-0 fw-bold text-dark">Case Study {{ $csIndex + 1 }}: {{ $caseStudy->title }}</h6>
+                        <h6 class="mb-0 fw-bold text-dark">@if(!str_contains(strtolower($caseStudy->title), 'case study'))Case Study {{ $csIndex + 1 }}: @endif{{ $caseStudy->title }}</h6>
                         @if($caseStudy->cloned_from_id)
                             <span class="badge bg-warning text-dark ms-2"><i class="ti ti-copy"></i> Cloned</span>
                         @endif
@@ -123,13 +123,6 @@
 
                     <div class="card-body p-4">
 
-                        {{-- Scenario Content --}}
-                        @if($caseStudy->content)
-                            <div class="p-3 mb-4 bg-light-subtle border-start border-4 border-primary rounded-end">
-                                <h6 class="text-uppercase text-muted fs-7 fw-bold mb-2">Case Study Scenario</h6>
-                                <div class="text-dark text-break">{!! $caseStudy->content !!}</div>
-                            </div>
-                        @endif
 
                         {{-- Visits --}}
                         @forelse($caseStudy->visits as $vIndex => $visit)

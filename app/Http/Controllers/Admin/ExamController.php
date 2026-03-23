@@ -213,7 +213,8 @@ class ExamController extends Controller
             }
         }
 
-        return redirect()->route('admin.sections.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.sections.index')
             ->with('open_add_section_modal', true)
             ->with('new_exam_id', $exam->id)
             ->with('success', 'Exam Created Successfully!');
@@ -328,7 +329,8 @@ class ExamController extends Controller
             }
         }
 
-        return redirect()->route('admin.exams.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.exams.index')
             ->with('success', 'Exam Updated Successfully!');
     }
 
@@ -574,7 +576,8 @@ class ExamController extends Controller
             }
         }
 
-        return redirect()->route('admin.exams.index')
+        $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+        return redirect()->route($prefix . '.exams.index')
             ->with('success', "Exam cloned successfully! New exam: {$newExam->name}");
     }
     // PUBLISH EXAM WITH VALIDATION

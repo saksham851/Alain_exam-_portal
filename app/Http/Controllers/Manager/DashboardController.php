@@ -17,28 +17,18 @@ class DashboardController extends Controller
             ->where('status', 1)
             ->count();
 
-        $totalExams = Exam::where('status', 1)
-            ->where('is_active', 1)
-            ->count();
+        $totalExams = Exam::where('status', 1)->count();
 
-        $totalAttempts = ExamAttempt::whereHas('studentExam.student', function($q) {
-            $q->where('status', 1);
-        })->count();
-
-        $recentAttempts = ExamAttempt::with(['studentExam.student', 'studentExam.exam'])
-            ->whereHas('studentExam.student', function($q) {
-                $q->where('status', 1);
-            })
-            ->whereNotNull('ended_at')
-            ->orderBy('ended_at', 'desc')
-            ->limit(10)
+        $recentExams = Exam::where('status', 1)
+            ->with(['category'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
             ->get();
 
         return view('manager.dashboard', compact(
             'totalStudents',
             'totalExams',
-            'totalAttempts',
-            'recentAttempts'
+            'recentExams'
         ));
     }
 }

@@ -9,7 +9,9 @@
     <div class="navbar-content">
       <ul class="pc-navbar">
         
-        @if(auth()->check() && auth()->user()->role === 'admin')
+
+
+        @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'superadmin']))
         {{-- ADMIN LINKS --}}
         <li class="pc-item pc-caption">
             <label class="fw-bold text-uppercase small" style="letter-spacing: 1px; color: #94a3b8;">Administrator</label>
@@ -71,7 +73,16 @@
                 </li>
             </ul>
         </li>
+
+        @if(auth()->check() && auth()->user()->role === 'superadmin')
+        <li class="pc-item {{ request()->routeIs('superadmin.admins.*') ? 'active' : '' }}">
+            <a href="{{ route('superadmin.admins.index') }}" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-users"></i></span>
+                <span class="pc-mtext">Manage Staff</span>
+            </a>
         </li>
+        @endif
+
         @endif
 
         @if(auth()->check() && auth()->user()->role === 'manager')
@@ -93,13 +104,31 @@
                 <span class="pc-mtext">Students</span>
             </a>
         </li>
-        <li class="pc-item {{ request()->routeIs('manager.attempts.*') ? 'active' : '' }}">
-            <a href="{{ route('manager.attempts.index') }}" class="pc-link">
-                <span class="pc-micon"><i class="ti ti-file-check"></i></span>
-                <span class="pc-mtext">Results & Attempts</span>
+        <li class="pc-item pc-hasmenu {{ request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.questions.*') ? 'active pc-trigger' : '' }}">
+            <a href="#!" class="pc-link">
+                <span class="pc-micon"><i class="ti ti-book"></i></span>
+                <span class="pc-mtext">Exams</span>
+                <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
             </a>
+            <ul class="pc-submenu" @if(request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.questions.*')) style="display: block;" @endif>
+                <li class="pc-item {{ request()->routeIs('manager.exams.index') ? 'active' : '' }}">
+                    <a href="{{ route('manager.exams.index') }}" class="pc-link">All Exams</a>
+                </li>
+                <li class="pc-item {{ request()->routeIs('manager.exams.create') ? 'active' : '' }}">
+                    <a href="{{ route('manager.exams.create') }}" class="pc-link">Create Exam</a>
+                </li>
+                <li class="pc-item {{ request()->routeIs('manager.sections.index') ? 'active' : '' }}">
+                    <a href="{{ route('manager.sections.index') }}" class="pc-link">Sections</a>
+                </li>
+                <li class="pc-item {{ request()->routeIs('manager.case-studies-bank.*') ? 'active' : '' }}">
+                    <a href="{{ route('manager.case-studies-bank.index') }}" class="pc-link">Case Studies Bank</a>
+                </li>
+                <li class="pc-item {{ request()->routeIs('manager.questions.*') ? 'active' : '' }}">
+                    <a href="{{ route('manager.questions.index') }}" class="pc-link">Question Bank</a>
+                </li>
+            </ul>
         </li>
-        @endif
+    @endif
 
         @if(auth()->check() && auth()->user()->role === 'student')
         {{-- STUDENT LINKS --}}
