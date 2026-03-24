@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <div class="page-header">
   <div class="page-block">
     <div class="row align-items-center">
@@ -22,7 +26,7 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <form action="{{ route('admin.case-studies-bank.update', $caseStudy->id) }}" method="POST" id="caseStudyForm">
+        <form action="{{ route($routePrefix . '.case-studies-bank.update', $caseStudy->id) }}" method="POST" id="caseStudyForm">
             @csrf
             @method('PUT')
             @if(request()->has('return_url'))
@@ -142,7 +146,7 @@
                         <i class="ti ti-plus me-1"></i> Add Another Visit
                     </button>
                     <div>
-                        <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-light-secondary rounded-pill px-4 me-2">Cancel</a>
+                        <a href="{{ route($routePrefix . '.case-studies-bank.index') }}" class="btn btn-light-secondary rounded-pill px-4 me-2">Cancel</a>
                         <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
                             <i class="ti ti-device-floppy me-1"></i> Update Case Study
                         </button>
@@ -276,7 +280,7 @@
                 }
                 
                 try {
-                    const response = await fetch(`/admin/questions-ajax/case-studies/${this.selectedExamId}`);
+                    const response = await fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${this.selectedExamId}`);
                     const data = await response.json();
                     
                     if (data.sections) {

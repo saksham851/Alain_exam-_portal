@@ -259,9 +259,17 @@ class ExamController extends Controller
         
         if(!$exam) return redirect()->back()->with('error', 'Exam Not Found');
 
-        // Check if exam is locked and force edit checkbox is not checked
-        if ($exam->is_active == 1 && !$request->has('force_edit')) {
-            return redirect()->back()->with('error', 'This exam is locked. Check "Force Edit" to edit this active exam.');
+        // Backend restriction for published exams
+        if ($exam->is_active == 1) {
+            // Managers can NEVER force edit a published exam
+            if (auth()->user()->role === 'manager') {
+                return redirect()->back()->with('error', 'This exam is locked. Contact an administrator to make changes to a published exam.');
+            }
+            
+            // Admins must explicitly check 'force_edit'
+            if (!$request->has('force_edit')) {
+                return redirect()->back()->with('error', 'This exam is locked. Check "Force Edit" to edit this active exam.');
+            }
         }
 
         // Handle new certification type

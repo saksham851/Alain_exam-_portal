@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -45,7 +49,7 @@
                 <div class="row g-3">
                     <!-- Option 1: Create from Scratch -->
                     <div class="col-md-6">
-                        <a href="{{ route('admin.questions.create', request()->only(['exam_id', 'section_id'])) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                        <a href="{{ route($routePrefix . '.questions.create', request()->only(['exam_id', 'section_id'])) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
                                     <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
@@ -80,7 +84,7 @@
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
-                <form method="GET" action="{{ route('admin.questions.index') }}" id="filterForm">
+                <form method="GET" action="{{ route($routePrefix . '.questions.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
                         <!-- Certification Type Filter -->
                         <div class="col-md-2">
@@ -161,7 +165,7 @@
                         <!-- Buttons -->
                         <div class="col-md-1">
                             <div class="d-flex gap-1 justify-content-end">
-                                <a href="{{ route('admin.questions.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters">
+                                <a href="{{ route($routePrefix . '.questions.index') }}" class="btn btn-sm btn-light-secondary px-3" title="Clear Filters">
                                     <i class="ti ti-rotate"></i>
                                 </a>
                                 {{-- Hidden submit button to allow Enter key to submit if focused --}}
@@ -350,13 +354,13 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.questions.show', $question->id) }}">
+                                                <a class="dropdown-item" href="{{ route($routePrefix . '.questions.show', $question->id) }}">
                                                     <i class="ti ti-eye me-2"></i>View Question
                                                 </a>
                                             </li>
                                             @if($question->status == 0)
                                                 <li>
-                                                    <form action="{{ route('admin.questions.activate', $question->id) }}" method="POST" class="d-inline-block w-100" id="activateForm{{ $question->id }}">
+                                                    <form action="{{ route($routePrefix . '.questions.activate', $question->id) }}" method="POST" class="d-inline-block w-100" id="activateForm{{ $question->id }}">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to restore this question?', 'Restore Question', function() { document.getElementById('activateForm{{ $question->id }}').submit(); })">
@@ -371,7 +375,7 @@
                                                             <i class="ti ti-edit me-2"></i>Edit Question
                                                         </button>
                                                     @else
-                                                        <a class="dropdown-item" href="{{ route('admin.questions.edit', $question->id) }}">
+                                                        <a class="dropdown-item" href="{{ route($routePrefix . '.questions.edit', $question->id) }}">
                                                             <i class="ti ti-edit me-2"></i>Edit Question
                                                         </a>
                                                     @endif
@@ -382,7 +386,7 @@
                                                             <i class="ti ti-trash me-2"></i>Delete Question
                                                         </button>
                                                     @else
-                                                        <form action="{{ route('admin.questions.destroy', $question->id) }}" method="POST" class="d-inline-block w-100" id="deleteForm{{ $question->id }}">
+                                                        <form action="{{ route($routePrefix . '.questions.destroy', $question->id) }}" method="POST" class="d-inline-block w-100" id="deleteForm{{ $question->id }}">
                                                             @csrf @method('DELETE')
                                                             <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('deleteForm{{ $question->id }}'), 'Are you sure you want to delete this question?')">
                                                                 <i class="ti ti-trash me-2"></i>Delete Question
@@ -415,7 +419,7 @@
 <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.questions.import') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route($routePrefix . '.questions.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="importModalLabel">Import Questions from CSV</h5>
@@ -463,7 +467,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.questions.clone') }}" method="POST">
+            <form action="{{ route($routePrefix . '.questions.clone') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
                     <p class="text-muted mb-4">Select source questions to clone into a target case study.</p>
@@ -589,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sectionSelect.disabled = true;
 
         if (examId) {
-            return fetch(`/admin/questions-ajax/case-studies/${examId}`)
+            return fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${examId}`)
                 .then(response => response.json())
                 .then(data => {
                     sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
@@ -621,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
         visitSelect.disabled = true;
 
         if (caseStudyId) {
-            return fetch(`/admin/questions-ajax/visits/${caseStudyId}`)
+            return fetch(`/{{ $routePrefix }}/questions-ajax/visits/${caseStudyId}`)
                 .then(response => response.json())
                 .then(data => {
                     visitSelect.innerHTML = '<option value="">-- Select Visit --</option>';
@@ -651,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
         caseStudySelect.disabled = true;
 
         if (sectionId) {
-            return fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`)
+            return fetch(`/{{ $routePrefix }}/questions-ajax/sub-case-studies/${sectionId}`)
                 .then(response => response.json())
                 .then(data => {
                     caseStudySelect.innerHTML = '<option value="">-- Select Case Study --</option>';
@@ -713,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (caseStudyId) {
-            fetch(`/admin/questions-ajax/questions/${caseStudyId}`)
+            fetch(`/{{ $routePrefix }}/questions-ajax/questions/${caseStudyId}`)
                 .then(response => response.json())
                 .then(data => {
                     qLoading.style.display = 'none';

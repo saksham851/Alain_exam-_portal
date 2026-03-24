@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -45,7 +49,7 @@
                 <div class="row g-3">
                     <!-- Option 1: Create New -->
                     <div class="col-md-6">
-                        <a href="{{ route('admin.case-studies-bank.create', request()->only(['exam_id', 'section_id'])) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                        <a href="{{ route($routePrefix . '.case-studies-bank.create', request()->only(['exam_id', 'section_id'])) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
                                     <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
@@ -88,7 +92,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.case-studies-bank.copy') }}" method="POST">
+            <form action="{{ route($routePrefix . '.case-studies-bank.copy') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
                     <p class="text-muted mb-4">Select a source case study to clone into a target section.</p>
@@ -202,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sectionSelect.disabled = true;
 
         if (examId) {
-            return fetch(`/admin/questions-ajax/case-studies/${examId}`)
+            return fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${examId}`)
                 .then(response => response.json())
                 .then(data => {
                     sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
@@ -320,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (sectionId) {
-                fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`)
+                fetch(`/{{ $routePrefix }}/questions-ajax/sub-case-studies/${sectionId}`)
                     .then(response => response.json())
                     .then(data => {
                         csLoading.style.display = 'none';
@@ -395,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             <!-- Compact Filters Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
-                <form method="GET" action="{{ route('admin.case-studies-bank.index') }}" id="filterForm">
+                <form method="GET" action="{{ route($routePrefix . '.case-studies-bank.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
                         <!-- Search (moved to front) -->
                         <div class="col-md-3">
@@ -458,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         <!-- Clear Button -->
                         <div class="col-md-1">
-                            <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
+                            <a href="{{ route($routePrefix . '.case-studies-bank.index') }}" class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
                                 <i class="ti ti-rotate"></i>
                             </a>
                         </div>
@@ -539,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </button>
                                 </td>
                                 <td>
-                                    <a href="{{ $isActiveExam ? route('admin.case-studies-bank.show', $caseStudy->id) : route('admin.case-studies-bank.edit', $caseStudy->id) }}" class="text-decoration-none text-dark hover-primary">
+                                    <a href="{{ $isActiveExam ? route($routePrefix . '.case-studies-bank.show', $caseStudy->id) : route($routePrefix . '.case-studies-bank.edit', $caseStudy->id) }}" class="text-decoration-none text-dark hover-primary">
                                         <strong>{{ $caseStudy->title }}</strong>
                                     </a>
                                 </td>
@@ -580,13 +584,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.case-studies-bank.show', $caseStudy->id) }}">
+                                                <a class="dropdown-item" href="{{ route($routePrefix . '.case-studies-bank.show', $caseStudy->id) }}">
                                                     <i class="ti ti-eye me-2"></i>View Case Study
                                                 </a>
                                             </li>
                                             @if($caseStudy->status == 0)
                                                 <li>
-                                                    <form action="{{ route('admin.case-studies-bank.activate', $caseStudy->id) }}" method="POST" class="d-inline-block w-100" id="activateCsForm{{ $caseStudy->id }}">
+                                                    <form action="{{ route($routePrefix . '.case-studies-bank.activate', $caseStudy->id) }}" method="POST" class="d-inline-block w-100" id="activateCsForm{{ $caseStudy->id }}">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to restore this case study?', 'Restore Case Study', function() { document.getElementById('activateCsForm{{ $caseStudy->id }}').submit(); })">
@@ -601,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                             <i class="ti ti-edit me-2"></i>Edit Case Study
                                                         </button>
                                                     @else
-                                                        <a class="dropdown-item" href="{{ route('admin.case-studies-bank.edit', $caseStudy->id) }}">
+                                                        <a class="dropdown-item" href="{{ route($routePrefix . '.case-studies-bank.edit', $caseStudy->id) }}">
                                                             <i class="ti ti-edit me-2"></i>Edit Case Study
                                                         </a>
                                                     @endif
@@ -612,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                             <i class="ti ti-trash me-2"></i>Delete Case Study
                                                         </button>
                                                     @else
-                                                        <form action="{{ route('admin.case-studies-bank.destroy', $caseStudy->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $caseStudy->id }}">
+                                                        <form action="{{ route($routePrefix . '.case-studies-bank.destroy', $caseStudy->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $caseStudy->id }}">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="button" class="dropdown-item text-danger" onclick="showAlert.confirm('Are you sure you want to delete this case study?', 'Delete Case Study', function() { document.getElementById('delete-form-{{ $caseStudy->id }}').submit(); })">
@@ -648,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                         </div>
                                                                         
                                                                         <!-- Redirect Link Area -->
-                                                                        <a href="{{ $isActiveExam ? route('admin.case-studies-bank.show', $caseStudy->id) : route('admin.case-studies-bank.edit', $caseStudy->id) }}#visit-{{ $visit->id }}" 
+                                                                        <a href="{{ $isActiveExam ? route($routePrefix . '.case-studies-bank.show', $caseStudy->id) : route($routePrefix . '.case-studies-bank.edit', $caseStudy->id) }}#visit-{{ $visit->id }}" 
                                                                            class="d-flex align-items-center gap-2 text-decoration-none text-dark flex-grow-1 border-end pe-3 py-1 hover-bg-light rounded" 
                                                                            title="{{ $isActiveExam ? 'View' : 'Edit' }} this visit">
                                                                             <span class="badge bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 28px; height: 28px; font-size: 11px;">{{ $loop->iteration }}</span>
@@ -674,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                                     <li class="list-group-item d-flex justify-content-between align-items-center bg-white">
                                                                                         <div class="d-flex align-items-center gap-2 text-truncate">
                                                                                             <i class="ti ti-help-circle text-muted"></i>
-                                                                                            <a href="{{ route('admin.questions.edit', $question->id) }}" class="text-truncate text-decoration-none text-dark hover-primary" title="{{ strip_tags($question->question_text) }}">
+                                                                                            <a href="{{ route($routePrefix . '.questions.edit', $question->id) }}" class="text-truncate text-decoration-none text-dark hover-primary" title="{{ strip_tags($question->question_text) }}">
                                                                                                 {{ Str::limit(strip_tags($question->question_text), 80) }}
                                                                                             </a>
                                                                                         </div>

@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -30,7 +34,7 @@
 
             <!-- Filter Section -->
             <div class="card-body bg-light-subtle py-3 border-bottom">
-                <form method="GET" action="{{ route('admin.sections.index') }}" id="filterForm">
+                <form method="GET" action="{{ route($routePrefix . '.sections.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
                         <!-- Search -->
                         <div class="col-md-3">
@@ -97,7 +101,7 @@
                         
                         <!-- Clear Button -->
                         <div class="col-md-1">
-                            <a href="{{ route('admin.sections.index') }}" class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
+                            <a href="{{ route($routePrefix . '.sections.index') }}" class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
                                 <i class="ti ti-rotate"></i>
                             </a>
                         </div>
@@ -217,7 +221,7 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('admin.sections.show', $section->id) }}">
+                                                <a class="dropdown-item" href="{{ route($routePrefix . '.sections.show', $section->id) }}">
                                                     <i class="ti ti-eye me-2"></i>View Section
                                                 </a>
                                             </li>
@@ -228,7 +232,7 @@
                                                         <i class="ti ti-edit me-2"></i>Edit Section
                                                     </button>
                                                 @else
-                                                    <a class="dropdown-item" href="{{ route('admin.sections.edit', $section->id) }}">
+                                                    <a class="dropdown-item" href="{{ route($routePrefix . '.sections.edit', $section->id) }}">
                                                         <i class="ti ti-edit me-2"></i>Edit Section
                                                     </a>
                                                 @endif
@@ -236,7 +240,7 @@
 
                                             @if($section->status == 0)
                                                 <li>
-                                                    <form action="{{ route('admin.sections.activate', $section->id) }}" method="POST" class="d-inline-block w-100" id="activateSectionForm{{ $section->id }}">
+                                                    <form action="{{ route($routePrefix . '.sections.activate', $section->id) }}" method="POST" class="d-inline-block w-100" id="activateSectionForm{{ $section->id }}">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to activate this section?', 'Activate Section', function() { document.getElementById('activateSectionForm{{ $section->id }}').submit(); })">
@@ -251,7 +255,7 @@
                                                             <i class="ti ti-trash me-2"></i>Delete Section
                                                         </button>
                                                     @else
-                                                        <form action="{{ route('admin.sections.destroy', $section->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $section->id }}">
+                                                        <form action="{{ route($routePrefix . '.sections.destroy', $section->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $section->id }}">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('delete-form-{{ $section->id }}'), 'Are you sure you want to delete this section?')">
@@ -303,7 +307,7 @@
                 <div class="row g-3">
                     <!-- Option 1: Create New -->
                     <div class="col-md-6">
-                        <a href="{{ route('admin.sections.create', ['exam_id' => session('new_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                        <a href="{{ route($routePrefix . '.sections.create', ['exam_id' => session('new_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
                                     <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
@@ -346,7 +350,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.sections.clone-external') }}" method="POST">
+            <form action="{{ route($routePrefix . '.sections.clone-external') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
                     <p class="text-muted mb-4">Select a source exam to clone sections into a target exam.</p>
@@ -452,7 +456,7 @@
                 <div class="row g-3 justify-content-center">
                     <!-- Option 1: Create Another Section -->
                     <div class="col-md-4">
-                        <a href="{{ route('admin.sections.create', ['exam_id' => session('created_exam_id')]) }}" class="card h-100 border hover-shadow text-decoration-none text-dark shadow-sm" style="transition: all 0.3s; border-color: #e2e8f0;">
+                        <a href="{{ route($routePrefix . '.sections.create', ['exam_id' => session('created_exam_id')]) }}" class="card h-100 border hover-shadow text-decoration-none text-dark shadow-sm" style="transition: all 0.3s; border-color: #e2e8f0;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
                                     <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
@@ -482,7 +486,7 @@
 
                     <!-- Option 3: Add Case Studies -->
                     <div class="col-md-4">
-                        <a href="{{ route('admin.case-studies-bank.create', ['exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}" class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark shadow-sm" style="transition: all 0.3s;">
+                        <a href="{{ route($routePrefix . '.case-studies-bank.create', ['exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}" class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark shadow-sm" style="transition: all 0.3s;">
                             <div class="card-body text-center p-4">
                                 <div class="mb-3">
                                     <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
@@ -592,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (examId) {
                 // Use the AJAX route we saw in web.php: questions-ajax/case-studies/{examId} which maps to SectionController@getSections
-                fetch(`/admin/questions-ajax/case-studies/${examId}`)
+                fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${examId}`)
                     .then(response => response.json())
                     .then(data => {
                         secLoading.style.display = 'none';

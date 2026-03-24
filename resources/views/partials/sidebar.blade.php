@@ -104,13 +104,13 @@
                 <span class="pc-mtext">Students</span>
             </a>
         </li>
-        <li class="pc-item pc-hasmenu {{ request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.questions.*') ? 'active pc-trigger' : '' }}">
+        <li class="pc-item pc-hasmenu {{ request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.data.*') || request()->routeIs('manager.questions.*') ? 'active pc-trigger' : '' }}">
             <a href="#!" class="pc-link">
                 <span class="pc-micon"><i class="ti ti-book"></i></span>
                 <span class="pc-mtext">Exams</span>
                 <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
             </a>
-            <ul class="pc-submenu" @if(request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.questions.*')) style="display: block;" @endif>
+            <ul class="pc-submenu" @if(request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.data.*') || request()->routeIs('manager.questions.*')) style="display: block;" @endif>
                 <li class="pc-item {{ request()->routeIs('manager.exams.index') ? 'active' : '' }}">
                     <a href="{{ route('manager.exams.index') }}" class="pc-link">All Exams</a>
                 </li>
@@ -125,6 +125,9 @@
                 </li>
                 <li class="pc-item {{ request()->routeIs('manager.questions.*') ? 'active' : '' }}">
                     <a href="{{ route('manager.questions.index') }}" class="pc-link">Question Bank</a>
+                </li>
+                <li class="pc-item {{ request()->routeIs('manager.data.*') ? 'active' : '' }}">
+                    <a href="{{ route('manager.data.index') }}" class="pc-link">Data Management</a>
                 </li>
             </ul>
         </li>

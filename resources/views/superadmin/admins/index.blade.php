@@ -159,6 +159,22 @@
                     @csrf
                     
                     <div class="mb-3">
+                        <label for="first_name" class="form-label small fw-semibold mb-1">First Name <span class="text-danger">*</span></label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm @error('first_name') is-invalid @enderror"
+                            id="first_name"
+                            name="first_name"
+                            placeholder="First Name"
+                            value="{{ old('first_name') }}"
+                            required
+                        >
+                        @error('first_name')
+                            <div class="invalid-feedback"><i class="ti ti-alert-circle me-1"></i>{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="admin_email" class="form-label small fw-semibold mb-1">Email Address <span class="text-danger">*</span></label>
                         <input
                             type="email"

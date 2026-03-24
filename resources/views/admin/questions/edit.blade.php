@@ -1,6 +1,10 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -35,7 +39,7 @@
             </div>
         </div>
 
-        <form action="{{ isset($question) ? route('admin.questions.update', $question->id) : route('admin.questions.store') }}" method="POST" id="questionForm">
+        <form action="{{ isset($question) ? route($routePrefix . '.questions.update', $question->id) : route($routePrefix . '.questions.store') }}" method="POST" id="questionForm">
             @csrf
             @if(isset($question)) @method('PUT') @endif
             @if(request()->has('return_url'))
@@ -487,7 +491,7 @@
                     
                     <!-- Action Buttons (Right) -->
                     <div>
-                        <a href="{{ route('admin.questions.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                        <a href="{{ route($routePrefix . '.questions.index') }}" class="btn btn-secondary me-2">Cancel</a>
                         <button type="submit" class="btn btn-primary" :disabled="isActiveExam">
                             <i class="ti ti-check me-1"></i> Save {{ isset($question) ? 'Question' : 'Questions' }}
                         </button>
@@ -899,7 +903,7 @@ function questionForm() {
             if(!this.selectedExamId) return;
             this.isLoadingCompliance = true;
             try {
-                const response = await fetch(`/admin/exams/${this.selectedExamId}/validate-compliance`);
+                const response = await fetch(`/{{ $routePrefix }}/exams/${this.selectedExamId}/validate-compliance`);
                 const data = await response.json();
                 if(data.success) {
                     this.complianceData = data.compliance;
@@ -933,7 +937,7 @@ function questionForm() {
             }
             this.selectedExamId = examId; // Sync
             try {
-                const response = await fetch(`/admin/questions-ajax/case-studies/${examId}`);
+                const response = await fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${examId}`);
                 const data = await response.json();
                 
                 // New robust parsing
@@ -969,7 +973,7 @@ function questionForm() {
              const preserveVisitId = this.selectedVisitId; // Save it
              if(!sectionId) { this.subCaseStudies = []; this.visits = []; return; }
              try {
-                const response = await fetch(`/admin/questions-ajax/sub-case-studies/${sectionId}`);
+                const response = await fetch(`/{{ $routePrefix }}/questions-ajax/sub-case-studies/${sectionId}`);
                 this.subCaseStudies = await response.json();
                 
                 // Restore the visit ID if it was set
@@ -988,7 +992,7 @@ function questionForm() {
              this.existingQuestions = [];
              if(!caseStudyId) { this.visits = []; return; }
              try {
-                const response = await fetch(`/admin/questions-ajax/visits/${caseStudyId}`);
+                const response = await fetch(`/{{ $routePrefix }}/questions-ajax/visits/${caseStudyId}`);
                 this.visits = await response.json();
                 
                 // Load existing questions if visit is pre-selected
@@ -1003,7 +1007,7 @@ function questionForm() {
         async loadExistingQuestions(visitId) {
             if(!visitId) { this.existingQuestions = []; return; }
             try {
-                const response = await fetch(`/admin/questions-ajax/questions-by-visit/${visitId}`);
+                const response = await fetch(`/{{ $routePrefix }}/questions-ajax/questions-by-visit/${visitId}`);
                 let data = await response.json();
                 if (this.isEdit && this.currentQuestionId) data = data.filter(q => q.id != this.currentQuestionId);
 
@@ -1064,7 +1068,7 @@ function questionForm() {
              window.showAlert.confirm('Delete this question?', 'Delete', async () => {
                  // Fetch Delete logic... (same as before)
                   try {
-                    const response = await fetch(`/admin/questions/${id}`, {
+                    const response = await fetch(`/{{ $routePrefix }}/questions/${id}`, {
                         method: 'DELETE',
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' }
                     });

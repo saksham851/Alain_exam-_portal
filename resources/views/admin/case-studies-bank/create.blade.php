@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <div class="page-header">
   <div class="page-block">
     <div class="row align-items-center">
@@ -23,7 +27,7 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <form action="{{ route('admin.case-studies-bank.store') }}" method="POST" id="caseStudyForm">
+        <form action="{{ route($routePrefix . '.case-studies-bank.store') }}" method="POST" id="caseStudyForm">
             @csrf
             @if(request()->has('return_url'))
                 <input type="hidden" name="return_url" value="{{ request('return_url') }}">
@@ -174,7 +178,7 @@
                                                                                                     </div>
                                                                                                     <div class="d-flex align-items-center gap-3">
                                                                                                         <span class="badge bg-light text-muted border" x-text="q.points + ' pts'"></span>
-                                                                                                        <a :href="'/admin/questions/' + q.id + '/edit'" class="btn btn-icon btn-sm btn-light-primary rounded-circle" title="Edit Question">
+                                                                                                        <a :href="'/{{ $routePrefix }}/questions/' + q.id + '/edit'" class="btn btn-icon btn-sm btn-light-primary rounded-circle" title="Edit Question">
                                                                                                             <i class="ti ti-pencil"></i>
                                                                                                         </a>
                                                                                                     </div>
@@ -347,7 +351,7 @@
                             <i class="ti ti-plus me-1"></i> Add Another Case Study
                         </button>
                         <div>
-                            <a href="{{ route('admin.case-studies-bank.index') }}" class="btn btn-secondary me-2">
+                            <a href="{{ route($routePrefix . '.case-studies-bank.index') }}" class="btn btn-secondary me-2">
                                 <i class="ti ti-x me-1"></i> Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -525,7 +529,7 @@
                 console.log('Attempting to delete case study ID:', id);
                 window.showAlert.confirm('Are you sure you want to delete this case study? This action cannot be undone.', 'Delete Case Study?', async () => {
                     try {
-                        const response = await fetch(`/admin/case-studies-bank/${id}`, {
+                        const response = await fetch(`/{{ $routePrefix }}/case-studies-bank/${id}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -573,7 +577,7 @@
                 }
                 
                 try {
-                    const response = await fetch(`/admin/questions-ajax/case-studies/${this.selectedExamId}`);
+                    const response = await fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${this.selectedExamId}`);
                     const data = await response.json();
                     
                     if(Array.isArray(data)) {
@@ -603,7 +607,7 @@
                 }
 
                 try {
-                    const response = await fetch(`/admin/questions-ajax/sub-case-studies/${this.selectedSectionId}`);
+                    const response = await fetch(`/{{ $routePrefix }}/questions-ajax/sub-case-studies/${this.selectedSectionId}`);
                     const caseStudies = await response.json();
                     
                     this.existingCaseStudies = caseStudies.map(cs => ({

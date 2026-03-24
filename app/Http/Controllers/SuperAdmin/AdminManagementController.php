@@ -30,6 +30,7 @@ class AdminManagementController extends Controller
     public function invite(Request $request)
     {
         $request->validate([
+            'first_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'role' => 'required|in:admin,manager',
         ], [
@@ -42,7 +43,7 @@ class AdminManagementController extends Controller
 
         // Create the user
         $user = User::create([
-            'first_name'        => ucfirst($request->role),
+            'first_name'        => $request->first_name,
             'last_name'         => '',
             'email'             => $request->email,
             'password'          => Hash::make($tempPassword),
@@ -67,9 +68,8 @@ class AdminManagementController extends Controller
                 'resetUrl'      => $resetUrl,
                 'roleName'      => ucfirst($request->role)
             ], function ($message) use ($user) {
-                $role = ucfirst($user->role);
                 $message->to($user->email)
-                    ->subject("You have been invited as {$role} – Set Your Password");
+                    ->subject("Mentara Health Credentials");
             });
         } catch (\Exception $e) {
             return redirect()->route('superadmin.admins.index')
@@ -133,9 +133,8 @@ class AdminManagementController extends Controller
                 'resetUrl'     => $resetUrl,
                 'roleName'     => ucfirst($admin->role)
             ], function ($message) use ($admin) {
-                 $role = ucfirst($admin->role);
                 $message->to($admin->email)
-                    ->subject("{$role} Panel Access – Set Your Password");
+                    ->subject("Mentara Health Credentials");
             });
 
             return back()->with('success', "Invitation email resent to {$admin->email}.");

@@ -311,10 +311,15 @@
                         <i class="ti ti-lock" style="font-size: 20px; margin-top: 3px;"></i>
                         <div>
                             <strong>This Exam is Published/Locked</strong>
+                            @if(auth()->user()->role !== 'manager')
                             <p class="mb-0 mt-2">This exam is currently published and locked for editing. To make changes, please check the "Force Edit" checkbox below to confirm you want to edit this published exam.</p>
+                            @else
+                            <p class="mb-0 mt-2">This exam is currently published and locked for editing. Please contact an Administrator to make changes to a published exam.</p>
+                            @endif
                         </div>
                     </div>
 
+                    @if(auth()->user()->role !== 'manager')
                     <div class="mb-4">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="force_edit" id="forceEdit" value="1">
@@ -323,6 +328,7 @@
                             </label>
                         </div>
                     </div>
+                    @endif
                     @endif
 
                     <div class="row">
@@ -566,7 +572,7 @@
                         </a>
                         <div class="d-flex gap-2">
                              <a href="{{ route($routePrefix . '.index') }}" class="btn btn-light-secondary px-4">Cancel</a>
-                             <button type="submit" class="btn btn-primary px-4 shadow-sm" id="submitBtn">
+                             <button type="submit" class="btn btn-primary px-4 shadow-sm" id="submitBtn" {{ (auth()->user()->role === 'manager' && isset($exam) && $exam->is_active == 1) ? 'disabled' : '' }}>
                                  <i class="ti {{ isset($exam) ? 'ti-device-floppy' : 'ti-plus' }} me-2"></i>
                                  {{ isset($exam) ? 'Save Changes' : 'Create Exam' }}
                              </button>

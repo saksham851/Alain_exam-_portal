@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Invitation – Exam Portal</title>
+    <title>Mentara Health Credentials</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -27,9 +27,13 @@
             overflow: hidden;
         }
         .email-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #01284E 0%, #001a33 100%);
             padding: 32px 24px;
             text-align: center;
+        }
+        .email-header .logo {
+            max-width: 180px;
+            margin-bottom: 20px;
         }
         .email-header h1 {
             color: #ffffff;
@@ -71,7 +75,7 @@
         .info-box {
             background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
             border: 1px solid #c7d2fe;
-            border-left: 4px solid #4f46e5;
+            border-left: 4px solid #01284E;
             border-radius: 8px;
             padding: 20px 24px;
             margin-bottom: 28px;
@@ -129,7 +133,7 @@
         }
         .btn {
             display: inline-block;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            background: linear-gradient(135deg, #01284E, #001a33);
             color: #ffffff !important;
             font-size: 16px;
             font-weight: 700;
@@ -171,15 +175,16 @@
         <div class="email-content">
             <!-- Header -->
             <div class="email-header">
-                <div class="badge">🛡️ Admin Invitation</div>
-                <h1>You're now an Admin!</h1>
-                <p>Exam Portal – Administrative Access</p>
+                <img src="{{ $message->embed(public_path('assets/images/logo_image.png')) }}" alt="Mentara Health" class="logo">
+                <div class="badge">🛡️ Administrative Access</div>
+                <h1>Welcome to Mentara Health</h1>
+                <p>Official Portal Credentials</p>
             </div>
 
             <!-- Body -->
             <div class="email-body">
-                <p class="welcome-text">Hello! 👋</p>
-                <p class="description">You have been invited to join <strong>Exam Portal</strong> as an <strong>Administrator</strong>. You now have full access to manage exams, students, and all portal content.</p>
+                <p class="welcome-text">Hello {{ $user->first_name }}! 👋</p>
+                <p class="description">You have been invited to join the <strong>Mentara Health</strong> portal as an <strong>{{ $roleName }}</strong>. You now have the necessary access to manage exams, sections, and questions.</p>
 
                 <!-- Login Credentials -->
                 <div class="info-box">
@@ -197,7 +202,7 @@
 
                 <!-- Permissions Info -->
                 <div class="permissions-box">
-                    <h4>✅ Your Admin Permissions Include:</h4>
+                    <h4>✅ Your {{ $roleName }} Permissions Include:</h4>
                     <ul>
                         <li>Manage Students & Users</li>
                         <li>Create & Manage Exams, Categories</li>
@@ -223,7 +228,7 @@
 
             <!-- Footer -->
             <div class="email-footer">
-                <p>&copy; {{ date('Y') }} Exam Portal. All rights reserved.</p>
+                <p>&copy; {{ date('Y') }} Mentara Health. All rights reserved.</p>
                 <p>If you didn't expect this invitation, you can safely ignore this email.</p>
             </div>
         </div>

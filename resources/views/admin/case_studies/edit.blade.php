@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -28,7 +32,7 @@
         </div>
         @endif
 
-        <form id="caseStudyForm" action="{{ isset($caseStudy) ? route('admin.sections.update', $caseStudy->id) : route('admin.sections.store') }}" method="POST">
+        <form id="caseStudyForm" action="{{ isset($caseStudy) ? route($routePrefix . '.sections.update', $caseStudy->id) : route($routePrefix . '.sections.store') }}" method="POST">
             @csrf
             @if(isset($caseStudy)) @method('PUT') @endif
             @if(request()->has('return_url'))
@@ -77,7 +81,7 @@
                 @if(request()->has('return_url'))
                     <a href="{{ urldecode(request('return_url')) }}" class="btn btn-secondary me-2">Cancel</a>
                 @else
-                    <a href="{{ route('admin.sections.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                    <a href="{{ route($routePrefix . '.sections.index') }}" class="btn btn-secondary me-2">Cancel</a>
                 @endif
                 <button type="submit" class="btn btn-primary" {{ isset($caseStudy) && $caseStudy->exam && $caseStudy->exam->is_active == 1 ? 'disabled' : '' }}>Save Section</button>
             </div>

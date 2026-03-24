@@ -410,11 +410,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                                         <i class="ti ti-eye me-2"></i>View Exam
                                                     </a>
                                                 </li>
+                                                @if(!(auth()->user()->role === 'manager' && $exam->is_active == 1))
                                                 <li>
                                                     <a class="dropdown-item" href="{{ route($prefix . '.edit', $exam->id) }}">
                                                         <i class="ti ti-edit me-2"></i>Edit Exam
                                                     </a>
                                                 </li>
+                                                @endif
                                                 @if(auth()->user()->role !== 'manager')
                                                     @if($exam->is_active == 0)
                                                         <li>

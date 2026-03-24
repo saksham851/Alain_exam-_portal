@@ -1,6 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
+
+@php
+    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+@endphp
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -10,7 +14,7 @@
           <h5 class="m-b-10">Data Management</h5>
         </div>
         <ul class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{{ route($routePrefix . '.dashboard') }}">Dashboard</a></li>
           <li class="breadcrumb-item" aria-current="page">Data Management</li>
         </ul>
       </div>
@@ -50,7 +54,7 @@
                             <div class="card-body">
                                 <p class="text-muted small text-center mb-4">Import questions into unpublished exams with specific sections and case studies.</p>
                                 
-                                <form action="{{ route('admin.data.import-questions') }}" method="POST" enctype="multipart/form-data">
+                                <form action="{{ route($routePrefix . '.data.import-questions') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <div class="mb-4">
                                         <label class="form-label fw-bold">Select CSV File</label>
@@ -62,7 +66,7 @@
                                         <button type="submit" class="btn btn-primary btn-lg shadow-sm">
                                             <i class="ti ti-upload me-2"></i>Import Questions Now
                                         </button>
-                                        <a href="{{ route('admin.data.download-question-sample') }}" class="btn btn-outline-info">
+                                        <a href="{{ route($routePrefix . '.data.download-question-sample') }}" class="btn btn-outline-info">
                                             <i class="ti ti-download me-2"></i>Download Master CSV Template
                                         </a>
                                     </div>
