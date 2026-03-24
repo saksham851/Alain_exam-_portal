@@ -5,28 +5,45 @@
 <div class="page-header">
   <div class="page-block">
     <div class="row align-items-center">
-      <div class="col-md-12">
-        <div class="page-header-title">
-          <h5 class="m-b-10">Manage Staff</h5>
-        </div>
+        <ul class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('superadmin.admins.index') }}">Dashboard</a></li>
+          <li class="breadcrumb-item" aria-current="page">Manage Staff</li>
+        </ul>
       </div>
-    </div>
   </div>
 </div>
 <!-- [ breadcrumb ] end -->
 
-<div class="row">
+<div class="row mt-2">
     <div class="col-md-12">
         <div class="card">
-            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-                <div>
-                    <h5 class="mb-0 fw-bold">Admin & Manager Management</h5>
-                    <span class="text-muted small fw-normal">{{ $admins->count() }} total staff accounts</span>
+            <div class="card-header bg-white py-3 px-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0 fw-bold">Admin & Manager Management</h5>
+                        <span class="text-muted small fw-normal">{{ $admins->total() }} total staff accounts</span>
+                    </div>
+                    <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#inviteAdminModal">
+                        <i class="ti ti-user-plus"></i>
+                        <span>Invite Staff</span>
+                    </button>
                 </div>
-                <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#inviteAdminModal">
-                    <i class="ti ti-user-plus"></i>
-                    <span>Invite Staff</span>
-                </button>
+            </div>
+
+            <!-- Compact Filters Section (Matches Student Management) -->
+            <div class="card-body bg-light-subtle py-3 px-4 border-bottom">
+                <form method="GET" action="{{ auth()->user()->role === 'admin' ? route('admin.admins.index') : route('superadmin.admins.index') }}" id="staffFilterForm">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-muted small mb-1 text-uppercase" style="letter-spacing: 0.5px;">Search Staff</label>
+                            <div class="input-group input-group-sm mb-0">
+                                <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
+                                <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                       placeholder="Name or email..." value="{{ request('search') }}" id="staffSearchInput">
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
             
             <div class="card-body p-0">
@@ -44,18 +61,18 @@
                         <table class="table table-hover mb-0">
                             <thead style="background: #f8fafc;">
                                 <tr>
-                                    <th class="border-0 text-muted small fw-bold">STAFF</th>
+                                    <th class="border-0 text-muted small fw-bold px-4">STAFF</th>
                                     <th class="border-0 text-muted small fw-bold">EMAIL ADDRESS</th>
                                     <th class="border-0 text-muted small fw-bold">ROLE</th>
                                     <th class="border-0 text-muted small fw-bold">STATUS</th>
                                     <th class="border-0 text-muted small fw-bold">JOINED</th>
-                                    <th class="border-0 text-end text-muted small fw-bold">ACTIONS</th>
+                                    <th class="border-0 text-end text-muted small fw-bold px-4">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($admins as $admin)
                                 <tr>
-                                    <td>
+                                    <td class="px-4 py-3">
                                         <div class="d-flex align-items-center">
                                             <div class="avtar avtar-s bg-light-primary text-primary rounded-circle me-2">
                                                 <i class="ti ti-user fs-5"></i>
@@ -63,25 +80,25 @@
                                             <h6 class="mb-0 fw-bold">{{ $admin->first_name }} {{ $admin->last_name }}</h6>
                                         </div>
                                     </td>
-                                    <td><span class="text-muted small">{{ $admin->email }}</span></td>
-                                    <td>
+                                    <td class="py-3"><span class="text-muted small">{{ $admin->email }}</span></td>
+                                    <td class="py-3">
                                         @if($admin->role === 'admin')
                                             <span class="badge bg-light-primary text-primary border-0">Admin</span>
                                         @else
                                             <span class="badge bg-light-info text-info border-0">Manager</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="py-3">
                                         @if($admin->status)
                                             <span class="badge bg-light-success text-success border-0"><i class="ti ti-check me-1"></i>Active</span>
                                         @else
                                             <span class="badge bg-light-danger text-danger border-0"><i class="ti ti-x me-1"></i>Inactive</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td class="py-3">
                                         <span class="text-muted small">{{ $admin->created_at ? $admin->created_at->format('M d, Y') : 'N/A' }}</span>
                                     </td>
-                                    <td class="text-end">
+                                    <td class="text-end px-4 py-3">
                                         <div class="dropdown">
                                             <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
                                                     data-bs-toggle="dropdown" 
@@ -90,9 +107,9 @@
                                                     aria-expanded="false">
                                                 <i class="ti ti-dots-vertical f-18"></i>
                                             </button>
-                                            <ul class="dropdown-menu dropdown-menu-end">
+                                       <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
-                                                    <form action="{{ route('superadmin.admins.resend', $admin->id) }}" method="POST">
+                                                    <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.resend', $admin->id) : route('superadmin.admins.resend', $admin->id) }}" method="POST">
                                                         @csrf
                                                         <button type="submit" class="dropdown-item no-debounce text-primary">
                                                             <i class="ti ti-mail-forward me-2 text-primary"></i>Resend Invite
@@ -101,7 +118,7 @@
                                                 </li>
                                                 @if($admin->status)
                                                 <li>
-                                                    <form action="{{ route('superadmin.admins.deactivate', $admin->id) }}" method="POST">
+                                                    <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.deactivate', $admin->id) : route('superadmin.admins.deactivate', $admin->id) }}" method="POST">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="dropdown-item no-debounce text-warning">
@@ -111,7 +128,7 @@
                                                 </li>
                                                 @else
                                                 <li>
-                                                    <form action="{{ route('superadmin.admins.activate', $admin->id) }}" method="POST">
+                                                    <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.activate', $admin->id) : route('superadmin.admins.activate', $admin->id) }}" method="POST">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="dropdown-item no-debounce text-success">
@@ -121,7 +138,7 @@
                                                 </li>
                                                 @endif
                                                 <li>
-                                                    <form action="{{ route('superadmin.admins.destroy', $admin->id) }}" method="POST"
+                                                    <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.destroy', $admin->id) : route('superadmin.admins.destroy', $admin->id) }}" method="POST"
                                                         onsubmit="return confirm('Are you sure you want to permanently delete this staff member?');">
                                                         @csrf
                                                         @method('DELETE')
@@ -140,6 +157,10 @@
                     </div>
                 @endif
             </div>
+
+            @if(method_exists($admins, 'links'))
+                <x-custom-pagination :paginator="$admins" />
+            @endif
         </div>
     </div>
 </div>
@@ -155,7 +176,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <form action="{{ route('superadmin.admins.invite') }}" method="POST" id="inviteAdminForm">
+                <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.invite') : route('superadmin.admins.invite') }}" method="POST" id="inviteAdminForm">
                     @csrf
                     
                     <div class="mb-3">
@@ -190,6 +211,9 @@
                         @enderror
                     </div>
 
+                    @if(auth()->user()->role === 'admin')
+                        <input type="hidden" name="role" value="manager">
+                    @else
                     <div class="mb-3">
                         <label for="admin_role" class="form-label small fw-semibold mb-1">Role <span class="text-danger">*</span></label>
                         <select class="form-select form-select-sm" id="admin_role" name="role" required>
@@ -198,6 +222,7 @@
                         </select>
                         <small class="text-muted mt-1 d-block">Select the level of access for this staff member.</small>
                     </div>
+                    @endif
 
                     <div class="alert alert-primary py-2 mb-0 d-flex align-items-center">
                         <i class="ti ti-info-circle me-2 fs-4"></i>
@@ -224,5 +249,34 @@
     });
 </script>
 @endif
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('staffFilterForm');
+    const searchInput = document.getElementById('staffSearchInput');
+    
+    let searchTimeout;
+    
+    // Auto-submit on search input (debounced - 1000ms delay)
+    if (searchInput) {
+        // Keep focus and cursor at end when typing
+        if (searchInput.value) {
+            searchInput.focus();
+            const val = searchInput.value;
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                filterForm.submit();
+            }, 1000);
+        });
+    }
+});
+</script>
+@endpush
 
 @endsection

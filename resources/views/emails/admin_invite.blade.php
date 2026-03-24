@@ -28,38 +28,51 @@
         }
         .email-header {
             background: linear-gradient(135deg, #01284E 0%, #001a33 100%);
-            padding: 32px 24px;
+            padding: 40px 24px;
             text-align: center;
-        }
-        .email-header .logo {
-            max-width: 180px;
-            margin-bottom: 20px;
         }
         .email-header h1 {
             color: #ffffff;
-            margin: 0 0 6px 0;
-            font-size: 26px;
+            margin: 0 0 8px 0;
+            font-size: 24px;
             font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
-        .email-header p {
-            color: rgba(255,255,255,0.85);
-            margin: 0;
+        .email-header .subtitle {
+            color: rgba(255,255,255,0.8);
+            margin: 0 0 24px 0;
             font-size: 14px;
+            font-weight: 500;
+        }
+        .logo-wrapper {
+            background: #ffffff;
+            display: inline-block;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .email-header .logo {
+            max-width: 120px;
+            display: block;
+            height: auto;
         }
         .badge {
             display: inline-block;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.15);
             color: #fff;
-            padding: 4px 14px;
+            padding: 6px 16px;
             border-radius: 50px;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            margin-bottom: 0;
             text-transform: uppercase;
+            border: 1px solid rgba(255,255,255,0.2);
         }
         .email-body {
-            padding: 36px 32px;
+            padding: 40px 32px;
         }
         .welcome-text {
             font-size: 20px;
@@ -175,10 +188,14 @@
         <div class="email-content">
             <!-- Header -->
             <div class="email-header">
-                <img src="{{ $message->embed(public_path('assets/images/logo_image.png')) }}" alt="Mentara Health" class="logo">
-                <div class="badge">🛡️ Administrative Access</div>
-                <h1>Welcome to Mentara Health</h1>
-                <p>Official Portal Credentials</p>
+                <h1>Mentara Health Portal Credentials</h1>
+                <p class="subtitle">Official Welcome & Access Invitation</p>
+                <div class="logo-wrapper">
+                    <img src="{{ $message->embed(public_path('assets/images/logo_image.png')) }}" alt="Mentara Health" class="logo">
+                </div>
+                <div>
+                    <div class="badge">🛡️ Administrative Access</div>
+                </div>
             </div>
 
             <!-- Body -->

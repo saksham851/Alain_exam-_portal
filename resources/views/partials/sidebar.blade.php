@@ -74,9 +74,9 @@
             </ul>
         </li>
 
-        @if(auth()->check() && auth()->user()->role === 'superadmin')
-        <li class="pc-item {{ request()->routeIs('superadmin.admins.*') ? 'active' : '' }}">
-            <a href="{{ route('superadmin.admins.index') }}" class="pc-link">
+        @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'superadmin']))
+        <li class="pc-item {{ request()->routeIs('admin.admins.*') || request()->routeIs('superadmin.admins.*') ? 'active' : '' }}">
+            <a href="{{ auth()->user()->role === 'admin' ? route('admin.admins.index') : route('superadmin.admins.index') }}" class="pc-link">
                 <span class="pc-micon"><i class="ti ti-users"></i></span>
                 <span class="pc-mtext">Manage Staff</span>
             </a>

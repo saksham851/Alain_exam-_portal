@@ -209,6 +209,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('data-management/sample/questions', [DataManagementController::class, 'downloadQuestionSample'])->name('data.download-question-sample');
         Route::get('data-management/sample/case-studies', [DataManagementController::class, 'downloadCaseStudySample'])->name('data.download-case-study-sample');
 
+        // Staff Management for Admins
+        Route::get('admins', [AdminManagementController::class, 'index'])->name('admins.index');
+        Route::post('admins/invite', [AdminManagementController::class, 'invite'])->name('admins.invite');
+        Route::patch('admins/{id}/deactivate', [AdminManagementController::class, 'deactivate'])->name('admins.deactivate');
+        Route::patch('admins/{id}/activate', [AdminManagementController::class, 'activate'])->name('admins.activate');
+        Route::delete('admins/{id}', [AdminManagementController::class, 'destroy'])->name('admins.destroy');
+        Route::post('admins/{id}/resend', [AdminManagementController::class, 'resendInvite'])->name('admins.resend');
+
 
 
         // Exam Categories

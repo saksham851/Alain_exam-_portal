@@ -17,9 +17,24 @@ class AdminManagementController extends Controller
      */
     public function index()
     {
-        $admins = User::whereIn('role', ['admin', 'manager'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = User::whereIn('role', ['admin', 'manager']);
+        
+        // Admins can only see and manage Managers
+        if (auth()->user()->role === 'admin') {
+            $query->where('role', 'manager');
+        }
+
+        // Search functionalitiy (Matches Student Management)
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $admins = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return view('superadmin.admins.index', compact('admins'));
     }
@@ -29,11 +44,18 @@ class AdminManagementController extends Controller
      */
     public function invite(Request $request)
     {
-        $request->validate([
+        $rules = [
             'first_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'role' => 'required|in:admin,manager',
-        ], [
+        ];
+
+        // Admins can only invite Managers
+        if (auth()->user()->role === 'admin') {
+            $request->merge(['role' => 'manager']);
+        }
+
+        $request->validate($rules, [
             'email.unique' => 'This email is already registered.',
             'email.required' => 'Email address is required.',
         ]);
@@ -86,6 +108,12 @@ class AdminManagementController extends Controller
     public function deactivate($id)
     {
         $admin = User::whereIn('role', ['admin', 'manager'])->findOrFail($id);
+        
+        // Security: Admin can't deactivate another admin
+        if (auth()->user()->role === 'admin' && $admin->role !== 'manager') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $admin->update(['status' => 0]);
 
         return back()->with('success', ucfirst($admin->role) . ' has been deactivated.');
@@ -97,6 +125,12 @@ class AdminManagementController extends Controller
     public function activate($id)
     {
         $admin = User::whereIn('role', ['admin', 'manager'])->findOrFail($id);
+
+        // Security: Admin can't activate another admin
+        if (auth()->user()->role === 'admin' && $admin->role !== 'manager') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $admin->update(['status' => 1]);
 
         return back()->with('success', ucfirst($admin->role) . ' has been activated.');
@@ -108,6 +142,12 @@ class AdminManagementController extends Controller
     public function destroy($id)
     {
         $admin = User::whereIn('role', ['admin', 'manager'])->findOrFail($id);
+
+        // Security: Admin can't delete another admin
+        if (auth()->user()->role === 'admin' && $admin->role !== 'manager') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $admin->delete();
 
         return back()->with('success', ucfirst($admin->role) . ' has been deleted.');
@@ -119,6 +159,11 @@ class AdminManagementController extends Controller
     public function resendInvite($id)
     {
         $admin = User::whereIn('role', ['admin', 'manager'])->findOrFail($id);
+
+        // Security: Admin can't resend invite to another admin
+        if (auth()->user()->role === 'admin' && $admin->role !== 'manager') {
+            abort(403, 'Unauthorized action.');
+        }
 
         $token = Password::createToken($admin);
         $resetUrl = url(route('password.reset', [
