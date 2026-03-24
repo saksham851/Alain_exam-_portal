@@ -275,7 +275,7 @@ function toggleComplianceLabel(btn) {
                                                 <i class="ti ti-file-text"></i>
                                             </div>
                                             <h6 class="mb-0 fw-bold text-dark">
-                                                @if(str_contains(strtolower($caseStudy->title), 'case study'))
+                                                @if(str_contains(strtolower($caseStudy->title), 'case'))
                                                     {{ $caseStudy->title }}
                                                 @else
                                                     Case Study {{ $csIndex + 1 }}: {{ $caseStudy->title }}

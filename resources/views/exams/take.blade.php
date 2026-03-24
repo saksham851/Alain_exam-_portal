@@ -495,7 +495,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content overflow-hidden border-0 shadow-lg" style="border-radius: 20px;">
                 <div class="modal-body text-center p-5">
-                    <h3 class="fw-bold text-slate-800 mb-3">Submit This Session?</h3>
+                    <h3 class="fw-bold text-slate-800 mb-3">Submit Answers For This Session</h3>
                     <p class="text-muted mb-4 lead" style="font-size: 1rem;">You are about to submit your answers for this session. Once submitted, your answers are final and you will not be able to return to this portion of the exam.</p>
                     <div class="d-grid gap-3 mt-4">
                         <button type="button" class="btn btn-success btn-lg py-3 rounded-3 fw-bold shadow-sm" onclick="handleVisitSubmit()">

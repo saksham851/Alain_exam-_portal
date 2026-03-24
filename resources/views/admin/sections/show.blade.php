@@ -109,7 +109,7 @@
                         <div class="bg-secondary-subtle text-secondary rounded p-1 me-3">
                             <i class="ti ti-file-text"></i>
                         </div>
-                        <h6 class="mb-0 fw-bold text-dark">@if(!str_contains(strtolower($caseStudy->title), 'case study'))Case Study {{ $csIndex + 1 }}: @endif{{ $caseStudy->title }}</h6>
+                        <h6 class="mb-0 fw-bold text-dark">@if(!str_contains(strtolower($caseStudy->title), 'case'))Case Study {{ $csIndex + 1 }}: @endif{{ $caseStudy->title }}</h6>
                         @if($caseStudy->cloned_from_id)
                             <span class="badge bg-warning text-dark ms-2"><i class="ti ti-copy"></i> Cloned</span>
                         @endif
