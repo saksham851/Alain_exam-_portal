@@ -542,10 +542,10 @@ class QuestionController extends Controller
     public function export()
     {
         $questions = Question::where('status', 1)
-            ->with(['visit.caseStudy.section', 'options', 'tags'])
+            ->with(['visit.caseStudy.section.exam', 'options', 'tags.scoreCategory', 'tags.contentArea'])
             ->get();
         
-        $filename = 'questions_' . date('Y-m-d_His') . '.csv';
+        $filename = 'questions_export_' . date('Y-m-d_His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -553,17 +553,56 @@ class QuestionController extends Controller
 
         $callback = function() use ($questions) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Case Study', 'Question Text', 'Type', 'Max Points', 'Created At']);
+            
+            // Comprehensive Header matching the import format
+            fputcsv($file, [
+                'exam_name',
+                'section_title',
+                'case_study_title',
+                'visit_title',
+                'visit_content',
+                'question_text',
+                'max_point',
+                'option_1',
+                'option_2',
+                'option_3',
+                'option_4',
+                'correct_option',
+                'score_category_1',
+                'content_area_1',
+                'score_category_2',
+                'content_area_2'
+            ]);
 
             foreach ($questions as $q) {
-                fputcsv($file, [
-                    $q->id,
+                $options = $q->options->sortBy('option_key');
+                $correctKeys = $options->where('is_correct', 1)->pluck('option_key')->toArray();
+                
+                // Get tags
+                $tags = $q->tags;
+                $t1 = $tags->get(0);
+                $t2 = $tags->get(1);
+
+                $row = [
+                    $q->visit && $q->visit->caseStudy && $q->visit->caseStudy->section && $q->visit->caseStudy->section->exam ? $q->visit->caseStudy->section->exam->name : '',
+                    $q->visit && $q->visit->caseStudy && $q->visit->caseStudy->section ? $q->visit->caseStudy->section->title : '',
                     $q->visit && $q->visit->caseStudy ? $q->visit->caseStudy->title : '',
+                    $q->visit ? $q->visit->title : '',
+                    $q->visit ? strip_tags($q->visit->description) : '',
                     strip_tags($q->question_text),
-                    $q->question_type,
                     $q->max_question_points,
-                    $q->created_at->format('Y-m-d H:i:s'),
-                ]);
+                    $options->where('option_key', 'A')->first()->option_text ?? '',
+                    $options->where('option_key', 'B')->first()->option_text ?? '',
+                    $options->where('option_key', 'C')->first()->option_text ?? '',
+                    $options->where('option_key', 'D')->first()->option_text ?? '',
+                    implode(',', $correctKeys),
+                    $t1 && $t1->scoreCategory ? $t1->scoreCategory->name : '',
+                    $t1 && $t1->contentArea ? $t1->contentArea->name : '',
+                    $t2 && $t2->scoreCategory ? $t2->scoreCategory->name : '',
+                    $t2 && $t2->contentArea ? $t2->contentArea->name : '',
+                ];
+                
+                fputcsv($file, $row);
             }
             fclose($file);
         };

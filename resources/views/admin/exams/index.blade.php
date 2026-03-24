@@ -601,28 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         publishBtn.innerHTML = '<i class="ti ti-lock me-1"></i> Cannot Publish';
                     }
                     
-                    // Render Guidance if fails
-                    const guideContainer = document.getElementById('complianceGuidanceContainer');
-                    const guideList = document.getElementById('complianceGuidanceList');
-                    guideList.innerHTML = '';
-                    
-                    if(!isValid && data.compliance.compliance_guidance && data.compliance.compliance_guidance.length > 0) {
-                        guideContainer.style.display = 'block';
-                        data.compliance.compliance_guidance.forEach(guide => {
-                            const div = document.createElement('div');
-                            div.className = 'small d-flex align-items-center mb-1';
-                            div.innerHTML = `
-                                <span class="badge bg-warning text-dark me-2">${guide.count} Qs</span>
-                                <span>Add questions with: 
-                                    <strong class="text-primary">${guide.cat1_area || 'Any Cat 1 Area'}</strong> + 
-                                    <strong class="text-success">${guide.cat2_area || 'Any Cat 2 Area'}</strong>
-                                </span>
-                            `;
-                            guideList.appendChild(div);
-                        });
-                    } else {
-                        guideContainer.style.display = 'none';
-                    }
+
                     
                     // Build Table
                     document.getElementById('complianceTableContainer').style.display = 'block';
@@ -678,45 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             tableContainer.parentElement.insertBefore(summaryDiv, tableContainer);
                         }
 
-                         // Warning for Uncategorized
-                        if(data.compliance.uncategorized_count > 0) {
-                             const uncategorizedTr = document.createElement('tr');
-                             const uncatQuestions = data.compliance.uncategorized_questions || [];
-                             
-                             let questionsHtml = `
-                                <div class="mt-2 vstack gap-2">
-                                    ${uncatQuestions.slice(0, 10).map(q => `
-                                        <div class="p-2 border rounded bg-white small d-flex justify-content-between align-items-center shadow-sm">
-                                            <div class="text-truncate" style="max-width: 500px;">
-                                                <i class="ti ti-help text-muted me-1"></i>
-                                                <span class="text-dark fw-medium">${q.text}</span>
-                                            </div>
-                                            <a href="/admin/questions/${q.id}/edit?return_url=${encodeURIComponent(window.location.href)}" 
-                                               class="btn btn-xs btn-outline-primary fw-bold px-2 py-1" style="font-size: 10px;">
-                                               <i class="ti ti-tag me-1"></i>Fix Tags
-                                            </a>
-                                        </div>
-                                    `).join('')}
-                                    ${uncatQuestions.length > 10 ? `<div class="text-center py-1 small text-muted fw-bold">... and ${uncatQuestions.length - 10} more questions need attention</div>` : ''}
-                                </div>
-                             `;
 
-                             uncategorizedTr.innerHTML = `
-                                <td colspan="4" class="bg-warning-subtle text-warning-emphasis px-3 py-3 border-bottom">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div>
-                                            <i class="ti ti-alert-triangle me-1 fs-5"></i> 
-                                            <strong>Tagging Required:</strong> ${data.compliance.uncategorized_count} questions are not properly categorized.
-                                        </div>
-                                        <button class="btn btn-sm btn-warning text-dark fw-bold shadow-sm" onclick="autoFixCompliance(window.currentExamId)">
-                                            <i class="ti ti-wand me-1"></i> Auto-Assign Tags
-                                        </button>
-                                    </div>
-                                    ${questionsHtml}
-                                </td>
-                             `;
-                             tbody.appendChild(uncategorizedTr);
-                        }
 
                         // Group Items by Category
                         const grouped = {};
@@ -760,13 +701,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                      </td>
                                      <td class="pe-4 text-end">
                                          <div class="d-flex align-items-center justify-content-end gap-3">
-                                             ${!areaPassed && fixables.length > 0 ? `
-                                                 <button class="btn btn-sm btn-outline-primary fw-bold px-3 border-2" 
-                                                         style="font-size: 11px; border-radius: 6px;"
-                                                         onclick="toggleFixList('fix_row_${area.id}')">
-                                                     <i class="ti ti-adjustments-horizontal me-1"></i>Resolve Tags
-                                                 </button>
-                                             ` : ''}
                                              ${areaPassed 
                                                  ? '<span class="text-success fw-bold small"><i class="ti ti-circle-check me-1"></i>Verified</span>' 
                                                  : '<span class="text-danger fw-bold small"><i class="ti ti-circle-x me-1"></i>Incomplete</span>'}
@@ -798,10 +732,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                     </span>
                                                                  </div>
                                                              </div>
-                                                             <a href="/admin/questions/${q.id}/edit?return_url=${encodeURIComponent(window.location.href)}" 
-                                                                class="btn btn-sm btn-light border fw-bold text-primary px-3" 
-                                                                style="font-size: 11px;">Fix Tagging</a>
-                                                         </div>
+                                                          </div>
+                                                      </div>
+                                                  </div>
                                                      `).join('')}
                                                      ${fixables.length > 5 ? `
                                                          <div class="p-2 bg-light text-center small text-muted fw-bold">
@@ -1032,13 +965,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
 
-                    <!-- Question Quantity Guide -->
-                    <div id="complianceGuidanceContainer" class="mb-4 p-3 bg-light-warning border border-warning-subtle rounded-3" style="display:none;">
-                        <h6 class="text-warning-emphasis fw-bold mb-2">
-                            <i class="ti ti-bulb me-1"></i> Question Quantity Guide (To Achieve Compliance)
-                        </h6>
-                        <div id="complianceGuidanceList" class="vstack gap-2"></div>
-                    </div>
+
 
                     <!-- Breakdown Table -->
                     <div id="complianceTableContainer">

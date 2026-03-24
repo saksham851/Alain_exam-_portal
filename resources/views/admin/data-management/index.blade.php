@@ -72,8 +72,8 @@
                                     <h6 class="mb-2"><i class="ti ti-info-circle me-1"></i>Import Requirements:</h6>
                                     <small class="text-muted d-block mb-1">• Exam must be in <strong>Unpublished</strong> status</small>
                                     <small class="text-muted d-block mb-1">• Section Name must exactly match the exam structure</small>
-                                    <small class="text-muted d-block mb-1">• CSV must include <strong>Dual Tagging</strong> columns (total 16 columns)</small>
-                                    <small class="text-muted d-block mb-0">• Correct Option should be numeric (1-4)</small>
+                                    <small class="text-muted d-block mb-1">• CSV must include <strong>Visit Content</strong> and <strong>Max Point</strong> columns (total 16 columns)</small>
+                                    <small class="text-muted d-block mb-0">• Correct Option should be letters (A-D) or comma-separated (e.g., A,C)</small>
                                 </div>
                             </div>
                         </div>

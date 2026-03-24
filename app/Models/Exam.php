@@ -8,6 +8,27 @@ use App\Models\Question;
 
 class Exam extends Model
 {
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($exam) {
+            if (empty($exam->exam_code)) {
+                $lastExam = self::where('exam_code', 'like', 'MH%')
+                    ->orderBy('exam_code', 'desc')
+                    ->first();
+
+                if ($lastExam) {
+                    $lastCode = $lastExam->exam_code;
+                    $number = (int) substr($lastCode, 2);
+                    $newNumber = str_pad($number + 1, 4, '0', STR_PAD_LEFT);
+                    $exam->exam_code = 'MH' . $newNumber;
+                } else {
+                    $exam->exam_code = 'MH0001';
+                }
+            }
+        });
+    }
     protected $fillable = [
         'category_id',
         'exam_code',

@@ -173,7 +173,7 @@ class ExamController extends Controller
 
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
-            'exam_code' => 'required|string|max:50|unique:exams,exam_code',
+            'exam_code' => 'nullable|string|max:50|unique:exams,exam_code',
             'category_id' => 'required|exists:exam_categories,id',
             'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'description' => 'nullable|string',
@@ -289,7 +289,7 @@ class ExamController extends Controller
 
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
-            'exam_code' => 'required|string|max:50|unique:exams,exam_code,' . $id,
+            'exam_code' => 'nullable|string|max:50|unique:exams,exam_code,' . $id,
             'category_id' => 'required|exists:exam_categories,id',
             'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'description' => 'nullable|string',
