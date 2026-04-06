@@ -33,13 +33,26 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
+                        @php
+                            $headers = [];
+                            if($attempts->count() > 0) {
+                                foreach($attempts as $a) {
+                                    if(is_array($a->category_breakdown)) {
+                                        foreach($a->category_breakdown as $c) {
+                                            $headers[$c['name']] = $c['name'];
+                                        }
+                                    }
+                                }
+                            }
+                        @endphp
                         <thead>
                             <tr>
                                 <th>Exam Name</th>
                                 <th>Duration</th>
                                 <th>Started At</th>
-                                <th>IG Score</th>
-                                <th>DM Score</th>
+                                @foreach($headers as $headerName)
+                                    <th>{{ $headerName }}</th>
+                                @endforeach
                                 <th>Total Score</th>
                                 <th>Status</th>
                                 <th class="text-end">Actions</th>
@@ -53,9 +66,21 @@
                                     <span class="text-muted fw-semibold">{{ $attempt->formatted_duration }}</span>
                                 </td>
                                 <td>{{ $attempt->started_at->format('M d, Y H:i') }}</td>
-                                <td>{{ round($attempt->ig_score, 1) }}%</td>
-                                <td>{{ round($attempt->dm_score, 1) }}%</td>
-                                <td><strong>{{ round($attempt->percentage, 1) }}%</strong></td>
+                                @foreach($headers as $headerName)
+                                    @php
+                                        $earned = 0;
+                                        if(is_array($attempt->category_breakdown)) {
+                                            foreach($attempt->category_breakdown as $c) {
+                                                if($c['name'] == $headerName) {
+                                                    $earned = $c['earned_points'] ?? 0;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    @endphp
+                                    <td>{{ $earned }} pts</td>
+                                @endforeach
+                                <td><strong>{{ $attempt->total_score }} pts</strong></td>
                                 <td>
                                     <span class="badge {{ $attempt->is_passed ? 'bg-success' : 'bg-danger' }}">
                                         {{ $attempt->is_passed ? 'Passed' : 'Failed' }}
