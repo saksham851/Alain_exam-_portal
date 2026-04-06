@@ -191,7 +191,7 @@
                 <h1>Mentara Health Portal Credentials</h1>
                 <p class="subtitle">Official Welcome & Access Invitation</p>
                 <div class="logo-wrapper">
-                    <img src="{{ $message->embed(public_path('assets/images/logo_image.png')) }}" alt="Mentara Health" class="logo">
+                    <img src="{{ asset('assets/images/logo_image.png') }}" alt="Mentara Health" class="logo">
                 </div>
                 <div>
                     <div class="badge">🛡️ Administrative Access</div>

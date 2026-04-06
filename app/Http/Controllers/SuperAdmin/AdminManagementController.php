@@ -60,8 +60,8 @@ class AdminManagementController extends Controller
             'email.required' => 'Email address is required.',
         ]);
 
-        // Generate a random temp password
-        $tempPassword = Str::random(12);
+        // Generate a random temp password that meets complexity requirements
+        $tempPassword = $this->generateStrongPassword(12);
 
         // Create the user
         $user = User::create([
@@ -186,5 +186,31 @@ class AdminManagementController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', "Could not send email: " . $e->getMessage());
         }
+    }
+    /**
+     * Generate a strong random password with at least:
+     * 1 Uppercase, 1 Number, 1 Special Character
+     */
+    private function generateStrongPassword($length = 12)
+    {
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $numbers   = '0123456789';
+        $special   = '!@#$%^&*()-_+';
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+
+        // Ensure at least one of each required type
+        $password = '';
+        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+        $password .= $special[random_int(0, strlen($special) - 1)];
+
+        // Fill the rest with random characters from all sets
+        $all = $uppercase . $numbers . $special . $lowercase;
+        for ($i = 0; $i < ($length - 3); $i++) {
+            $password .= $all[random_int(0, strlen($all) - 1)];
+        }
+
+        // Shuffle the results to avoid predictable positions
+        return str_shuffle($password);
     }
 }

@@ -230,6 +230,7 @@
 @php
     $questionsList = [];
     $sectionsMap = [];
+    $caseVisitsMap = [];
     
     foreach($exam->sections as $secIndex => $section) {
         $sectionsMap[$section->id] = [
@@ -239,13 +240,21 @@
         ];
 
         foreach($section->caseStudies as $caseStudy) {
+            // Map visits for this case
+            $caseVisitsMap[$caseStudy->id] = $caseStudy->visits->map(function($v) {
+                return [
+                    'id' => $v->id,
+                    'title' => $v->title,
+                    'content' => $v->description
+                ];
+            });
+
             foreach($caseStudy->visits as $visit) {
                 foreach($visit->questions as $question) {
                     $questionsList[] = [
                         'question' => $question,
                         'section_id' => $section->id, 
                         'visit_id' => $visit->id,
-                        // ... other fields
                         'section_title' => $section->title,
                         'case_title' => $caseStudy->title,
                         'case_id' => $caseStudy->id,
@@ -264,7 +273,9 @@
 <div x-data="examWizard(
     {{ count($questionsList) }}, 
     {{ json_encode(array_column($questionsList, 'section_id')) }},
-    {{ json_encode(array_column($questionsList, 'visit_id')) }}
+    {{ json_encode(array_column($questionsList, 'visit_id')) }},
+    {{ json_encode(array_column($questionsList, 'case_id')) }},
+    {{ json_encode($caseVisitsMap) }}
 )" x-init="initTimer()" x-cloak>
     
     <!-- START OVERLAY -->
@@ -366,34 +377,35 @@
                 <div x-show="currentIndex === {{ $index }}" class="slide-container" data-section-id="{{ $slide['section_id'] }}">
                     
                     @if(!empty(strip_tags($slide['case_title'] ?? '')))
-                    <div class="case-study-box">
-                        <div class="case-title-area">
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-file-text text-primary fs-5 me-2"></i>
-                                <h6 class="mb-0 fw-bold text-slate-700">{{ $slide['case_title'] }}</h6>
-                            </div>
+                    <div class="mb-4">
+                        <div class="d-inline-flex align-items-center bg-light-primary px-3 py-2 rounded-pill">
+                            <h6 class="mb-0 fw-bold text-primary">{{ $slide['case_title'] }}</h6>
                         </div>
                     </div>
                     @endif
 
-                    @if(!empty(strip_tags($slide['visit_title'] ?? '')))
-                    <div class="case-study-box mt-3">
-                        <div class="case-title-area bg-light" @click="isVisitExpanded = !isVisitExpanded">
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-notes text-secondary fs-5 me-2"></i>
-                                <h6 class="mb-0 fw-bold text-slate-700">{{ $slide['visit_title'] }}</h6>
-                            </div>
-                            <i class="ti fs-5 text-muted transition-transform" :class="isVisitExpanded ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
-                        </div>
-                        <div x-show="isVisitExpanded" x-collapse>
-                            @if(!empty(strip_tags($slide['visit_content'] ?? '')))
-                                <div class="p-4 border-top bg-white">
-                                    <div class="text-slate-600 leading-relaxed">{!! $slide['visit_content'] !!}</div>
+                    <!-- Visit Rows (Dynamic stacked visits) -->
+                    <template x-for="v in getRelevantVisits({{ $slide['case_id'] }}, {{ $slide['visit_id'] }})" :key="v.id">
+                        <div class="mt-3">
+                            <!-- Header (Heading style) -->
+                            <div class="case-study-box">
+                                <div class="case-title-area" @click="toggleVisit(v.id)">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ti ti-notes text-primary fs-5 me-2"></i>
+                                        <h6 class="mb-0 fw-bold text-slate-700" x-text="v.title"></h6>
+                                    </div>
+                                    <i class="ti fs-5 text-muted transition-transform" :class="isVisitExpanded(v.id) ? 'ti-chevron-up' : 'ti-chevron-down'"></i>
                                 </div>
-                            @endif
+                                
+                                <!-- Integrated Content (No separate box) -->
+                                <div x-show="isVisitExpanded(v.id)" x-collapse>
+                                    <div class="p-4 border-top bg-white">
+                                        <div class="text-slate-600 leading-relaxed" x-html="v.content"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    @endif
+                    </template>
 
                     <div class="text-center py-5" x-show="!viewedCases.includes({{ $slide['visit_id'] }}) && !completedVisitIds.includes({{ $slide['visit_id'] }})">
                         <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-sm fw-bold d-inline-flex align-items-center gap-2" @click="viewedCases.push({{ $slide['visit_id'] }})">
@@ -431,7 +443,7 @@
                 <div class="action-inner">
                     <!-- Can only go back if the previous question is in the same section -->
                     <button type="button" class="btn btn-light btn-action" 
-                            x-show="currentIndex > 0" 
+                            x-show="currentIndex > 0 && visitIds[currentIndex] === visitIds[currentIndex - 1]" 
                             @click="prevSlide()">
                        <i class="ti ti-chevron-left me-1"></i> Go Back
                     </button>
@@ -656,13 +668,16 @@
             }, 200);
         }
 
-        function examWizard(totalSlides, questionSections, visitIds) {
+        function examWizard(totalSlides, questionSections, visitIds, caseIds, caseVisitsMap) {
             return {
                 currentIndex: 0,
                 totalSlides: totalSlides,
                 questionSections: questionSections,
                 visitIds: visitIds,
+                caseIds: caseIds,
+                caseVisitsMap: caseVisitsMap,
                 completedVisitIds: [],
+                expandedVisitIds: [],
                 isLastQuestionOfExam: false,
                 expiryTimestamp: {{ \Carbon\Carbon::parse($attempt->started_at)->addMinutes($exam->duration_minutes)->timestamp }} * 1000,
                 now: new Date().getTime(),
@@ -671,7 +686,6 @@
                 isSubmitting: false, 
                 boundHandleBeforeUnload: null,
                 isCaseExpanded: true,
-                isVisitExpanded: true,
                 viewedCases: [],
                 
                 currentSectionId: null,
@@ -709,6 +723,29 @@
                 init() {
                     this.updateCurrentSection();
                     this.initTimer();
+                    this.expandedVisitIds = [this.visitIds[0]];
+                },
+
+                isVisitExpanded(id) {
+                    return this.expandedVisitIds.includes(id);
+                },
+
+                toggleVisit(id) {
+                    if (this.expandedVisitIds.includes(id)) {
+                        this.expandedVisitIds = this.expandedVisitIds.filter(i => i !== id);
+                    } else {
+                        this.expandedVisitIds.push(id);
+                    }
+                },
+
+                getRelevantVisits(caseId, currentVisitId) {
+                    const allVisits = this.caseVisitsMap[caseId] || [];
+                    const relevant = [];
+                    for (const v of allVisits) {
+                        relevant.push(v);
+                        if (v.id === currentVisitId) break;
+                    }
+                    return relevant;
                 },
                 
                 confirmSubmit(action) {
@@ -783,8 +820,12 @@
                         }
                         
                         // Expansion state for the new current slide
-                        // If it's a completed visit, keep it collapsed (initially hidden)
-                        this.isVisitExpanded = !this.completedVisitIds.includes(this.visitIds[this.currentIndex]);
+                        const nextVisitId = this.visitIds[this.currentIndex];
+                        if (currentVisitId !== nextVisitId) {
+                            // If visit changed, collapse previous ones and expand current one
+                            this.expandedVisitIds = [nextVisitId];
+                        }
+                        
                         this.isCaseExpanded = true;
                         
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
@@ -793,25 +834,15 @@
 
                 prevSlide() {
                     if (this.currentIndex > 0) {
-                        const oldSecId = this.currentSectionId;
                         const currentVisitId = this.visitIds[this.currentIndex];
                         const prevVisitId = this.visitIds[this.currentIndex - 1];
                         
-                        if (currentVisitId === prevVisitId) {
-                            // Moving within the same visit, just go back one question
-                            this.currentIndex--;
-                        } else {
-                            // Moving to a previous visit. Jump to the first question of that visit.
-                            let idx = this.currentIndex - 1;
-                            const targetVisitId = this.visitIds[idx];
-                            while (idx > 0 && this.visitIds[idx - 1] === targetVisitId) {
-                                idx--;
-                            }
-                            this.currentIndex = idx;
-                        }
+                        // Restricted to same visit
+                        if (currentVisitId !== prevVisitId) return;
+
+                        const oldSecId = this.currentSectionId;
+                        this.currentIndex--;
                         
-                        // If we returned to a completed visit, it should be initially hidden (collapsed)
-                        this.isVisitExpanded = !this.completedVisitIds.includes(this.visitIds[this.currentIndex]);
                         this.isCaseExpanded = true;
                         this.$nextTick(() => { this.handleScrollLogic(oldSecId); });
                     }

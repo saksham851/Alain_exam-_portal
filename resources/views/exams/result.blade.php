@@ -113,15 +113,15 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.35rem 1rem;
+        padding: 0.45rem 1.2rem;
         border-radius: 99px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 1.5px;
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 1px;
         text-transform: uppercase;
         margin-bottom: 1rem;
-        backdrop-filter: blur(10px);
-        {{ $overallPassed ? 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;' : 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;' }}
+        {{ $overallPassed ? 'background: #10b981; color: #ffffff;' : 'background: #ef4444; color: #ffffff;' }}
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .rp-exam-name {
@@ -356,12 +356,13 @@
     }
 
     .rp-cat-badge {
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 1px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
         text-transform: uppercase;
-        padding: 0.3rem 0.75rem;
+        padding: 0.4rem 1rem;
         border-radius: 99px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     .rp-cat-badge.pass { background: #10b981; color: white; }
