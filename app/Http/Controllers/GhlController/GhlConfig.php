@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GhlController;
 
 class GhlConfig
 {
-    public const VERSION_ID = '69c137b46e68ff865b4cd1b5';
+    public const VERSION_ID = '6981c39178b42f8b4e29f060';
 
     public const APP_URL = 'https://app.gohighlevel.com/v2/location/';
 

@@ -83,34 +83,34 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['manager'])->prefix('manager')->name('manager.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
-        
+
         // Students Management (View Only)
         Route::get('/students', [UserController::class, 'index'])->name('students.index');
         Route::get('/students/{id}', [UserController::class, 'show'])->name('students.show');
-        
+
         // Student Attempts Management (View Only)
         Route::get('/students/{id}/assigned-exams', [UserController::class, 'getAssignedExams'])->name('students.assigned-exams');
         Route::get('/students/{studentId}/exam/{examId}/attempts', [UserController::class, 'getStudentExamAttempts'])->name('students.exam-attempts');
-        
+
         // Exams Management (Limited)
         Route::resource('exams', ExamController::class);
         Route::get('exams/{id}/validate-compliance', [ExamController::class, 'validateCompliance'])->name('exams.validate-compliance');
         Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
-        
+
         // Sections
         Route::resource('sections', SectionController::class);
         Route::patch('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');
         Route::post('sections/{section}/clone', [SectionController::class, 'clone'])->name('sections.clone');
         Route::post('sections/clone-external', [SectionController::class, 'clone'])->name('sections.clone-external');
-        
+
         // Questions Management
         Route::resource('questions', QuestionController::class);
         Route::patch('questions/{id}/activate', [QuestionController::class, 'activate'])->name('questions.activate');
         Route::post('questions/clone', [QuestionController::class, 'clone'])->name('questions.clone');
         Route::post('questions/import', [QuestionController::class, 'import'])->name('questions.import');
-        
+
         // Case Studies Bank
-        Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function() {
+        Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
@@ -165,7 +165,7 @@ Route::middleware(['auth'])->group(function () {
 
         // API Routes for Exam Builder (Case Studies, Visits, Questions)
         Route::delete('api/case-studies/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy']);
-        
+
         Route::get('api/visits-detail/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxShow']);
         Route::post('api/visits', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxStore']);
         Route::put('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxUpdate']);
@@ -182,14 +182,14 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin Routes
     Route::middleware(['admin'])->name('admin.')->prefix('admin')->group(function () {
-        
+
         // Admin Dashboard
         Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
         // Users Management
         Route::resource('users', UserController::class);
         Route::patch('users/{id}/activate', [UserController::class, 'activate'])->name('users.activate');
-        
+
         // User Attempts Management
         Route::get('users/{id}/assigned-exams', [UserController::class, 'getAssignedExams'])->name('users.assigned-exams');
         Route::get('users/{studentId}/exam/{examId}/attempts', [UserController::class, 'getStudentExamAttempts'])->name('users.exam-attempts');
@@ -200,11 +200,11 @@ Route::middleware(['auth'])->group(function () {
 
         // Data Management (Import/Export)
         Route::get('data-management', [DataManagementController::class, 'index'])->name('data.index');
-        
+
         // Import Routes
         Route::post('data-management/import-questions', [DataManagementController::class, 'importQuestions'])->name('data.import-questions');
         Route::post('data-management/import-case-studies', [DataManagementController::class, 'importCaseStudies'])->name('data.import-case-studies');
-        
+
         // Sample CSV Downloads
         Route::get('data-management/sample/questions', [DataManagementController::class, 'downloadQuestionSample'])->name('data.download-question-sample');
         Route::get('data-management/sample/case-studies', [DataManagementController::class, 'downloadCaseStudySample'])->name('data.download-case-study-sample');
@@ -244,7 +244,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('questions/export', [QuestionController::class, 'export'])->name('questions.export');
 
         // Case Studies Bank
-        Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function() {
+        Route::prefix('case-studies-bank')->name('case-studies-bank.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'store'])->name('store');
@@ -257,38 +257,38 @@ Route::middleware(['auth'])->group(function () {
         });
 
 
-         // AJAX Routes for dynamic dropdowns
-         Route::get('questions-ajax/case-studies/{examId}', [SectionController::class, 'getSections']);
-         Route::get('questions-ajax/sub-case-studies/{sectionId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getCaseStudiesBySection']);
-         Route::get('questions-ajax/questions/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByCaseStudy']);
-         Route::get('questions-ajax/visits/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getVisits']);
-         Route::get('questions-ajax/questions-by-visit/{visitId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByVisit']);
+        // AJAX Routes for dynamic dropdowns
+        Route::get('questions-ajax/case-studies/{examId}', [SectionController::class, 'getSections']);
+        Route::get('questions-ajax/sub-case-studies/{sectionId}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'getCaseStudiesBySection']);
+        Route::get('questions-ajax/questions/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByCaseStudy']);
+        Route::get('questions-ajax/visits/{caseStudyId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getVisits']);
+        Route::get('questions-ajax/questions-by-visit/{visitId}', [\App\Http\Controllers\Admin\QuestionController::class, 'getQuestionsByVisit']);
 
-         // API Routes for Sections (used in exam edit page)
-         Route::get('api/sections/{examId}', [SectionController::class, 'getSections']);
-         Route::get('api/sections/{examId}/deleted', [SectionController::class, 'getDeletedSections']);
-         Route::get('api/sections/{sectionId}/content', [SectionController::class, 'getSectionContent']);
-         Route::get('api/sections-ajax/{id}', [SectionController::class, 'show']);
-         Route::delete('api/sections-ajax/{id}', [SectionController::class, 'ajaxDestroy']);
-         Route::patch('api/sections-ajax/{id}/restore', [SectionController::class, 'ajaxRestore']);
+        // API Routes for Sections (used in exam edit page)
+        Route::get('api/sections/{examId}', [SectionController::class, 'getSections']);
+        Route::get('api/sections/{examId}/deleted', [SectionController::class, 'getDeletedSections']);
+        Route::get('api/sections/{sectionId}/content', [SectionController::class, 'getSectionContent']);
+        Route::get('api/sections-ajax/{id}', [SectionController::class, 'show']);
+        Route::delete('api/sections-ajax/{id}', [SectionController::class, 'ajaxDestroy']);
+        Route::patch('api/sections-ajax/{id}/restore', [SectionController::class, 'ajaxRestore']);
 
-         // API Routes for Exam Builder (Case Studies, Visits, Questions)
-         Route::delete('api/case-studies/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy']);
-         
-         Route::get('api/visits-detail/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxShow']);
-         Route::post('api/visits', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxStore']);
-         Route::put('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxUpdate']);
-         Route::delete('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxDestroy']);
+        // API Routes for Exam Builder (Case Studies, Visits, Questions)
+        Route::delete('api/case-studies/{id}', [\App\Http\Controllers\Admin\CaseStudyBankController::class, 'destroy']);
 
-         Route::delete('api/questions/{id}', [\App\Http\Controllers\Admin\QuestionController::class, 'destroy']);
+        Route::get('api/visits-detail/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxShow']);
+        Route::post('api/visits', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxStore']);
+        Route::put('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxUpdate']);
+        Route::delete('api/visits/{id}', [\App\Http\Controllers\Admin\VisitController::class, 'ajaxDestroy']);
 
-         // Sections
-         Route::resource('sections', SectionController::class);
-         Route::patch('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');
-         Route::post('sections/{section}/clone', [SectionController::class, 'clone'])->name('sections.clone');
-         Route::post('sections/clone-external', [SectionController::class, 'clone'])->name('sections.clone-external');
+        Route::delete('api/questions/{id}', [\App\Http\Controllers\Admin\QuestionController::class, 'destroy']);
 
-         // Results & Attempts
+        // Sections
+        Route::resource('sections', SectionController::class);
+        Route::patch('sections/{id}/activate', [SectionController::class, 'activate'])->name('sections.activate');
+        Route::post('sections/{section}/clone', [SectionController::class, 'clone'])->name('sections.clone');
+        Route::post('sections/clone-external', [SectionController::class, 'clone'])->name('sections.clone-external');
+
+        // Results & Attempts
         Route::get('attempts', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('attempts.index');
         Route::get('attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
         Route::get('attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');

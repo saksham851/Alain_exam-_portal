@@ -174,14 +174,21 @@ class ExamScoringService
         $overallPassed = $overallStats['earned_points'] >= $overallThresholdPoints;
         $finalPassed = $allCategoriesPassed && $overallPassed;
 
+        // 5. Calculate Aggregated Score (Sum of Categories as shown in UI)
+        $totalEarnedAggregated = 0;
+        foreach ($categoryStats as $stat) {
+            $totalEarnedAggregated += $stat['earned_points'];
+        }
+
         return [
-            'total_score' => $overallStats['earned_points'], // Primary score is now Points
-            'earned_points' => $overallStats['earned_points'],
+            'total_score' => $totalEarnedAggregated, // Use sum of categories to match UI
+            'earned_points' => $overallStats['earned_points'], // Actual unique points
             'max_points' => $overallStats['max_points'],
             'percentage' => $overallStats['percentage'],
             'is_passed' => $finalPassed,
             'category_breakdown' => $categoryStats, 
             'content_area_breakdown' => $contentAreaStats,
+            'total_earned_aggregated' => $totalEarnedAggregated,
         ];
     }
 

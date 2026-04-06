@@ -220,7 +220,7 @@ class ExamController extends Controller
         }
             
         // Use DB Transaction to handle high concurrency (100-200 users)
-        \Illuminate\Support\Facades\DB::transaction(function () use ($attempt, $request) {
+        $result = \Illuminate\Support\Facades\DB::transaction(function () use ($attempt, $request) {
             // Save answers
             $answers = $request->input('answers', []);
             $answerData = [];
@@ -252,6 +252,8 @@ class ExamController extends Controller
                 'total_score' => $result['total_score'],
                 'is_passed' => $result['is_passed'] ? 1 : 0,
             ]);
+            
+            return $result;
         });
         
         // Prepare data for GoHighLevel Custom Object
@@ -260,17 +262,16 @@ class ExamController extends Controller
             $payload = [
                 "name" => $user->first_name . ' ' . $user->last_name,
                 "email" => $user->email,
-                "total_score" => $attempt->total_score,
-                "is_passed" => $attempt->is_passed,
-                "breakdown" => $attempt->category_breakdown,
+                "total_score" => $result['total_score'],
+                "is_passed" => $result['is_passed'],
+                "breakdown" => $result['category_breakdown'],
                 "attempts" => $studentExam->attempts_used,
                 "status" => $attempt->is_passed ? 'Pass' : 'Fail',
                 "exam_name" => $studentExam->exam->name,
             ];
 
-            // Dispatch background job to create record in GHL
-            // This handles high concurrency by processing GHL API calls sequentially in the background
-            ProcessGHLRecord::dispatch($payload);
+            // Dispatch synchronously for real-time processing
+            ProcessGHLRecord::dispatchSync($payload);
             
             \Illuminate\Support\Facades\Log::info('Exam Completion GHL Job Dispatched for: ' . $user->email);
 

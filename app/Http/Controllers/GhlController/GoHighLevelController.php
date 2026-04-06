@@ -17,11 +17,11 @@ class GoHighLevelController extends Controller
     {
         $clientId = env('GHL_CLIENT_ID');
         // Use dynamic URL generation to handle different ports/hosts
-        $redirectUri = url('/getAccessToken'); 
+        $redirectUri = url('/getAccessToken');
         $scopes = GhlConfig::SCOPES;
-        
+
         $scopeString = implode(' ', $scopes);
-        
+
         $url = GhlConfig::AUTH_URL . "?" . http_build_query([
             'response_type' => GhlConfig::DEFAULTS['response_type'],
             'redirect_uri' => $redirectUri,
@@ -36,7 +36,7 @@ class GoHighLevelController extends Controller
     public function callback(Request $request)
     {
         $code = $request->query('code');
-        
+
         Log::info('GHL Callback Hit', ['code' => $code]);
 
         if (!$code) {
@@ -61,7 +61,7 @@ class GoHighLevelController extends Controller
         if ($response->successful()) {
             $data = $response->json();
             Log::info('Token Exchange Successful', $data);
-            
+
             try {
                 $token = GoHighLevelToken::updateOrCreate(
                     ['location_id' => $data['locationId'] ?? null],
@@ -75,7 +75,7 @@ class GoHighLevelController extends Controller
                         'scope' => $data['scope'] ?? '',
                     ]
                 );
-                
+
                 Log::info('Token Saved to DB', ['id' => $token->id]);
 
                 // Dispatch Job Synchronously to ensure object is created immediately
@@ -113,7 +113,7 @@ class GoHighLevelController extends Controller
         // Check for event type to ensure we only process Uninstalls
         // GHL usually sends 'type' => 'AppUninstall' or 'Uninstall'
         $type = $data['type'] ?? '';
-        
+
         // STRICT CHECK: Only process actual uninstall events
         if (!in_array($type, ['AppUninstall', 'Uninstall'])) {
             // If this endpoint is used as a Default Webhook URL, it will receive other events (like INSTALL).
