@@ -91,11 +91,11 @@
         transition: all 0.3s ease;
     }
     .section-step.active {
-        background-color: #01284E;
-        border-color: #01284E;
+        background-color: #001427;
+        border-color: #001427;
         color: white;
         transform: scale(1.1);
-        box-shadow: 0 4px 10px rgba(1, 40, 78, 0.2);
+        box-shadow: 0 4px 10px rgba(0, 20, 39, 0.2);
     }
     .section-step.passed {
         background-color: #f0f7ff;
@@ -134,8 +134,8 @@
     }
     .q-badge {
         display: inline-block;
-        background: #f0f7ff;
-        color: #01284E;
+        background: rgba(0, 20, 39, 0.05);
+        color: #001427;
         padding: 4px 12px;
         border-radius: 6px;
         font-size: 0.75rem;
@@ -173,9 +173,9 @@
         border-color: #cbd5e1 !important;
     }
     .option-row:has(input:checked) {
-        border-color: #01284E !important;
-        background-color: #f0f7ff;
-        box-shadow: 0 2px 8px rgba(1, 40, 78, 0.05);
+        border-color: #001427 !important;
+        background-color: rgba(0, 20, 39, 0.02);
+        box-shadow: 0 2px 8px rgba(0, 20, 39, 0.05);
     }
     .option-radio-ui {
         min-width: 20px;
@@ -546,7 +546,7 @@
     </div>
 
     <!-- RESULT LOADING SCREEN -->
-    <div id="resultLoadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); z-index:99999; justify-content:center; align-items:center; flex-direction:column;">
+    <div id="resultLoadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: linear-gradient(135deg, #001427 0%, #002345 50%, #001427 100%); z-index:99999; justify-content:center; align-items:center; flex-direction:column;">
         <div style="text-align:center; color:#fff; padding: 2rem;">
             <!-- Animated Logo -->
             <div style="margin-bottom: 2.5rem;">

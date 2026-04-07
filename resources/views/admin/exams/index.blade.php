@@ -7,6 +7,51 @@
 @endphp
 
 @section('content')
+<style>
+    /* Premium Modal Refinements */
+    .modal-content {
+        border-radius: 16px !important;
+        overflow: hidden;
+    }
+    .modal-header.bg-primary {
+        background: linear-gradient(135deg, #001427 0%, #002345 100%) !important;
+        padding: 1.5rem !important;
+    }
+    .modal-header.bg-primary .modal-title,
+    .modal-header.bg-primary i {
+        color: #ffffff !important;
+    }
+    .modal-title {
+        font-weight: 700 !important;
+        letter-spacing: 0.5px;
+        color: #ffffff !important;
+    }
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1) !important;
+        opacity: 0.8;
+    }
+    .modal-header .btn-close:hover {
+        opacity: 1;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: #001427 !important;
+    }
+    .bg-light-primary {
+        background-color: rgba(0, 20, 39, 0.05) !important;
+    }
+    .text-primary {
+        color: #001427 !important;
+    }
+    /* Pulse effect for icons */
+    .rounded-circle.bg-light-primary i {
+        transition: all 0.3s ease;
+    }
+    .hover-shadow:hover .rounded-circle.bg-light-primary i {
+        transform: scale(1.1);
+    }
+</style>
 <!-- [ breadcrumb ] start -->
 <div class="page-header">
   <div class="page-block">
@@ -943,9 +988,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="modal fade" id="complianceModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-bottom">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title fw-bold">
-                    <i class="ti ti-clipboard-check me-2 text-primary"></i>Standard Compliance Check
+                    <i class="ti ti-clipboard-check me-2"></i> Standard Compliance Check
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

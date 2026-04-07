@@ -51,9 +51,9 @@
         <!-- Core Branding & UI Refinements -->
         <style>
             :root {
-                --bs-primary: #01284E; /* Refined Navy */
-                --bs-primary-rgb: 1, 40, 78;
-                --primary: #01284E;
+                --bs-primary: #001427; /* Rich Dark Ocean */
+                --bs-primary-rgb: 0, 20, 39;
+                --primary: #001427;
                 
                 --bs-success: #10b981; /* Standard Green */
                 --bs-success-rgb: 16, 185, 129;
@@ -64,16 +64,16 @@
                 --bs-info: #0056b3;
                 
                 /* Template specific overrides */
-                --pc-primary: #01284E !important;
-                --pc-primary-hover: #001a33 !important;
+                --pc-primary: #001427 !important;
+                --pc-primary-hover: #002345 !important;
             }
 
             /* Extra force for primary buttons to prevent theme overrides */
             .btn-primary, 
             .btn-primary:not(:hover),
             .btn-primary:not(:active) {
-                background-color: #01284E !important;
-                border-color: #01284E !important;
+                background-color: #001427 !important;
+                border-color: #001427 !important;
                 color: #fff !important;
             }
 
@@ -81,16 +81,16 @@
             .btn-primary {
                 background-color: var(--bs-primary) !important;
                 border-color: var(--bs-primary) !important;
-                box-shadow: 0 4px 10px rgba(1, 40, 78, 0.2) !important;
+                box-shadow: 0 4px 10px rgba(0, 20, 39, 0.2) !important;
             }
             .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
-                background-color: #001a33 !important;
-                border-color: #001a33 !important;
+                background-color: #002345 !important;
+                border-color: #002345 !important;
             }
 
             .bg-primary { background-color: var(--bs-primary) !important; }
             .text-primary { color: var(--bs-primary) !important; }
-            .bg-light-primary { background-color: rgba(1, 51, 102, 0.1) !important; color: var(--bs-primary) !important; }
+            .bg-light-primary { background-color: rgba(0, 20, 39, 0.08) !important; color: var(--bs-primary) !important; }
 
             .bg-success { background-color: var(--bs-success) !important; }
             .text-success { color: var(--bs-success) !important; }

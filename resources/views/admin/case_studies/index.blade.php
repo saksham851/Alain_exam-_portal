@@ -2,674 +2,784 @@
 
 @section('content')
 
-@php
-    $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
-@endphp
-<!-- [ breadcrumb ] start -->
-<div class="page-header">
-  <div class="page-block">
-    <div class="row align-items-center">
-      <div class="col-md-12">
-        <div class="page-header-title">
-          <h5 class="m-b-10">Sections</h5>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- [ breadcrumb ] end -->
+    @php
+        $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
+    @endphp
+    <style>
+        /* Premium Modal Refinements */
+        .modal-content {
+            border-radius: 16px !important;
+            overflow: hidden;
+        }
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    All Sections 
-                    <span class="badge bg-light-secondary ms-2">{{ $caseStudies->total() }} Total</span>
-                </h5>
-                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSectionModal">
-                    <i class="ti ti-plus me-1"></i> Add New Section
-                </button>
+        .modal-header.bg-primary {
+            background: linear-gradient(135deg, #001427 0%, #002345 100%) !important;
+            padding: 1.5rem !important;
+        }
+
+        .modal-header.bg-primary .modal-title,
+        .modal-header.bg-primary i {
+            color: #ffffff !important;
+        }
+
+        .modal-title {
+            font-weight: 700 !important;
+            letter-spacing: 0.5px;
+            color: #ffffff !important;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1) !important;
+            opacity: 0.8;
+        }
+
+        .modal-header .btn-close:hover {
+            opacity: 1;
+        }
+
+        .hover-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+            border-color: #001427 !important;
+        }
+
+        .bg-light-primary {
+            background-color: rgba(0, 20, 39, 0.05) !important;
+        }
+
+        .text-primary {
+            color: #001427 !important;
+        }
+
+        /* Pulse effect for icons */
+        .rounded-circle.bg-light-primary i {
+            transition: all 0.3s ease;
+        }
+
+        .hover-shadow:hover .rounded-circle.bg-light-primary i {
+            transform: scale(1.1);
+        }
+    </style>
+    <!-- [ breadcrumb ] start -->
+    <div class="page-header">
+        <div class="page-block">
+            <div class="row align-items-center">
+                <div class="col-md-12">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Sections</h5>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+    <!-- [ breadcrumb ] end -->
 
-            <!-- Filter Section -->
-            <div class="card-body bg-light-subtle py-3 border-bottom">
-                <form method="GET" action="{{ route($routePrefix . '.sections.index') }}" id="filterForm">
-                    <div class="row g-2 align-items-end">
-                        <!-- Exam Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                            <select name="exam_id" id="examFilter" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Exams</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
-                                        {{ $exam->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        All Sections
+                        <span class="badge bg-light-secondary ms-2">{{ $caseStudies->total() }} Total</span>
+                    </h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#addSectionModal">
+                        <i class="ti ti-plus me-1"></i> Add New Section
+                    </button>
+                </div>
 
-                        <!-- Search -->
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold text-muted small mb-1">SEARCH SECTIONS</label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
-                                <input type="text" name="search" id="searchInput" class="form-control border-start-0 ps-0" 
-                                       placeholder="Search section title..." value="{{ request('search') }}">
+                <!-- Filter Section -->
+                <div class="card-body bg-light-subtle py-3 border-bottom">
+                    <form method="GET" action="{{ route($routePrefix . '.sections.index') }}" id="filterForm">
+                        <div class="row g-2 align-items-end">
+                            <!-- Exam Filter -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
+                                <select name="exam_id" id="examFilter" class="form-select form-select-sm"
+                                    onchange="document.getElementById('filterForm').submit()">
+                                    <option value="">All Exams</option>
+                                    @foreach($exams as $exam)
+                                        <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
+                                            {{ $exam->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Search -->
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-muted small mb-1">SEARCH SECTIONS</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white border-end-0"><i
+                                            class="ti ti-search text-muted"></i></span>
+                                    <input type="text" name="search" id="searchInput"
+                                        class="form-control border-start-0 ps-0" placeholder="Search section title..."
+                                        value="{{ request('search') }}">
+                                </div>
+                            </div>
+
+                            <!-- Exam Category Filter -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
+                                <select name="category_id" id="examCategoryFilter" class="form-select form-select-sm"
+                                    onchange="document.getElementById('filterForm').submit()">
+                                    <option value="">All Categories</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                            {{ $category->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Certification Type Filter -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
+                                <select name="certification_type" id="certificationTypeFilter"
+                                    class="form-select form-select-sm"
+                                    onchange="document.getElementById('filterForm').submit()">
+                                    <option value="">All Types</option>
+                                    @foreach($certificationTypes as $type)
+                                        <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
+                                            {{ $type }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Status (Toggle) -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
+                                <div class="form-check form-switch mt-1">
+                                    <input type="hidden" name="status" id="statusFilterInput"
+                                        value="{{ request('status', 'active') }}">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch"
+                                        style="width: 3em; height: 1.5em;" {{ request('status', 'active') == 'active' ? 'checked' : '' }}
+                                        onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; document.getElementById('filterForm').submit()">
+                                    <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
+                                        {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Clear Button -->
+                            <div class="col-md-1">
+                                <a href="{{ route($routePrefix . '.sections.index') }}"
+                                    class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
+                                    <i class="ti ti-rotate"></i>
+                                </a>
                             </div>
                         </div>
+                    </form>
+                </div>
 
-                        <!-- Exam Category Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM CATEGORY</label>
-                            <select name="category_id" id="examCategoryFilter" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Categories</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                <!-- Active Filters Indicator -->
+                @php
+                    $hasActiveFilters = request('search') ||
+                        request('category_id') ||
+                        request('certification_type') ||
+                        request('exam_id') ||
+                        request('status') === 'inactive';
+                @endphp
 
-                        <!-- Certification Type Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
-                            <select name="certification_type" id="certificationTypeFilter" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Types</option>
-                                @foreach($certificationTypes as $type)
-                                    <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
-                                        {{ $type }}
-                                    </option>
-                                @endforeach
-                            </select>
+                @if($hasActiveFilters)
+                    <div class="card-body border-top border-bottom bg-light-subtle py-3">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <span class="text-muted small fw-semibold">
+                                <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
+                            </span>
+                            @if(request('search'))
+                                <span class="badge rounded-pill bg-dark">
+                                    <i class="ti ti-search me-1"></i>{{ request('search') }}
+                                </span>
+                            @endif
+                            @if(request('status') === 'inactive')
+                                <span class="badge rounded-pill bg-danger">
+                                    <i class="ti ti-trash me-1"></i>Deleted
+                                </span>
+                            @endif
+                            @if(request('category_id'))
+                                <span class="badge rounded-pill bg-info">
+                                    <i
+                                        class="ti ti-category me-1"></i>{{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
+                                </span>
+                            @endif
+                            @if(request('certification_type'))
+                                <span class="badge rounded-pill bg-success">
+                                    <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
+                                </span>
+                            @endif
+                            @if(request('exam_id'))
+                                <span class="badge rounded-pill bg-primary">
+                                    <i
+                                        class="ti ti-file-text me-1"></i>{{ $exams->firstWhere('id', request('exam_id'))->name ?? 'Unknown' }}
+                                </span>
+                            @endif
                         </div>
+                    </div>
+                @endif
 
-                        <!-- Status (Toggle) -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
-                            <div class="form-check form-switch mt-1">
-                                <input type="hidden" name="status" id="statusFilterInput" value="{{ request('status', 'active') }}">
-                                <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch" style="width: 3em; height: 1.5em;"
-                                       {{ request('status', 'active') == 'active' ? 'checked' : '' }}
-                                       onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; document.getElementById('filterForm').submit()">
-                                <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
-                                    {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <!-- Clear Button -->
-                        <div class="col-md-1">
-                            <a href="{{ route($routePrefix . '.sections.index') }}" class="btn btn-sm btn-light-secondary w-100" title="Clear Filters">
-                                <i class="ti ti-rotate"></i>
+                <!-- Table -->
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Section Title</th>
+                                    <th style="width: 15%;">Source</th>
+                                    <th style="width: 15%;">Exam</th>
+                                    <th style="width: 10%;">Exam Category</th>
+                                    <th style="width: 10%;">Certification Type</th>
+                                    <th class="text-center" style="width: 10%;">Total Case Studies</th>
+                                    <th class="text-center" style="width: 10%;">Total Questions</th>
+                                    <th class="text-end" style="width: 10%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($caseStudies as $section)
+                                    <tr>
+                                        <td>
+                                            <strong>{{ $section->title }}</strong>
+                                        </td>
+                                        <td>
+                                            @if($section->cloned_from_id && $section->clonedFrom && $section->clonedFrom->exam)
+                                                <span class="text-muted small">
+                                                    Clone from
+                                                    <strong>{{ Str::limit($section->clonedFrom->exam->name, 20) }}</strong>
+                                                </span>
+                                            @elseif(!empty($section->cloned_from_id))
+                                                <span class="text-muted small"><em>Source Deleted</em></span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="text-dark">{{ $section->exam->name ?? 'N/A' }}</span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge bg-light-primary">{{ $section->exam->category->name ?? 'N/A' }}</span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge bg-light-info">{{ $section->exam->certification_type ?? 'N/A' }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light-success">{{ $section->caseStudies->count() }} Case
+                                                Studies</span>
+                                        </td>
+                                        <td class="text-center">
+                                            @php
+                                                $questionCount = $section->caseStudies->sum(function ($cs) {
+                                                    return $cs->questions->count();
+                                                });
+                                            @endphp
+                                            <span class="badge bg-light-warning text-warning">{{ $questionCount }}
+                                                Questions</span>
+                                        </td>
+                                        <td class="text-end">
+                                            @php
+                                                // Check if the exam is active
+                                                $isActiveExam = $section->exam && $section->exam->is_active == 1;
+                                            @endphp
+                                            <div class="dropdown">
+                                                <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none"
+                                                    type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport"
+                                                    data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                    <i class="ti ti-dots-vertical f-18"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item"
+                                                            href="{{ route($routePrefix . '.sections.show', $section->id) }}">
+                                                            <i class="ti ti-eye me-2"></i>View Section
+                                                        </a>
+                                                    </li>
+
+                                                    <li>
+                                                        @if($isActiveExam)
+                                                            <button class="dropdown-item text-muted"
+                                                                style="cursor: not-allowed; opacity: 0.6;" disabled
+                                                                title="Exam is active - cannot edit">
+                                                                <i class="ti ti-edit me-2"></i>Edit Section
+                                                            </button>
+                                                        @else
+                                                            <a class="dropdown-item"
+                                                                href="{{ route($routePrefix . '.sections.edit', $section->id) }}">
+                                                                <i class="ti ti-edit me-2"></i>Edit Section
+                                                            </a>
+                                                        @endif
+                                                    </li>
+
+                                                    @if($section->status == 0)
+                                                        <li>
+                                                            <form
+                                                                action="{{ route($routePrefix . '.sections.activate', $section->id) }}"
+                                                                method="POST" class="d-inline-block w-100"
+                                                                id="activateSectionForm{{ $section->id }}">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <button type="button" class="dropdown-item text-success"
+                                                                    onclick="showAlert.confirm('Are you sure you want to activate this section?', 'Activate Section', function() { document.getElementById('activateSectionForm{{ $section->id }}').submit(); })">
+                                                                    <i class="ti ti-check me-2"></i>Activate Section
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    @else
+                                                        <li>
+                                                            @if($isActiveExam)
+                                                                <button class="dropdown-item text-muted"
+                                                                    style="cursor: not-allowed; opacity: 0.6;" disabled
+                                                                    title="Exam is active - cannot delete">
+                                                                    <i class="ti ti-trash me-2"></i>Delete Section
+                                                                </button>
+                                                            @else
+                                                                <form
+                                                                    action="{{ route($routePrefix . '.sections.destroy', $section->id) }}"
+                                                                    method="POST" class="d-inline delete-form"
+                                                                    id="delete-form-{{ $section->id }}">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="button" class="dropdown-item text-danger"
+                                                                        onclick="showDeleteModal(document.getElementById('delete-form-{{ $section->id }}'), 'Are you sure you want to delete this section?')">
+                                                                        <i class="ti ti-trash me-2"></i>Delete Section
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+                                                        </li>
+                                                    @endif
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">No sections found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <div class="text-muted small">
+                        Showing {{ $caseStudies->firstItem() }} to {{ $caseStudies->lastItem() }} of
+                        {{ $caseStudies->total() }} entries
+                    </div>
+                    <div>
+                        {{ $caseStudies->appends(request()->all())->links() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Section Choice Modal -->
+    <div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title d-flex align-items-center" id="addSectionModalLabel">
+                        <i class="ti ti-file-plus me-2 fs-4"></i> Add New Section
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4 text-center">How would you like to add a section?</p>
+
+                    <div class="row g-3">
+                        <!-- Option 1: Create New -->
+                        <div class="col-md-6">
+                            <a href="{{ route($routePrefix . '.sections.create', ['exam_id' => session('new_exam_id')]) }}"
+                                class="card h-100 border-2 hover-shadow text-decoration-none text-dark"
+                                style="transition: all 0.3s;">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center"
+                                            style="width: 70px; height: 70px;">
+                                            <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h5 class="fw-bold mb-2">Create Section from Scratch</h5>
+                                    <p class="text-muted small mb-0">Start with a blank section.</p>
+                                </div>
                             </a>
                         </div>
+
+                        <!-- Option 2: Clone Existing -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark"
+                                style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal"
+                                data-bs-target="#cloneSectionModal">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center"
+                                            style="width: 70px; height: 70px;">
+                                            <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h5 class="fw-bold mb-2">Clone Section from Exam</h5>
+                                    <p class="text-muted small mb-0">Copy an existing section.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clone Section Modal -->
+    <div class="modal fade" id="cloneSectionModal" tabindex="-1" aria-labelledby="cloneSectionModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title d-flex align-items-center" id="cloneSectionModalLabel">
+                        <i class="ti ti-copy me-2 fs-4"></i> Clone Section from Exam
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route($routePrefix . '.sections.clone-external') }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <p class="text-muted mb-4">Select a source exam to clone sections into a target exam.</p>
+
+                        <div class="row g-4">
+                            <!-- Source Configuration -->
+                            <div class="col-md-12">
+                                <h6 class="fw-bold mb-3 text-primary"><i class="ti ti-file-import me-1"></i> Source Details
+                                </h6>
+
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="clone_source_exam_id" class="form-label fw-bold">Source Exam</label>
+                                        <select class="form-select" id="clone_source_exam_id" required>
+                                            <option value="">-- Select Exam --</option>
+                                            @foreach($exams as $exam)
+                                                <option value="{{ $exam->id }}" data-is-active="{{ $exam->is_active }}">
+                                                    {{ $exam->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <label class="form-label fw-bold mb-0">Select Sections to Clone</label>
+                                        <div class="form-check m-0">
+                                            <input class="form-check-input" type="checkbox" id="select_all_sections">
+                                            <label class="form-check-label fw-bold small text-primary"
+                                                for="select_all_sections">Select All</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="sections_checkbox_list" class="row g-2 border rounded p-3 bg-white"
+                                        style="max-height: 250px; overflow-y: auto; display: none;">
+                                        <!-- Checkboxes injected here -->
+                                    </div>
+
+                                    <div id="sec_loading" class="text-center py-3" style="display: none;">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span class="ms-2 text-muted small">Loading sections...</span>
+                                    </div>
+
+                                    <div id="sec_no_data" class="text-center py-3 text-muted small">
+                                        -- Select Source Exam First --
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <hr class="my-2">
+                            </div>
+
+                            <!-- Target Configuration -->
+                            <div class="col-md-12">
+                                <h6 class="fw-bold mb-3 text-success"><i class="ti ti-file-export me-1"></i> Target Details
+                                </h6>
+
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="clone_target_exam_id" class="form-label fw-bold">Target Exam</label>
+                                        <select class="form-select" id="clone_target_exam_id" name="target_exam_id"
+                                            required>
+                                            <option value="">-- Select Target Exam --</option>
+                                            @foreach($exams as $exam)
+                                                <option value="{{ $exam->id }}" {{ (request('exam_id') == $exam->id || session('new_exam_id') == $exam->id) ? 'selected' : '' }}>{{ $exam->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info border-0 mb-0 mt-3">
+                            <i class="ti ti-info-circle me-2"></i>
+                            <strong>Note:</strong> Cloning will copy the Section, Case Studies, and Questions.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-outline-secondary me-auto" data-bs-toggle="modal"
+                            data-bs-target="#addSectionModal">
+                            <i class="ti ti-arrow-left me-1"></i> Back
+                        </button>
+
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-copy me-1"></i> Clone Section
+                        </button>
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
 
-            <!-- Active Filters Indicator -->
-            @php
-                $hasActiveFilters = request('search') || 
-                                  request('category_id') || 
-                                  request('certification_type') || 
-                                  request('exam_id') ||
-                                  request('status') === 'inactive';
-            @endphp
-            
-            @if($hasActiveFilters)
-            <div class="card-body border-top border-bottom bg-light-subtle py-3">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <span class="text-muted small fw-semibold">
-                        <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
-                    </span>
-                    @if(request('search'))
-                        <span class="badge rounded-pill bg-dark">
-                            <i class="ti ti-search me-1"></i>{{ request('search') }}
-                        </span>
-                    @endif
-                    @if(request('status') === 'inactive')
-                        <span class="badge rounded-pill bg-danger">
-                            <i class="ti ti-trash me-1"></i>Deleted
-                        </span>
-                    @endif
-                    @if(request('category_id'))
-                        <span class="badge rounded-pill bg-info">
-                            <i class="ti ti-category me-1"></i>{{ $categories->firstWhere('id', request('category_id'))->name ?? 'Unknown' }}
-                        </span>
-                    @endif
-                    @if(request('certification_type'))
-                        <span class="badge rounded-pill bg-success">
-                            <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
-                        </span>
-                    @endif
-                    @if(request('exam_id'))
-                        <span class="badge rounded-pill bg-primary">
-                            <i class="ti ti-file-text me-1"></i>{{ $exams->firstWhere('id', request('exam_id'))->name ?? 'Unknown' }}
-                        </span>
-                    @endif
+    <!-- Section Success Modal -->
+    <div class="modal fade" id="sectionSuccessModal" tabindex="-1" aria-labelledby="sectionSuccessModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title d-flex align-items-center" id="sectionSuccessModalLabel">
+                        Section Created Successfully!
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4 text-center fs-5">Would you like to add another section or move to case
+                        studies?</p>
+
+                    <div class="row g-3 justify-content-center">
+                        <!-- Option 1: Create Another Section -->
+                        <div class="col-md-4">
+                            <a href="{{ route($routePrefix . '.sections.create', ['exam_id' => session('created_exam_id')]) }}"
+                                class="card h-100 border hover-shadow text-decoration-none text-dark shadow-sm"
+                                style="transition: all 0.3s; border-color: #e2e8f0;">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center"
+                                            style="width: 60px; height: 60px;">
+                                            <i class="ti ti-plus text-primary fw-bold" style="font-size: 1.8rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h6 class="fw-bold mb-2">Create Another Section</h6>
+                                    <p class="text-muted small mb-0">Start blank.</p>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Option 2: Clone Section -->
+                        <div class="col-md-4">
+                            <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark shadow-sm"
+                                style="cursor: pointer; transition: all 0.3s;" onclick="openCloneModalFromSuccess()">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center"
+                                            style="width: 60px; height: 60px;">
+                                            <i class="ti ti-copy text-info fw-bold" style="font-size: 1.8rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h6 class="fw-bold mb-2">Clone Section</h6>
+                                    <p class="text-muted small mb-0">From existing.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Option 3: Add Case Studies -->
+                        <div class="col-md-4">
+                            <a href="{{ route($routePrefix . '.case-studies-bank.create', ['exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}"
+                                class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark shadow-sm"
+                                style="transition: all 0.3s;">
+                                <div class="card-body text-center p-4">
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center"
+                                            style="width: 60px; height: 60px;">
+                                            <i class="ti ti-arrow-right text-primary fw-bold"
+                                                style="font-size: 1.8rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h6 class="fw-bold mb-2">Add Case Studies</h6>
+                                    <p class="text-muted small mb-0">Proceed to content.</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <style>
+        /* Ensure pagination links are visible */
+        .card-footer .pagination {
+            margin: 0;
+        }
+    </style>
+
+    <script>
+        function openCloneModalFromSuccess() {
+            // Hide success modal
+            var sectionSuccessModalEl = document.getElementById('sectionSuccessModal');
+            var sectionSuccessModal = bootstrap.Modal.getInstance(sectionSuccessModalEl);
+            if (sectionSuccessModal) {
+                sectionSuccessModal.hide();
+            }
+
+            // Open clone modal
+            var cloneSectionModal = new bootstrap.Modal(document.getElementById('cloneSectionModal'));
+            cloneSectionModal.show();
+
+            // Pre-select the exam in the clone modal target if avaiable
+            @if(session('created_exam_id'))
+                var targetSelect = document.getElementById('clone_target_exam_id');
+                if (targetSelect) {
+                    targetSelect.value = "{{ session('created_exam_id') }}";
+                }
+            @endif
+    }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check if we need to auto-open the Add Section modal (e.g. after creating an exam)
+            @if(session('open_add_section_modal'))
+                var addSectionModal = new bootstrap.Modal(document.getElementById('addSectionModal'));
+                addSectionModal.show();
             @endif
 
-            <!-- Table -->
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width: 20%;">Section Title</th>
-                                <th style="width: 15%;">Source</th>
-                                <th style="width: 15%;">Exam</th>
-                                <th style="width: 10%;">Exam Category</th>
-                                <th style="width: 10%;">Certification Type</th>
-                                <th class="text-center" style="width: 10%;">Total Case Studies</th>
-                                <th class="text-center" style="width: 10%;">Total Questions</th>
-                                <th class="text-end" style="width: 10%;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($caseStudies as $section)
-                            <tr>
-                                <td>
-                                    <strong>{{ $section->title }}</strong>
-                                </td>
-                                <td>
-                                    @if($section->cloned_from_id && $section->clonedFrom && $section->clonedFrom->exam)
-                                         <span class="text-muted small">
-                                            Clone from <strong>{{ Str::limit($section->clonedFrom->exam->name, 20) }}</strong>
-                                        </span>
-                                    @elseif(!empty($section->cloned_from_id))
-                                        <span class="text-muted small"><em>Source Deleted</em></span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="text-dark">{{ $section->exam->name ?? 'N/A' }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light-primary">{{ $section->exam->category->name ?? 'N/A' }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light-info">{{ $section->exam->certification_type ?? 'N/A' }}</span>
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge bg-light-success">{{ $section->caseStudies->count() }} Case Studies</span>
-                                </td>
-                                <td class="text-center">
-                                    @php
-                                        $questionCount = $section->caseStudies->sum(function($cs) {
-                                            return $cs->questions->count();
-                                        });
-                                    @endphp
-                                    <span class="badge bg-light-warning text-warning">{{ $questionCount }} Questions</span>
-                                </td>
-                                <td class="text-end">
-                                    @php
-                                        // Check if the exam is active
-                                        $isActiveExam = $section->exam && $section->exam->is_active == 1;
-                                    @endphp
-                                    <div class="dropdown">
-                                        <button class="btn p-0 text-secondary bg-transparent border-0 shadow-none" type="button" 
-                                                data-bs-toggle="dropdown" 
-                                                data-bs-boundary="viewport" 
-                                                data-bs-popper-config='{"strategy":"fixed"}'
-                                                aria-expanded="false">
-                                            <i class="ti ti-dots-vertical f-18"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route($routePrefix . '.sections.show', $section->id) }}">
-                                                    <i class="ti ti-eye me-2"></i>View Section
-                                                </a>
-                                            </li>
-                                            
-                                            <li>
-                                                @if($isActiveExam)
-                                                    <button class="dropdown-item text-muted" style="cursor: not-allowed; opacity: 0.6;" disabled title="Exam is active - cannot edit">
-                                                        <i class="ti ti-edit me-2"></i>Edit Section
-                                                    </button>
-                                                @else
-                                                    <a class="dropdown-item" href="{{ route($routePrefix . '.sections.edit', $section->id) }}">
-                                                        <i class="ti ti-edit me-2"></i>Edit Section
-                                                    </a>
-                                                @endif
-                                            </li>
+                // Check if we need to auto-open the Section Success Modal (after creating a section)
+                @if(session('section_created_success'))
+                    var sectionSuccessModal = new bootstrap.Modal(document.getElementById('sectionSuccessModal'));
+                    // wait a tiny bit to ensure DOM is ready
+                    setTimeout(function () {
+                        sectionSuccessModal.show();
+                    }, 100);
+                @endif
 
-                                            @if($section->status == 0)
-                                                <li>
-                                                    <form action="{{ route($routePrefix . '.sections.activate', $section->id) }}" method="POST" class="d-inline-block w-100" id="activateSectionForm{{ $section->id }}">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="button" class="dropdown-item text-success" onclick="showAlert.confirm('Are you sure you want to activate this section?', 'Activate Section', function() { document.getElementById('activateSectionForm{{ $section->id }}').submit(); })">
-                                                            <i class="ti ti-check me-2"></i>Activate Section
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                            @else
-                                                <li>
-                                                    @if($isActiveExam)
-                                                        <button class="dropdown-item text-muted" style="cursor: not-allowed; opacity: 0.6;" disabled title="Exam is active - cannot delete">
-                                                            <i class="ti ti-trash me-2"></i>Delete Section
-                                                        </button>
-                                                    @else
-                                                        <form action="{{ route($routePrefix . '.sections.destroy', $section->id) }}" method="POST" class="d-inline delete-form" id="delete-form-{{ $section->id }}">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="button" class="dropdown-item text-danger" onclick="showDeleteModal(document.getElementById('delete-form-{{ $section->id }}'), 'Are you sure you want to delete this section?')">
-                                                                <i class="ti ti-trash me-2"></i>Delete Section
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                </li>
-                                            @endif
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center py-4">No sections found.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="card-footer d-flex align-items-center justify-content-between">
-                <div class="text-muted small">
-                    Showing {{ $caseStudies->firstItem() }} to {{ $caseStudies->lastItem() }} of {{ $caseStudies->total() }} entries
-                </div>
-                <div>
-                     {{ $caseStudies->appends(request()->all())->links() }}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+        // Clone Flow
+        const sourceExamSelect = document.getElementById('clone_source_exam_id');
+            const sectionsContainer = document.getElementById('sections_checkbox_list');
+            const secLoading = document.getElementById('sec_loading');
+            const secNoData = document.getElementById('sec_no_data');
+            const selectAllSec = document.getElementById('select_all_sections');
 
-<!-- Add Section Choice Modal -->
-<div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title d-flex align-items-center" id="addSectionModalLabel">
-                    <i class="ti ti-file-plus me-2 fs-4"></i> Add New Section
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted mb-4 text-center">How would you like to add a section?</p>
-                
-                <div class="row g-3">
-                    <!-- Option 1: Create New -->
-                    <div class="col-md-6">
-                        <a href="{{ route($routePrefix . '.sections.create', ['exam_id' => session('new_exam_id')]) }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
-                            <div class="card-body text-center p-4">
-                                <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-plus text-primary" style="font-size: 2.2rem;"></i>
-                                    </div>
-                                </div>
-                                <h5 class="fw-bold mb-2">Create Section from Scratch</h5>
-                                <p class="text-muted small mb-0">Start with a blank section.</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- Option 2: Clone Existing -->
-                    <div class="col-md-6">
-                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneSectionModal">
-                            <div class="card-body text-center p-4">
-                                <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
-                                        <i class="ti ti-copy text-primary" style="font-size: 2.2rem;"></i>
-                                    </div>
-                                </div>
-                                <h5 class="fw-bold mb-2">Clone Section from Exam</h5>
-                                <p class="text-muted small mb-0">Copy an existing section.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Clone Section Modal -->
-<div class="modal fade" id="cloneSectionModal" tabindex="-1" aria-labelledby="cloneSectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title d-flex align-items-center" id="cloneSectionModalLabel">
-                    <i class="ti ti-copy me-2 fs-4"></i> Clone Section from Exam
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ route($routePrefix . '.sections.clone-external') }}" method="POST">
-                @csrf
-                <div class="modal-body p-4">
-                    <p class="text-muted mb-4">Select a source exam to clone sections into a target exam.</p>
-                    
-                    <div class="row g-4">
-                        <!-- Source Configuration -->
-                        <div class="col-md-12">
-                            <h6 class="fw-bold mb-3 text-primary"><i class="ti ti-file-import me-1"></i> Source Details</h6>
-                            
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label for="clone_source_exam_id" class="form-label fw-bold">Source Exam</label>
-                                    <select class="form-select" id="clone_source_exam_id" required>
-                                        <option value="">-- Select Exam --</option>
-                                        @foreach($exams as $exam)
-                                            <option value="{{ $exam->id }}" data-is-active="{{ $exam->is_active }}">{{ $exam->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <label class="form-label fw-bold mb-0">Select Sections to Clone</label>
-                                    <div class="form-check m-0">
-                                        <input class="form-check-input" type="checkbox" id="select_all_sections">
-                                        <label class="form-check-label fw-bold small text-primary" for="select_all_sections">Select All</label>
-                                    </div>
-                                </div>
-                                
-                                <div id="sections_checkbox_list" class="row g-2 border rounded p-3 bg-white" style="max-height: 250px; overflow-y: auto; display: none;">
-                                    <!-- Checkboxes injected here -->
-                                </div>
-
-                                <div id="sec_loading" class="text-center py-3" style="display: none;">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <span class="ms-2 text-muted small">Loading sections...</span>
-                                </div>
-
-                                <div id="sec_no_data" class="text-center py-3 text-muted small">
-                                    -- Select Source Exam First --
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
-                             <hr class="my-2">
-                        </div>
-
-                        <!-- Target Configuration -->
-                        <div class="col-md-12">
-                            <h6 class="fw-bold mb-3 text-success"><i class="ti ti-file-export me-1"></i> Target Details</h6>
-                            
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label for="clone_target_exam_id" class="form-label fw-bold">Target Exam</label>
-                                    <select class="form-select" id="clone_target_exam_id" name="target_exam_id" required>
-                                        <option value="">-- Select Target Exam --</option>
-                                        @foreach($exams as $exam)
-                                            <option value="{{ $exam->id }}" {{ (request('exam_id') == $exam->id || session('new_exam_id') == $exam->id) ? 'selected' : '' }}>{{ $exam->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info border-0 mb-0 mt-3">
-                        <i class="ti ti-info-circle me-2"></i>
-                        <strong>Note:</strong> Cloning will copy the Section, Case Studies, and Questions.
-                    </div>
-                </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-outline-secondary me-auto" data-bs-toggle="modal" data-bs-target="#addSectionModal">
-                        <i class="ti ti-arrow-left me-1"></i> Back
-                    </button>
-                    
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="ti ti-copy me-1"></i> Clone Section
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Section Success Modal -->
-<div class="modal fade" id="sectionSuccessModal" tabindex="-1" aria-labelledby="sectionSuccessModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title d-flex align-items-center" id="sectionSuccessModalLabel">
-                    Section Created Successfully!
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted mb-4 text-center fs-5">Would you like to add another section or move to case studies?</p>
-                
-                <div class="row g-3 justify-content-center">
-                    <!-- Option 1: Create Another Section -->
-                    <div class="col-md-4">
-                        <a href="{{ route($routePrefix . '.sections.create', ['exam_id' => session('created_exam_id')]) }}" class="card h-100 border hover-shadow text-decoration-none text-dark shadow-sm" style="transition: all 0.3s; border-color: #e2e8f0;">
-                            <div class="card-body text-center p-4">
-                                <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                        <i class="ti ti-plus text-primary fw-bold" style="font-size: 1.8rem;"></i>
-                                    </div>
-                                </div>
-                                <h6 class="fw-bold mb-2">Create Another Section</h6>
-                                <p class="text-muted small mb-0">Start blank.</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- Option 2: Clone Section -->
-                     <div class="col-md-4">
-                        <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark shadow-sm" style="cursor: pointer; transition: all 0.3s;" onclick="openCloneModalFromSuccess()">
-                            <div class="card-body text-center p-4">
-                                <div class="mb-3">
-                                    <div class="rounded-circle bg-light-info d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                        <i class="ti ti-copy text-info fw-bold" style="font-size: 1.8rem;"></i>
-                                    </div>
-                                </div>
-                                <h6 class="fw-bold mb-2">Clone Section</h6>
-                                <p class="text-muted small mb-0">From existing.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Option 3: Add Case Studies -->
-                    <div class="col-md-4">
-                        <a href="{{ route($routePrefix . '.case-studies-bank.create', ['exam_id' => session('created_exam_id'), 'section_id' => session('created_section_id')]) }}" class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark shadow-sm" style="transition: all 0.3s;">
-                            <div class="card-body text-center p-4">
-                                <div class="mb-3">
-                                    <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                        <i class="ti ti-arrow-right text-primary fw-bold" style="font-size: 1.8rem;"></i>
-                                    </div>
-                                </div>
-                                <h6 class="fw-bold mb-2">Add Case Studies</h6>
-                                <p class="text-muted small mb-0">Proceed to content.</p>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-/* Ensure pagination links are visible */
-.card-footer .pagination {
-    margin: 0;
-}
-</style>
-
-<script>
-function openCloneModalFromSuccess() {
-    // Hide success modal
-    var sectionSuccessModalEl = document.getElementById('sectionSuccessModal');
-    var sectionSuccessModal = bootstrap.Modal.getInstance(sectionSuccessModalEl);
-    if (sectionSuccessModal) {
-        sectionSuccessModal.hide();
-    }
-    
-    // Open clone modal
-    var cloneSectionModal = new bootstrap.Modal(document.getElementById('cloneSectionModal'));
-    cloneSectionModal.show();
-    
-    // Pre-select the exam in the clone modal target if avaiable
-    @if(session('created_exam_id'))
-        var targetSelect = document.getElementById('clone_target_exam_id');
-        if(targetSelect) {
-            targetSelect.value = "{{ session('created_exam_id') }}";
-        }
-    @endif
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if we need to auto-open the Add Section modal (e.g. after creating an exam)
-    @if(session('open_add_section_modal'))
-        var addSectionModal = new bootstrap.Modal(document.getElementById('addSectionModal'));
-        addSectionModal.show();
-    @endif
-
-    // Check if we need to auto-open the Section Success Modal (after creating a section)
-    @if(session('section_created_success'))
-        var sectionSuccessModal = new bootstrap.Modal(document.getElementById('sectionSuccessModal'));
-        // wait a tiny bit to ensure DOM is ready
-        setTimeout(function() {
-            sectionSuccessModal.show();
-        }, 100);
-    @endif
-
-    // Clone Flow
-    const sourceExamSelect = document.getElementById('clone_source_exam_id');
-    const sectionsContainer = document.getElementById('sections_checkbox_list');
-    const secLoading = document.getElementById('sec_loading');
-    const secNoData = document.getElementById('sec_no_data');
-    const selectAllSec = document.getElementById('select_all_sections');
-
-    // Select All Logic
-    if (selectAllSec) {
-        selectAllSec.addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.section-source-checkbox');
-            checkboxes.forEach(cb => cb.checked = this.checked);
-        });
-    }
-
-    if (sourceExamSelect) {
-        sourceExamSelect.addEventListener('change', function() {
-            const examId = this.value;
-
-            // Update Target Exam Dropdown: Prevent selecting the same exam as source
-            const targetExamSelect = document.getElementById('clone_target_exam_id');
-            if (targetExamSelect) {
-                Array.from(targetExamSelect.options).forEach(option => {
-                    option.hidden = false;
-                    option.disabled = false;
-                    
-                    if (examId && option.value == examId) {
-                        option.hidden = true; // Use 'hidden' attribute to remove from view
-                        option.disabled = true; // Disable as fallback
-                    }
+            // Select All Logic
+            if (selectAllSec) {
+                selectAllSec.addEventListener('change', function () {
+                    const checkboxes = document.querySelectorAll('.section-source-checkbox');
+                    checkboxes.forEach(cb => cb.checked = this.checked);
                 });
-                
-                // If the disabled exam was currently selected, reset the selection
-                if (targetExamSelect.value == examId) {
-                    targetExamSelect.value = "";
-                }
             }
 
-            if(sectionsContainer) {
-                sectionsContainer.innerHTML = '';
-                sectionsContainer.style.display = 'none';
-                secNoData.style.display = 'none';
-                secLoading.style.display = 'block';
-            }
+            if (sourceExamSelect) {
+                sourceExamSelect.addEventListener('change', function () {
+                    const examId = this.value;
 
-            if (examId) {
-                // Use the AJAX route we saw in web.php: questions-ajax/case-studies/{examId} which maps to SectionController@getSections
-                fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${examId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        secLoading.style.display = 'none';
-                        // The endpoint returns array of objects {id, title}
-                        // It might return object directly or array
-                        // Looking at controller: return response()->json($sections);
-                        
-                        const sections = data.sections || data;
-                        if (sections && Array.isArray(sections) && sections.length > 0) {
-                            if(sectionsContainer) {
-                                sectionsContainer.style.display = 'flex'; // row
-                                
-                                sections.forEach(sec => {
-                                    const checkboxId = `sec_source_${sec.id}`;
-                                    const html = `
-                                        <div class="col-md-6">
-                                            <div class="form-check">
-                                                <input class="form-check-input section-source-checkbox" type="checkbox" name="source_section_ids[]" value="${sec.id}" id="${checkboxId}">
-                                                <label class="form-check-label text-truncate d-block" for="${checkboxId}" title="${sec.title}">
-                                                    ${sec.title}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    `;
-                                    sectionsContainer.insertAdjacentHTML('beforeend', html);
-                                });
+                    // Update Target Exam Dropdown: Prevent selecting the same exam as source
+                    const targetExamSelect = document.getElementById('clone_target_exam_id');
+                    if (targetExamSelect) {
+                        Array.from(targetExamSelect.options).forEach(option => {
+                            option.hidden = false;
+                            option.disabled = false;
+
+                            if (examId && option.value == examId) {
+                                option.hidden = true; // Use 'hidden' attribute to remove from view
+                                option.disabled = true; // Disable as fallback
                             }
-                        } else {
-                            if(secNoData) {
-                                secNoData.innerText = 'No sections found for this exam';
-                                secNoData.style.display = 'block';
-                            }
+                        });
+
+                        // If the disabled exam was currently selected, reset the selection
+                        if (targetExamSelect.value == examId) {
+                            targetExamSelect.value = "";
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching sections:', error);
+                    }
+
+                    if (sectionsContainer) {
+                        sectionsContainer.innerHTML = '';
+                        sectionsContainer.style.display = 'none';
+                        secNoData.style.display = 'none';
+                        secLoading.style.display = 'block';
+                    }
+
+                    if (examId) {
+                        // Use the AJAX route we saw in web.php: questions-ajax/case-studies/{examId} which maps to SectionController@getSections
+                        fetch(`/{{ $routePrefix }}/questions-ajax/case-studies/${examId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                secLoading.style.display = 'none';
+                                // The endpoint returns array of objects {id, title}
+                                // It might return object directly or array
+                                // Looking at controller: return response()->json($sections);
+
+                                const sections = data.sections || data;
+                                if (sections && Array.isArray(sections) && sections.length > 0) {
+                                    if (sectionsContainer) {
+                                        sectionsContainer.style.display = 'flex'; // row
+
+                                        sections.forEach(sec => {
+                                            const checkboxId = `sec_source_${sec.id}`;
+                                            const html = `
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input section-source-checkbox" type="checkbox" name="source_section_ids[]" value="${sec.id}" id="${checkboxId}">
+                                                    <label class="form-check-label text-truncate d-block" for="${checkboxId}" title="${sec.title}">
+                                                        ${sec.title}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        `;
+                                            sectionsContainer.insertAdjacentHTML('beforeend', html);
+                                        });
+                                    }
+                                } else {
+                                    if (secNoData) {
+                                        secNoData.innerText = 'No sections found for this exam';
+                                        secNoData.style.display = 'block';
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching sections:', error);
+                                secLoading.style.display = 'none';
+                                if (secNoData) {
+                                    secNoData.innerText = 'Error loading sections';
+                                    secNoData.style.display = 'block';
+                                }
+                            });
+                    } else {
                         secLoading.style.display = 'none';
-                        if(secNoData) {
-                            secNoData.innerText = 'Error loading sections';
+                        if (secNoData) {
+                            secNoData.innerText = '-- Select Source Exam First --';
                             secNoData.style.display = 'block';
                         }
-                    });
-            } else {
-                secLoading.style.display = 'none';
-                if(secNoData) {
-                    secNoData.innerText = '-- Select Source Exam First --';
-                    secNoData.style.display = 'block';
-                }
+                    }
+                });
             }
         });
-    }
-});
 
-// Auto-submit filters on change (already handled by onchange events in elements)
-// Debounced search - auto-submit after 500ms of no typing
-let searchTimeout;
-const searchInput = document.getElementById('searchInput');
+        // Auto-submit filters on change (already handled by onchange events in elements)
+        // Debounced search - auto-submit after 500ms of no typing
+        let searchTimeout;
+        const searchInput = document.getElementById('searchInput');
 
-if (searchInput) {
-    // Auto-focus if there is a value (restores focus after reload)
-    if (searchInput.value) {
-        searchInput.focus();
-        const val = searchInput.value;
-        searchInput.value = '';
-        searchInput.value = val;
-    }
+        if (searchInput) {
+            // Auto-focus if there is a value (restores focus after reload)
+            if (searchInput.value) {
+                searchInput.focus();
+                const val = searchInput.value;
+                searchInput.value = '';
+                searchInput.value = val;
+            }
 
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            document.getElementById('filterForm').submit();
-        }, 500);
-    });
-}
-</script>
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function () {
+                    document.getElementById('filterForm').submit();
+                }, 500);
+            });
+        }
+    </script>
 @endsection
