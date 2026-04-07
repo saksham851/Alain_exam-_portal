@@ -46,6 +46,10 @@ class QuestionController extends Controller
             });
         }
 
+        // Filter by Visit (depends on Case Study selection)
+        if ($request->filled('visit')) {
+            $query->where('visit_id', $request->visit);
+        }
 
 
         // Filter by Certification Type (through Exam)
@@ -106,13 +110,22 @@ class QuestionController extends Controller
         }
         
         $caseStudies = $caseStudiesQuery->orderBy('title')->get();
+
+        // Get visits based on selected case study (if any)
+        $visits = collect();
+        if ($request->filled('case_study')) {
+            $visits = \App\Models\Visit::where('case_study_id', $request->case_study)
+                ->where('status', 1)
+                ->orderBy('order_no')
+                ->get(['id', 'title', 'order_no']);
+        }
     
     $selectedExamActive = false;
     if ($request->filled('exam')) {
         $selectedExamActive = Exam::where('id', $request->exam)->where('is_active', 1)->exists();
     }
     
-    return view('admin.questions.index', compact('questions', 'caseStudies', 'exams', 'examCategories', 'certificationTypes', 'selectedExamActive'));
+    return view('admin.questions.index', compact('questions', 'caseStudies', 'exams', 'examCategories', 'certificationTypes', 'selectedExamActive', 'visits'));
 }
     
 

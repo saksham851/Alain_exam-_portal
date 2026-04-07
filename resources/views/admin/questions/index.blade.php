@@ -163,15 +163,29 @@
                                 </select>
                             </div>
 
-                            <!-- Certification Type Filter -->
+                            <!-- Case Study Filter -->
                             <div class="col-md-2">
-                                <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
-                                <select name="certification_type" id="certification_type" class="form-select form-select-sm"
-                                    onchange="handleCertificationTypeChange()">
-                                    <option value="">All Types</option>
-                                    @foreach($certificationTypes as $type)
-                                        <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
-                                            {{ $type }}
+                                <label class="form-label fw-bold text-muted small mb-1">CASE STUDY</label>
+                                <select name="case_study" id="case_study" class="form-select form-select-sm"
+                                    onchange="handleCaseStudyChange()">
+                                    <option value="">All Case Studies</option>
+                                    @foreach($caseStudies as $caseStudy)
+                                        <option value="{{ $caseStudy->id }}" {{ request('case_study') == $caseStudy->id ? 'selected' : '' }}>
+                                            {{ $caseStudy->title }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Visit Filter -->
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold text-muted small mb-1">VISIT</label>
+                                <select name="visit" id="visit" class="form-select form-select-sm"
+                                    onchange="document.getElementById('filterForm').submit()">
+                                    <option value="">All Visits</option>
+                                    @foreach($visits as $v)
+                                        <option value="{{ $v->id }}" {{ request('visit') == $v->id ? 'selected' : '' }}>
+                                            {{ $v->title }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -191,22 +205,8 @@
                                 </select>
                             </div>
 
-                            <!-- Case Study Filter -->
-                            <div class="col-md-2">
-                                <label class="form-label fw-bold text-muted small mb-1">CASE STUDY</label>
-                                <select name="case_study" id="case_study" class="form-select form-select-sm"
-                                    onchange="document.getElementById('filterForm').submit()">
-                                    <option value="">All Case Studies</option>
-                                    @foreach($caseStudies as $caseStudy)
-                                        <option value="{{ $caseStudy->id }}" {{ request('case_study') == $caseStudy->id ? 'selected' : '' }}>
-                                            {{ $caseStudy->title }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
                             <!-- Question Type Filter -->
-                            <div class="col-md-1">
+                            <div class="col-md-2">
                                 <label class="form-label fw-bold text-muted small mb-1">QUESTION TYPE</label>
                                 <select name="question_type" id="question_type" class="form-select form-select-sm"
                                     onchange="document.getElementById('filterForm').submit()">
@@ -219,17 +219,14 @@
                             </div>
 
                             <!-- Status (Toggle) -->
-                            <div class="col-md-2">
+                            <div class="col-md-1">
                                 <label class="form-label fw-bold text-muted small mb-1">STATUS</label>
                                 <div class="form-check form-switch mt-1">
                                     <input type="hidden" name="status" id="statusFilterInput"
                                         value="{{ request('status', 'active') }}">
                                     <input class="form-check-input" type="checkbox" role="switch" id="statusFilterSwitch"
-                                        style="width: 3em; height: 1.5em;" {{ request('status', 'active') == 'active' ? 'checked' : '' }}
+                                        style="width: 2.5em; height: 1.25em;" {{ request('status', 'active') == 'active' ? 'checked' : '' }}
                                         onchange="document.getElementById('statusFilterInput').value = this.checked ? 'active' : 'inactive'; document.getElementById('filterForm').submit()">
-                                    <label class="form-check-label ms-2 mt-1" for="statusFilterSwitch">
-                                        {{ request('status', 'active') == 'active' ? 'Active' : 'Inactive' }}
-                                    </label>
                                 </div>
                             </div>
 
@@ -244,6 +241,7 @@
                                     <button type="submit" class="d-none"></button>
                                 </div>
                             </div>
+
                         </div>
 
                     </form>
@@ -251,11 +249,11 @@
 
                 <!-- Active Filters Indicator -->
                 @php
-                    $hasActiveFilters = request('certification_type') ||
+                    $hasActiveFilters = 
                         request('exam_category') ||
                         request('exam') ||
-                        request('category') ||
                         request('case_study') ||
+                        request('visit') ||
                         request('question_type') ||
                         request('status') === 'inactive';
                 @endphp
@@ -271,9 +269,9 @@
                                     <i class="ti ti-trash me-1"></i>Deleted
                                 </span>
                             @endif
-                            @if(request('certification_type'))
-                                <span class="badge rounded-pill bg-success">
-                                    <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
+                            @if(request('visit'))
+                                <span class="badge rounded-pill bg-warning text-dark">
+                                    <i class="ti ti-history me-1"></i>{{ $visits->firstWhere('id', request('visit'))->title ?? 'Unknown' }}
                                 </span>
                             @endif
                             @if(request('exam_category'))
@@ -306,32 +304,39 @@
                 @endif
 
                 <script>
-                    function handleCertificationTypeChange() {
-                        const form = document.getElementById('filterForm');
-                        form.submit();
-                    }
-
                     function handleExamCategoryChange() {
                         const form = document.getElementById('filterForm');
                         const examSelect = document.getElementById('exam');
                         const caseStudySelect = document.getElementById('case_study');
+                        const visitSelect = document.getElementById('visit');
 
-                        // Clear exam and case study selections when exam category changes
-                        examSelect.value = '';
-                        caseStudySelect.value = '';
+                        // Clear downstream selections
+                        if (examSelect) examSelect.value = '';
+                        if (caseStudySelect) caseStudySelect.value = '';
+                        if (visitSelect) visitSelect.value = '';
 
-                        // Submit the form to reload with filtered exams
                         form.submit();
                     }
 
                     function handleExamChange() {
                         const form = document.getElementById('filterForm');
                         const caseStudySelect = document.getElementById('case_study');
+                        const visitSelect = document.getElementById('visit');
 
-                        // Clear case study selection when exam changes
-                        caseStudySelect.value = '';
+                        // Clear downstream selections
+                        if (caseStudySelect) caseStudySelect.value = '';
+                        if (visitSelect) visitSelect.value = '';
 
-                        // Submit the form to reload with filtered case studies
+                        form.submit();
+                    }
+
+                    function handleCaseStudyChange() {
+                        const form = document.getElementById('filterForm');
+                        const visitSelect = document.getElementById('visit');
+
+                        // Clear downstream selections
+                        if (visitSelect) visitSelect.value = '';
+
                         form.submit();
                     }
                 </script>
