@@ -32,7 +32,7 @@ class Section extends Model
 
     public function caseStudies()
     {
-        return $this->hasMany(CaseStudy::class, 'section_id');
+        return $this->hasMany(CaseStudy::class, 'section_id')->orderBy('order_no', 'asc');
     }
 
     public function clonedFrom()

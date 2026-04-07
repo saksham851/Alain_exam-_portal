@@ -17,6 +17,9 @@ class ExamAttempt extends Model
         'content_area_breakdown',
         'is_passed',
         'tab_switch_count',
+        'timezone',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
@@ -50,5 +53,25 @@ class ExamAttempt extends Model
         }
         
         return $diff->format('%im %ss');
+    }
+
+    public function getFormattedStartTimeAttribute()
+    {
+        if (!$this->started_at) return 'N/A';
+        $time = clone $this->started_at;
+        if ($this->timezone) {
+            $time->setTimezone($this->timezone);
+        }
+        return $time->format('M d, Y h:i A') . ($this->timezone ? ' (' . $this->timezone . ')' : '');
+    }
+
+    public function getFormattedEndTimeAttribute()
+    {
+        if (!$this->ended_at) return 'N/A';
+        $time = clone $this->ended_at;
+        if ($this->timezone) {
+            $time->setTimezone($this->timezone);
+        }
+        return $time->format('M d, Y h:i A') . ($this->timezone ? ' (' . $this->timezone . ')' : '');
     }
 }

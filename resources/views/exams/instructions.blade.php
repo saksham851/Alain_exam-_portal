@@ -77,9 +77,12 @@
 
             <!-- Action Buttons -->
             <div class="d-flex gap-3 justify-content-center">
-                <form action="{{ route('exams.confirm-start', $exam->id) }}" method="POST">
+                <form id="startExamForm" action="{{ route('exams.confirm-start', $exam->id) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn btn-primary px-5 py-2">
+                    <input type="hidden" name="timezone" id="timezone">
+                    <input type="hidden" name="latitude" id="latitude">
+                    <input type="hidden" name="longitude" id="longitude">
+                    <button type="button" id="startBtn" class="btn btn-primary px-5 py-2">
                         <i class="ti ti-player-play me-1"></i>Start Exam
                     </button>
                 </form>
@@ -98,4 +101,45 @@
 .bg-light-warning { background-color: rgba(var(--bs-warning-rgb), 0.1) !important; }
 .bg-light-info { background-color: rgba(13, 202, 240, 0.1) !important; }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startBtn = document.getElementById('startBtn');
+    const form = document.getElementById('startExamForm');
+    const timezoneInput = document.getElementById('timezone');
+    const latInput = document.getElementById('latitude');
+    const longInput = document.getElementById('longitude');
+
+    // Set timezone automatically
+    timezoneInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    startBtn.addEventListener('click', function() {
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Requesting Location...';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    latInput.value = position.coords.latitude;
+                    longInput.value = position.coords.longitude;
+                    form.submit();
+                },
+                function(error) {
+                    console.warn("Location access denied or failed:", error.message);
+                    // Submit anyway without location if denied
+                    form.submit();
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+            form.submit();
+        }
+    });
+});
+</script>
 @endsection

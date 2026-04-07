@@ -110,7 +110,7 @@ class ExamController extends Controller
     /**
      * Confirm and create exam attempt
      */
-    public function confirmStart($id)
+    public function confirmStart(Request $request, $id)
     {
         $studentId = auth()->id();
         $studentExam = StudentExam::where('student_id', $studentId)
@@ -136,6 +136,9 @@ class ExamController extends Controller
             'started_at' => now(),
             'status' => 'in_progress',
             'time_remaining' => $studentExam->exam->duration_minutes * 60, // in seconds
+            'timezone' => $request->input('timezone'),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
         ]);
         
         // Deduct attempt immediately

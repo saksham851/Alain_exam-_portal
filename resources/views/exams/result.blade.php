@@ -67,7 +67,7 @@
     }
     $examName           = $attempt->studentExam->exam->name ?? 'Exam';
     $studentName        = $attempt->studentExam->student->name ?? auth()->user()->name ?? 'Student';
-    $attemptDate        = $attempt->ended_at ? \Carbon\Carbon::parse($attempt->ended_at)->format('M d, Y • h:i A') : 'N/A';
+    $attemptDate        = $attempt->formatted_end_time;
 @endphp
 
 <style>

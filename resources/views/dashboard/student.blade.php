@@ -187,7 +187,7 @@
                                 <td class="px-3 py-3">
                                     <div class="d-flex flex-column">
                                         <span class="fw-bold text-slate-800 text-truncate" style="max-width: 130px; line-height: 1.2;">{{ $attempt->exam_title }}</span>
-                                        <span class="text-muted small">{{ $attempt->date ? $attempt->date->format('d M') : 'N/A' }} • {{ $attempt->duration }}</span>
+                                        <span class="text-muted small">{{ $attempt->date }} • {{ $attempt->duration }}</span>
                                     </div>
                                 </td>
                                 <td class="px-3 py-3 text-end">

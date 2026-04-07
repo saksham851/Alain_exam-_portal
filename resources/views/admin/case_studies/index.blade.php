@@ -36,6 +36,19 @@
             <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route($routePrefix . '.sections.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
+                        <!-- Exam Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
+                            <select name="exam_id" id="examFilter" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
+                                <option value="">All Exams</option>
+                                @foreach($exams as $exam)
+                                    <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
+                                        {{ $exam->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Search -->
                         <div class="col-md-3">
                             <label class="form-label fw-bold text-muted small mb-1">SEARCH SECTIONS</label>
@@ -67,19 +80,6 @@
                                 @foreach($certificationTypes as $type)
                                     <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
                                         {{ $type }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- Exam Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                            <select name="exam_id" id="examFilter" class="form-select form-select-sm" onchange="document.getElementById('filterForm').submit()">
-                                <option value="">All Exams</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ request('exam_id') == $exam->id ? 'selected' : '' }}>
-                                        {{ $exam->name }}
                                     </option>
                                 @endforeach
                             </select>

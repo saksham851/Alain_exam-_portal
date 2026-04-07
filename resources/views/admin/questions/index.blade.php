@@ -86,6 +86,19 @@
             <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route($routePrefix . '.questions.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
+                        <!-- Exam Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
+                            <select name="exam" id="exam" class="form-select form-select-sm" onchange="handleExamChange()">
+                                <option value="">All Exams</option>
+                                @foreach($exams as $exam)
+                                    <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
+                                        {{ $exam->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Certification Type Filter -->
                         <div class="col-md-2">
                             <label class="form-label fw-bold text-muted small mb-1">CERTIFICATION TYPE</label>
@@ -107,19 +120,6 @@
                                 @foreach($examCategories as $examCategory)
                                     <option value="{{ $examCategory->id }}" {{ request('exam_category') == $examCategory->id ? 'selected' : '' }}>
                                         {{ $examCategory->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- Exam Filter -->
-                        <div class="col-md-1">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                            <select name="exam" id="exam" class="form-select form-select-sm" onchange="handleExamChange()">
-                                <option value="">All Exams</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
-                                        {{ $exam->name }}
                                     </option>
                                 @endforeach
                             </select>

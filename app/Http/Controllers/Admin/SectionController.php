@@ -72,7 +72,7 @@ class SectionController extends Controller
             });
         }
 
-        $sections = $query->orderBy('created_at', 'desc')->paginate(15);
+        $sections = $query->orderBy('order_no', 'asc')->paginate(15);
 
         // Append query parameters to pagination links
         $sections->appends($request->all());
@@ -159,7 +159,7 @@ class SectionController extends Controller
             'exam_id' => $request->exam_id,
             'exam_standard_category_id' => $request->exam_standard_category_id,
             'title' => $request->title,
-            'content' => $request->content,
+            'content' => $request->input('content'),
             'order_no' => Section::where('exam_id', $request->exam_id)->max('order_no') + 1,
             'status' => 1,
         ]);
@@ -224,7 +224,7 @@ class SectionController extends Controller
             'exam_id' => $request->exam_id,
             'exam_standard_category_id' => $request->exam_standard_category_id,
             'title' => $request->title,
-            'content' => $request->content,
+            'content' => $request->input('content'),
         ]);
 
         if ($request->has('return_url')) {

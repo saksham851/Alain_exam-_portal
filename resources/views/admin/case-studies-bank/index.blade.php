@@ -401,7 +401,20 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-body bg-light-subtle py-3 border-bottom">
                 <form method="GET" action="{{ route($routePrefix . '.case-studies-bank.index') }}" id="filterForm">
                     <div class="row g-2 align-items-end">
-                        <!-- Search (moved to front) -->
+                        <!-- Exam Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
+                            <select name="exam" id="examFilter" class="form-select form-select-sm">
+                                <option value="">All Exams</option>
+                                @foreach($exams as $exam)
+                                    <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
+                                        {{ $exam->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Search -->
                         <div class="col-md-3">
                             <label class="form-label fw-bold text-muted small mb-1">SEARCH CASE STUDIES</label>
                             <input type="text" name="search" id="searchInput" class="form-control form-control-sm" placeholder="Search case study title..." value="{{ request('search') }}">
@@ -428,19 +441,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 @foreach($certificationTypes as $type)
                                     <option value="{{ $type }}" {{ request('certification_type') == $type ? 'selected' : '' }}>
                                         {{ $type }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <!-- Exam Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                            <select name="exam" id="examFilter" class="form-select form-select-sm">
-                                <option value="">All Exams</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
-                                        {{ $exam->name }}
                                     </option>
                                 @endforeach
                             </select>

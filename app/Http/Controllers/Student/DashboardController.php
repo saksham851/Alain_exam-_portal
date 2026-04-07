@@ -51,7 +51,7 @@ class DashboardController extends Controller
                 return (object)[
                     'id' => $attempt->id,
                     'exam_title' => $attempt->studentExam->exam->name ?? 'Unknown Exam',
-                    'date' => $attempt->ended_at,
+                    'date' => $attempt->formatted_end_time,
                     'duration' => $attempt->formatted_duration,
                     'score' => round($attempt->total_score),
                     'status' => $attempt->is_passed ? 'Pass' : 'Fail',

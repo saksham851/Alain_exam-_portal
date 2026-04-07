@@ -29,7 +29,7 @@ class CaseStudy extends Model
 
     public function visits()
     {
-        return $this->hasMany(Visit::class);
+        return $this->hasMany(Visit::class)->orderBy('order_no', 'asc');
     }
 
     public function questions()

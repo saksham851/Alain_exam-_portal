@@ -240,7 +240,7 @@
                                 <td>
                                     <span class="text-muted fw-semibold">{{ $attempt->formatted_duration }}</span>
                                 </td>
-                                <td>{{ $attempt->created_at->format('M d, Y H:i') }}</td>
+                                <td>{{ $attempt->formatted_start_time }}</td>
                                 <td class="text-end">
                                     <a href="{{ route($routePrefix . '.attempts.show', $attempt->id) }}" class="btn btn-icon btn-link-primary btn-sm">
                                         <i class="ti ti-eye"></i>

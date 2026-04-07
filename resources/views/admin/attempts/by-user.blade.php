@@ -65,7 +65,7 @@
                                 <td>
                                     <span class="text-muted fw-semibold">{{ $attempt->formatted_duration }}</span>
                                 </td>
-                                <td>{{ $attempt->started_at->format('M d, Y H:i') }}</td>
+                                <td>{{ $attempt->formatted_start_time }}</td>
                                 @foreach($headers as $headerName)
                                     @php
                                         $earned = 0;
