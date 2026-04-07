@@ -431,15 +431,7 @@
                     </div>
                 </div>
 
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <div class="text-muted small">
-                        Showing {{ $caseStudies->firstItem() }} to {{ $caseStudies->lastItem() }} of
-                        {{ $caseStudies->total() }} entries
-                    </div>
-                    <div>
-                        {{ $caseStudies->appends(request()->all())->links() }}
-                    </div>
-                </div>
+                <x-custom-pagination :paginator="$caseStudies" label="sections" />
             </div>
         </div>
     </div>

@@ -51,10 +51,7 @@ class ExamController extends Controller
             $query->where('is_active', $request->input('is_active'));
         }
 
-        $exams = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        // Append query parameters to pagination links
-        $exams->appends($request->all());
+        $exams = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         // Get all categories for filter dropdown
         $categories = \App\Models\ExamCategory::where('status', 1)

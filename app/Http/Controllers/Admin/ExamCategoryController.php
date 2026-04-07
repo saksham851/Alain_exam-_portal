@@ -37,10 +37,7 @@ class ExamCategoryController extends Controller
             $query->has('exams', '=', $examCount);
         }
 
-        $categories = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        // Append query parameters to pagination links
-        $categories->appends($request->all());
+        $categories = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         return view('admin.exam-categories.index', compact('categories'));
     }

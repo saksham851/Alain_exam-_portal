@@ -64,7 +64,7 @@ class CaseStudyBankController extends Controller
               }]);
         }]);
 
-        $caseStudies = $query->orderBy('created_at', 'desc')->paginate(20);
+        $caseStudies = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         // Get filter data
         $examCategories = ExamCategory::where('status', 1)->orderBy('name')->get();

@@ -57,7 +57,8 @@ class AttemptController extends Controller
         
         // Get all attempts with student and exam information
         $attempts = $query->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         // Transform for the view
         $attempts->getCollection()->transform(function($attempt) {
@@ -112,7 +113,8 @@ class AttemptController extends Controller
             })
             ->with(['studentExam.exam'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $attempts->getCollection()->transform(function($attempt) {
             $attempt->exam_name = $attempt->studentExam->exam->name;

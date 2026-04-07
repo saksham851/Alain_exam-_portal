@@ -121,6 +121,7 @@ class DashboardController extends Controller
         // Get exam overview data
         $examOverview = $examQuery->orderBy('created_at', 'desc')
             ->paginate(5, ['*'], 'exam_page')
+            ->withQueryString()
             ->through(function($exam) {
                 // Count questions for this exam through case studies
                 $questionCount = 0;
@@ -181,6 +182,7 @@ class DashboardController extends Controller
         // Get student details data
         $studentDetails = $studentQuery->orderBy('created_at', 'desc')
             ->paginate(5, ['*'], 'student_page')
+            ->withQueryString()
             ->through(function($student) {
                 // Calculate average score from all attempts
                 $attempts = ExamAttempt::whereHas('studentExam', function($q) use ($student) {

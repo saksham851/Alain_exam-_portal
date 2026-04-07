@@ -101,14 +101,8 @@
                             @endforelse
                         </tbody>
                     </table>
-                </div>
-                
-                @if($attempts->hasPages())
-                <div class="p-3">
-                    {{ $attempts->links() }}
-                </div>
-                @endif
             </div>
+            <x-custom-pagination :paginator="$attempts" label="attempts" />
         </div>
     </div>
 </div>

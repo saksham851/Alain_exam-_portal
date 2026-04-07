@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="row mb-4">
+  <div class="row mb-4">
     <!-- Stats Cards -->
     <div class="col-md-6 col-xl-2">
       <a href="{{ route('admin.users.index') }}" class="text-decoration-none">
@@ -10,9 +10,10 @@
           <div class="card-body pt-3 px-3 pb-2">
             <h6 class="mb-2 f-w-700 text-muted small text-uppercase" style="letter-spacing: 0.5px;">Total Students</h6>
             <h4 class="mb-1 fw-bold">{{ number_format($stats['total_students']) }}</h4>
-            <span class="badge rounded-pill bg-light-primary text-primary px-3 py-1 fw-bold" style="font-size: 0.65rem;"><i class="ti ti-users me-1"></i> ACTIVE USERS</span>
+            <span class="badge rounded-pill bg-light-primary text-primary px-3 py-1 fw-bold"
+              style="font-size: 0.65rem;"><i class="ti ti-users me-1"></i> ACTIVE USERS</span>
           </div>
-        </div>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+        </div>
       </a>
     </div>
 
@@ -22,7 +23,8 @@
           <div class="card-body pt-3 px-3 pb-2">
             <h6 class="mb-2 f-w-700 text-muted small text-uppercase" style="letter-spacing: 0.5px;">Total Exams</h6>
             <h4 class="mb-1 fw-bold">{{ $stats['active_exams'] }}</h4>
-            <span class="badge rounded-pill bg-light-success text-success px-3 py-1 fw-bold" style="font-size: 0.65rem;"><i class="ti ti-book me-1"></i> LIVE EXAMS</span>
+            <span class="badge rounded-pill bg-light-success text-success px-3 py-1 fw-bold"
+              style="font-size: 0.65rem;"><i class="ti ti-book me-1"></i> LIVE EXAMS</span>
           </div>
         </div>
       </a>
@@ -33,7 +35,8 @@
         <div class="card h-100">
           <div class="card-body pt-3 px-3 pb-2">
             <h6 class="mb-2 f-w-400 text-muted">Total Exam Categories</h6>
-            <h4 class="mb-2">{{ $stats['exam_categories'] }} <span class="badge bg-light-info border border-info"><i class="ti ti-file-text"></i></span></h4>
+            <h4 class="mb-2">{{ $stats['exam_categories'] }} <span class="badge bg-light-info border border-info"><i
+                  class="ti ti-file-text"></i></span></h4>
             <p class="mb-0 text-muted text-sm">Total categories</p>
           </div>
         </div>
@@ -45,7 +48,8 @@
         <div class="card h-100">
           <div class="card-body pt-3 px-3 pb-2">
             <h6 class="mb-2 f-w-400 text-muted">Total Case Studies</h6>
-            <h4 class="mb-2">{{ $stats['case_studies'] }} <span class="badge bg-light-secondary border border-secondary"><i class="ti ti-file-text"></i></span></h4>
+            <h4 class="mb-2">{{ $stats['case_studies'] }} <span
+                class="badge bg-light-secondary border border-secondary"><i class="ti ti-file-text"></i></span></h4>
             <p class="mb-0 text-muted text-sm">Total case studies</p>
           </div>
         </div>
@@ -57,7 +61,8 @@
         <div class="card h-100">
           <div class="card-body pt-3 px-3 pb-2">
             <h6 class="mb-2 f-w-400 text-muted">Questions Bank</h6>
-            <h4 class="mb-2">{{ number_format($stats['total_questions']) }} <span class="badge bg-light-warning border border-warning"><i class="ti ti-question-mark"></i></span></h4>
+            <h4 class="mb-2">{{ number_format($stats['total_questions']) }} <span
+                class="badge bg-light-warning border border-warning"><i class="ti ti-question-mark"></i></span></h4>
             <p class="mb-0 text-muted text-sm">Total questions</p>
           </div>
         </div>
@@ -69,22 +74,23 @@
         <div class="card h-100">
           <div class="card-body pt-3 px-3 pb-2">
             <h6 class="mb-2 f-w-400 text-muted">Recent Attempts</h6>
-            <h4 class="mb-2">{{ $stats['recent_attempts_count'] }} <span class="badge bg-light-danger border border-danger"><i class="ti ti-trending-up"></i></span></h4>
+            <h4 class="mb-2">{{ $stats['recent_attempts_count'] }} <span
+                class="badge bg-light-danger border border-danger"><i class="ti ti-trending-up"></i></span></h4>
             <p class="mb-0 text-muted text-sm">Last 24 hours</p>
           </div>
         </div>
       </a>
     </div>
-</div>
+  </div>
 
-<!-- Student Details Table -->
-<div class="row mb-4">
+  <!-- Student Details Table -->
+  <div class="row mb-4">
     <div class="col-md-12">
       <div class="card">
         <div class="card-header">
-            <h5>Student Details</h5>
+          <h5>Student Details</h5>
         </div>
-        
+
         <!-- Compact Filters Section -->
         <div class="card-body bg-light-subtle py-3 border-bottom">
           <form method="GET" action="{{ route('admin.dashboard') }}" id="studentDetailsFilterForm">
@@ -98,15 +104,16 @@
             @if(request('certification_type'))
               <input type="hidden" name="certification_type" value="{{ request('certification_type') }}">
             @endif
-            
+
             <div class="row g-2 align-items-end">
               <!-- Search -->
               <div class="col-md-6">
                 <label class="form-label fw-bold text-muted small mb-1">SEARCH BY NAME OR EMAIL</label>
                 <div class="input-group input-group-sm">
                   <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
-                  <input type="text" name="student_search" class="form-control border-start-0 ps-0" 
-                         placeholder="Student name or email..." value="{{ request('student_search') }}" id="studentSearchInput">
+                  <input type="text" name="student_search" class="form-control border-start-0 ps-0"
+                    placeholder="Student name or email..." value="{{ request('student_search') }}"
+                    id="studentSearchInput">
                 </div>
               </div>
 
@@ -121,46 +128,46 @@
             </div>
           </form>
         </div>
-        
+
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
+          document.addEventListener('DOMContentLoaded', function () {
             const studentFilterForm = document.getElementById('studentDetailsFilterForm');
             const studentSearchInput = document.getElementById('studentSearchInput');
-            
+
             let studentSearchTimeout;
-            
+
             // Auto-submit on search input (debounced - 500ms delay)
             if (studentSearchInput) {
-                studentSearchInput.addEventListener('input', function() {
-                    clearTimeout(studentSearchTimeout);
-                    studentSearchTimeout = setTimeout(function() {
-                        studentFilterForm.submit();
-                    }, 500);
-                });
+              studentSearchInput.addEventListener('input', function () {
+                clearTimeout(studentSearchTimeout);
+                studentSearchTimeout = setTimeout(function () {
+                  studentFilterForm.submit();
+                }, 500);
+              });
             }
-        });
+          });
         </script>
-        
+
         <!-- Active Filters Indicator -->
         @php
           $hasStudentFilters = request('student_search');
         @endphp
-        
+
         @if($hasStudentFilters)
-        <div class="card-body border-bottom bg-light-subtle py-3">
-          <div class="d-flex align-items-center flex-wrap gap-2">
-            <span class="text-muted small fw-semibold">
-              <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
-            </span>
-            @if(request('student_search'))
-              <span class="badge rounded-pill bg-dark">
-                <i class="ti ti-search me-1"></i>{{ request('student_search') }}
+          <div class="card-body border-bottom bg-light-subtle py-3">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="text-muted small fw-semibold">
+                <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
               </span>
-            @endif
+              @if(request('student_search'))
+                <span class="badge rounded-pill bg-dark">
+                  <i class="ti ti-search me-1"></i>{{ request('student_search') }}
+                </span>
+              @endif
+            </div>
           </div>
-        </div>
         @endif
-        
+
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -178,86 +185,77 @@
               </thead>
               <tbody>
                 @forelse($studentDetails as $student)
-                <tr>
-                  <td>
-                    <h6 class="mb-0">{{ $student->name }}</h6>
-                  </td>
-                  <td>
-                    <span class="text-muted">{{ $student->email }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-primary">{{ $student->enrolled_exams }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-info">{{ $student->total_attempts }}</span>
-                  </td>
-                  <td>
-                    @if($student->average_score > 0)
-                      <span class="badge {{ $student->average_score >= 70 ? 'bg-light-success' : 'bg-light-warning' }}">
-                        {{ $student->average_score }}%
-                      </span>
-                    @else
-                      <span class="text-muted">-</span>
-                    @endif
-                  </td>
-                  <td>
-                    @if($student->status == 1)
-                      <span class="badge bg-success">Active</span>
-                    @else
-                      <span class="badge bg-danger">Inactive</span>
-                    @endif
-                  </td>
-                  <td>
-                    <span class="text-muted">{{ $student->joined_date }}</span>
-                  </td>
-                  <td class="text-end">
-                    <a href="{{ route('admin.attempts.by-user', $student->id) }}" 
-                       class="btn btn-sm btn-light-primary" 
-                       title="View Attempts">
-                      <i class="ti ti-eye"></i>
-                    </a>
-                  </td>
-                </tr>
+                  <tr>
+                    <td>
+                      <h6 class="mb-0">{{ $student->name }}</h6>
+                    </td>
+                    <td>
+                      <span class="text-muted">{{ $student->email }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-primary">{{ $student->enrolled_exams }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-info">{{ $student->total_attempts }}</span>
+                    </td>
+                    <td>
+                      @if($student->average_score > 0)
+                        <span class="badge {{ $student->average_score >= 70 ? 'bg-light-success' : 'bg-light-warning' }}">
+                          {{ $student->average_score }}%
+                        </span>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($student->status == 1)
+                        <span class="badge bg-success">Active</span>
+                      @else
+                        <span class="badge bg-danger">Inactive</span>
+                      @endif
+                    </td>
+                    <td>
+                      <span class="text-muted">{{ $student->joined_date }}</span>
+                    </td>
+                    <td class="text-end">
+                      <a href="{{ route('admin.attempts.by-user', $student->id) }}" class="btn btn-sm btn-light-primary"
+                        title="View Attempts">
+                        <i class="ti ti-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
                 @empty
-                <tr>
-                  <td colspan="8" class="text-center text-muted py-4">
-                    @if($hasStudentFilters)
-                      No students found matching your filters.
-                    @else
-                      No students registered yet.
-                    @endif
-                  </td>
-                </tr>
+                  <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                      @if($hasStudentFilters)
+                        No students found matching your filters.
+                      @else
+                        No students registered yet.
+                      @endif
+                    </td>
+                  </tr>
                 @endforelse
               </tbody>
             </table>
           </div>
         </div>
-        
-        @if($studentDetails->count() > 0)
-        <div class="card-footer bg-white border-top py-3">
-          <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="text-muted small">
-              Showing <span class="fw-bold">{{ $studentDetails->firstItem() }}</span> to <span class="fw-bold">{{ $studentDetails->lastItem() }}</span> of <span class="fw-bold">{{ $studentDetails->total() }}</span> students
-            </div>
-            <div class="student-pagination">
-              {{ $studentDetails->appends(request()->except('student_page'))->links('pagination::bootstrap-5') }}
-            </div>
-          </div>
-        </div>
+
+        {{-- Custom Pagination --}}
+        @if($studentDetails->total() > 0)
+          <x-custom-pagination :paginator="$studentDetails" label="students" />
         @endif
       </div>
     </div>
-</div>
+  </div>
 
-<!-- Exam Overview Table -->
-<div class="row mb-4">
+  <!-- Exam Overview Table -->
+  <div class="row mb-4">
     <div class="col-md-12">
       <div class="card">
         <div class="card-header">
-            <h5>Exam Overview</h5>
+          <h5>Exam Overview</h5>
         </div>
-        
+
         <!-- Compact Filters Section -->
         <div class="card-body bg-light-subtle py-3 border-bottom">
           <form method="GET" action="{{ route('admin.dashboard') }}" id="examOverviewFilterForm">
@@ -267,8 +265,8 @@
                 <label class="form-label fw-bold text-muted small mb-1">SEARCH BY NAME OR CODE</label>
                 <div class="input-group input-group-sm">
                   <span class="input-group-text bg-white border-end-0"><i class="ti ti-search text-muted"></i></span>
-                  <input type="text" name="exam_search" class="form-control border-start-0 ps-0" 
-                         placeholder="Name or code..." value="{{ request('exam_search') }}" id="examSearchInput">
+                  <input type="text" name="exam_search" class="form-control border-start-0 ps-0"
+                    placeholder="Name or code..." value="{{ request('exam_search') }}" id="examSearchInput">
                 </div>
               </div>
 
@@ -309,73 +307,74 @@
             </div>
           </form>
         </div>
-        
+
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
+          document.addEventListener('DOMContentLoaded', function () {
             const filterForm = document.getElementById('examOverviewFilterForm');
             const searchInput = document.getElementById('examSearchInput');
             const categorySelect = document.getElementById('examCategorySelect');
             const certificationTypeSelect = document.getElementById('certificationTypeSelect');
-            
+
             let searchTimeout;
-            
+
             // Auto-submit on dropdown change (instant)
             if (categorySelect) {
-                categorySelect.addEventListener('change', function() {
-                    filterForm.submit();
-                });
+              categorySelect.addEventListener('change', function () {
+                filterForm.submit();
+              });
             }
-            
+
             if (certificationTypeSelect) {
-                certificationTypeSelect.addEventListener('change', function() {
-                    filterForm.submit();
-                });
+              certificationTypeSelect.addEventListener('change', function () {
+                filterForm.submit();
+              });
             }
-            
+
             // Auto-submit on search input (debounced - 500ms delay)
             if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(function() {
-                        filterForm.submit();
-                    }, 500);
-                });
+              searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function () {
+                  filterForm.submit();
+                }, 500);
+              });
             }
-        });
+          });
         </script>
-        
+
         <!-- Active Filters Indicator -->
         @php
-          $hasExamFilters = request('exam_search') || 
-                            request('exam_category_id') || 
-                            request('certification_type');
+          $hasExamFilters = request('exam_search') ||
+            request('exam_category_id') ||
+            request('certification_type');
         @endphp
-        
+
         @if($hasExamFilters)
-        <div class="card-body border-bottom bg-light-subtle py-3">
-          <div class="d-flex align-items-center flex-wrap gap-2">
-            <span class="text-muted small fw-semibold">
-              <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
-            </span>
-            @if(request('exam_search'))
-              <span class="badge rounded-pill bg-dark">
-                <i class="ti ti-search me-1"></i>{{ request('exam_search') }}
+          <div class="card-body border-bottom bg-light-subtle py-3">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="text-muted small fw-semibold">
+                <i class="ti ti-filter-check me-1"></i>ACTIVE FILTERS:
               </span>
-            @endif
-            @if(request('exam_category_id'))
-              <span class="badge rounded-pill bg-info">
-                <i class="ti ti-category me-1"></i>{{ $categories->firstWhere('id', request('exam_category_id'))->name ?? 'Unknown' }}
-              </span>
-            @endif
-            @if(request('certification_type'))
-              <span class="badge rounded-pill bg-success">
-                <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
-              </span>
-            @endif
+              @if(request('exam_search'))
+                <span class="badge rounded-pill bg-dark">
+                  <i class="ti ti-search me-1"></i>{{ request('exam_search') }}
+                </span>
+              @endif
+              @if(request('exam_category_id'))
+                <span class="badge rounded-pill bg-info">
+                  <i
+                    class="ti ti-category me-1"></i>{{ $categories->firstWhere('id', request('exam_category_id'))->name ?? 'Unknown' }}
+                </span>
+              @endif
+              @if(request('certification_type'))
+                <span class="badge rounded-pill bg-success">
+                  <i class="ti ti-certificate me-1"></i>{{ request('certification_type') }}
+                </span>
+              @endif
+            </div>
           </div>
-        </div>
         @endif
-        
+
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -394,82 +393,74 @@
               </thead>
               <tbody>
                 @forelse($examOverview as $exam)
-                <tr>
-                  <td>
-                    <span class="badge bg-light-info">{{ $exam->category }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-success">{{ $exam->certification_type }}</span>
-                  </td>
-                  <td>
-                    <h6 class="mb-0">{{ $exam->name }}</h6>
-                  </td>
-                  <td>
-                    @if($exam->exam_code)
-                      <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
-                    @else
-                      <span class="text-muted">-</span>
-                    @endif
-                  </td>
-                  <td>
-                    @if($exam->is_active == 1)
-                      <span class="badge bg-success">Published</span>
-                    @else
-                      <span class="badge bg-danger">Unpublished</span>
-                    @endif
-                  </td>
-                  <td>
-                    <span class="badge bg-light-primary">{{ $exam->student_count }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-warning">{{ $exam->question_count }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-secondary">{{ $exam->case_study_count }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light-danger">{{ $exam->attempt_count }}</span>
-                  </td>
-                </tr>
+                  <tr>
+                    <td>
+                      <span class="badge bg-light-info">{{ $exam->category }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-success">{{ $exam->certification_type }}</span>
+                    </td>
+                    <td>
+                      <h6 class="mb-0">{{ $exam->name }}</h6>
+                    </td>
+                    <td>
+                      @if($exam->exam_code)
+                        <span class="badge bg-light-secondary">{{ $exam->exam_code }}</span>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($exam->is_active == 1)
+                        <span class="badge bg-success">Published</span>
+                      @else
+                        <span class="badge bg-danger">Unpublished</span>
+                      @endif
+                    </td>
+                    <td>
+                      <span class="badge bg-light-primary">{{ $exam->student_count }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-warning">{{ $exam->question_count }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-secondary">{{ $exam->case_study_count }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light-danger">{{ $exam->attempt_count }}</span>
+                    </td>
+                  </tr>
                 @empty
-                <tr>
-                  <td colspan="10" class="text-center text-muted py-4">
-                    No exams available.
-                  </td>
-                </tr>
+                  <tr>
+                    <td colspan="10" class="text-center text-muted py-4">
+                      No exams available.
+                    </td>
+                  </tr>
                 @endforelse
               </tbody>
             </table>
           </div>
         </div>
 
-        @if($examOverview->count() > 0)
-        <div class="card-footer bg-white border-top py-3">
-          <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="text-muted small">
-              Showing <span class="fw-bold">{{ $examOverview->firstItem() }}</span> to <span class="fw-bold">{{ $examOverview->lastItem() }}</span> of <span class="fw-bold">{{ $examOverview->total() }}</span> exams
-            </div>
-            <div class="exam-pagination">
-              {{ $examOverview->appends(request()->except('exam_page'))->links('pagination::bootstrap-5') }}
-            </div>
-          </div>
-        </div>
+        {{-- Custom Pagination --}}
+        @if($examOverview->total() > 0)
+          <x-custom-pagination :paginator="$examOverview" label="exams" />
         @endif
       </div>
     </div>
-</div>
+  </div>
 
-<div class="row">
+  <div class="row">
     <!-- Recent Activity Table -->
     <div class="col-md-12 col-xl-8">
       <div class="card h-100">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Recent Activity</h5>
-            <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-primary">
-              <i class="ti ti-eye me-1"></i> View All
-            </a>
+          <h5 class="mb-0">Recent Activity</h5>
+          <a href="{{ route('admin.attempts.index') }}" class="btn btn-sm btn-light-primary">
+            <i class="ti ti-eye me-1"></i> View All
+          </a>
         </div>
-        
+
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table table-hover table-borderless mb-0">
@@ -484,28 +475,28 @@
               </thead>
               <tbody>
                 @forelse($recentAttempts as $attempt)
-                <tr>
-                  <td>
-                    <a href="{{ route('admin.attempts.by-user', $attempt->student_id) }}" class="text-muted">
-                      {{ $attempt->student_name }}
-                    </a>
-                  </td>
-                  <td>{{ $attempt->exam_name }}</td>
-                  <td>{{ round($attempt->total_score, 1) }}%</td>
-                  <td>
-                    <span class="d-flex align-items-center gap-2">
-                      <i class="fas fa-circle {{ $attempt->is_passed ? 'text-success' : 'text-danger' }} f-10 m-r-5"></i>
-                      {{ $attempt->is_passed ? 'Passed' : 'Failed' }}
-                    </span>
-                  </td>
-                  <td class="text-end">{{ $attempt->duration }}</td>
-                </tr>
+                  <tr>
+                    <td>
+                      <a href="{{ route('admin.attempts.by-user', $attempt->student_id) }}" class="text-muted">
+                        {{ $attempt->student_name }}
+                      </a>
+                    </td>
+                    <td>{{ $attempt->exam_name }}</td>
+                    <td>{{ round($attempt->total_score, 1) }}%</td>
+                    <td>
+                      <span class="d-flex align-items-center gap-2">
+                        <i class="fas fa-circle {{ $attempt->is_passed ? 'text-success' : 'text-danger' }} f-10 m-r-5"></i>
+                        {{ $attempt->is_passed ? 'Passed' : 'Failed' }}
+                      </span>
+                    </td>
+                    <td class="text-end">{{ $attempt->duration }}</td>
+                  </tr>
                 @empty
-                <tr>
-                  <td colspan="5" class="text-center text-muted py-4">
-                    No recent attempts found. Students haven't attempted any exams yet.
-                  </td>
-                </tr>
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                      No recent attempts found. Students haven't attempted any exams yet.
+                    </td>
+                  </tr>
                 @endforelse
               </tbody>
             </table>
@@ -538,5 +529,5 @@
         </div>
       </div>
     </div>
-</div>
+  </div>
 @endsection

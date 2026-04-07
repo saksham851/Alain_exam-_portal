@@ -71,10 +71,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        // Append query parameters to pagination links
-        $users->appends($request->all());
+        $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         // Get all exams and categories for filter dropdowns
         $exams = \App\Models\Exam::where('status', 1)

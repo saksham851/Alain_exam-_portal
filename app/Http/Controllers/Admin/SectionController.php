@@ -72,10 +72,7 @@ class SectionController extends Controller
             });
         }
 
-        $sections = $query->orderBy('order_no', 'asc')->paginate(15);
-
-        // Append query parameters to pagination links
-        $sections->appends($request->all());
+        $sections = $query->orderBy('order_no', 'asc')->paginate(15)->withQueryString();
 
         // Get all exams for filter dropdown
         $exams = Exam::where('status', 1)
