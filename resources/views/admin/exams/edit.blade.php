@@ -798,7 +798,6 @@ async function loadExamSections() {
                                 </div>
                             </div>
                             <h6 class="fw-bold mb-1 text-dark text-truncate">${section.title}</h6>
-                            <div class="bg-light d-inline-block px-2 py-0 rounded text-muted" style="font-size: 10px;">SEC-${section.id}</div>
                         </div>
                     </div>
                 `;
@@ -1039,19 +1038,20 @@ async function deleteSection(id) {
     }
 }
 
-let deletedPanelOpen = false;
-
 function toggleDeletedSections() {
     const panel = document.getElementById('deletedSectionsPanel');
     const btn = document.getElementById('deletedSectionsToggleBtn');
-    deletedPanelOpen = !deletedPanelOpen;
-    if (deletedPanelOpen) {
-        panel.style.display = 'block';
+    
+    // Use getComputedStyle for reliable visibility check
+    const isHidden = window.getComputedStyle(panel).display === 'none';
+    
+    if (isHidden) {
+        panel.style.setProperty('display', 'block', 'important');
         btn.classList.remove('btn-outline-danger');
         btn.classList.add('btn-danger');
         loadDeletedSections();
     } else {
-        panel.style.display = 'none';
+        panel.style.setProperty('display', 'none', 'important');
         btn.classList.remove('btn-danger');
         btn.classList.add('btn-outline-danger');
     }
@@ -1078,12 +1078,9 @@ async function loadDeletedSections() {
                 col.innerHTML = `
                     <div class="d-flex align-items-center justify-content-between p-3 border border-danger-subtle rounded-3 bg-danger-subtle">
                         <div class="d-flex align-items-center gap-2">
-                            <div style="width:32px;height:32px;background:#fee2e2;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                                <i class="ti ti-list-details text-danger fs-5"></i>
-                            </div>
                             <div>
                                 <div class="fw-semibold text-dark" style="font-size:13px;">${section.title}</div>
-                                <div class="text-muted" style="font-size:10px;">SEC-${section.id} &bull; Deleted ${section.deleted_at}</div>
+                                <div class="text-muted" style="font-size:10px;">Deleted ${section.deleted_at}</div>
                             </div>
                         </div>
                         <button class="btn btn-sm btn-success rounded-pill px-3" onclick="restoreSection(${section.id})">
