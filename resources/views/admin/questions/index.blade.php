@@ -59,7 +59,78 @@
         .hover-shadow:hover .rounded-circle.bg-light-primary i {
             transform: scale(1.1);
         }
+
+        /* Compact Choices.js Theme (Matching Image 2) */
+        .choices {
+            margin-bottom: 0;
+            border-radius: 6px !important;
+        }
+
+        .choices__inner {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 6px !important;
+            min-height: 32px !important;
+            padding: 2px 8px !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .choices__list--single {
+            padding: 0 !important;
+            font-size: 0.825rem !important;
+            font-weight: 400 !important;
+            color: #111827 !important;
+        }
+
+        .choices__list--dropdown {
+            border: 1px solid #d1d5db !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            margin-top: 2px !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .choices__item--choice {
+            padding: 6px 12px !important;
+            font-size: 0.825rem !important;
+            white-space: nowrap !important;
+            border-radius: 0 !important;
+            /* Full width highlight like Image 2 */
+            margin-bottom: 0 !important;
+        }
+
+        .choices__item--choice.is-highlighted {
+            background-color: #2563eb !important;
+            /* Standard Pro Blue */
+            color: #ffffff !important;
+        }
+
+        .choices__input {
+            background-color: #ffffff !important;
+            border: 1px solid #e5e7eb !important;
+            padding: 4px 8px !important;
+            margin: 4px !important;
+            width: calc(100% - 8px) !important;
+            font-size: 0.8rem !important;
+            border-radius: 4px !important;
+        }
+
+        .choices__placeholder {
+            opacity: 1;
+            color: #6b7280;
+        }
+
+        /* Adjusting layout for compact heights */
+        #filterForm .col-md-2,
+        #filterForm .col-md-1 {
+            padding-bottom: 2px;
+        }
     </style>
+
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <!-- [ breadcrumb ] start -->
     <div class="page-header">
         <div class="page-block">
@@ -152,8 +223,7 @@
                             <!-- Exam Filter -->
                             <div class="col-md-2">
                                 <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                                <select name="exam" id="exam" class="form-select form-select-sm"
-                                    onchange="handleExamChange()">
+                                <select name="exam" id="exam" class="choices-select" onchange="handleExamChange()">
                                     <option value="">All Exams</option>
                                     @foreach($exams as $exam)
                                         <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
@@ -249,7 +319,7 @@
 
                 <!-- Active Filters Indicator -->
                 @php
-                    $hasActiveFilters = 
+                    $hasActiveFilters =
                         request('exam_category') ||
                         request('exam') ||
                         request('case_study') ||
@@ -271,7 +341,8 @@
                             @endif
                             @if(request('visit'))
                                 <span class="badge rounded-pill bg-warning text-dark">
-                                    <i class="ti ti-history me-1"></i>{{ $visits->firstWhere('id', request('visit'))->title ?? 'Unknown' }}
+                                    <i
+                                        class="ti ti-history me-1"></i>{{ $visits->firstWhere('id', request('visit'))->title ?? 'Unknown' }}
                                 </span>
                             @endif
                             @if(request('exam_category'))
@@ -303,7 +374,51 @@
                     </div>
                 @endif
 
+                <!-- Choices.js JS -->
+                <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
                 <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const examSelect = document.getElementById('exam');
+                        if (examSelect) {
+                            new Choices(examSelect, {
+                                searchEnabled: true,
+                                itemSelectText: '',
+                                shouldSort: false,
+                                placeholder: true,
+                                placeholderValue: 'All Exams',
+                                searchPlaceholderValue: 'Search exam name...',
+                                classNames: {
+                                    containerOuter: 'choices',
+                                    containerInner: 'choices__inner',
+                                    input: 'choices__input',
+                                    inputCloned: 'choices__input--cloned',
+                                    list: 'choices__list',
+                                    listItems: 'choices__list--multiple',
+                                    listSingle: 'choices__list--single',
+                                    listDropdown: 'choices__list--dropdown',
+                                    item: 'choices__item',
+                                    itemSelectable: 'choices__item--selectable',
+                                    itemDisabled: 'choices__item--disabled',
+                                    itemChoice: 'choices__item--choice',
+                                    placeholder: 'choices__placeholder',
+                                    group: 'choices__group',
+                                    groupHeading: 'choices__heading',
+                                    button: 'choices__button',
+                                    activeState: 'is-active',
+                                    focusState: 'is-focused',
+                                    openState: 'is-open',
+                                    disabledState: 'is-disabled',
+                                    highlightedState: 'is-highlighted',
+                                    selectedState: 'is-selected',
+                                    flippedState: 'is-flipped',
+                                    loadingState: 'is-loading',
+                                    noResults: 'has-no-results',
+                                    noChoices: 'has-no-choices'
+                                }
+                            });
+                        }
+                    });
+
                     function handleExamCategoryChange() {
                         const form = document.getElementById('filterForm');
                         const examSelect = document.getElementById('exam');
@@ -857,16 +972,16 @@
 
                                         const checkboxId = `q_source_${q.id}`;
                                         const html = `
-                                        <div class="col-md-12">
-                                            <div class="form-check border-bottom pb-2">
-                                                <input class="form-check-input question-source-checkbox" type="checkbox" name="source_question_ids[]" value="${q.id}" id="${checkboxId}">
-                                                <label class="form-check-label d-block" for="${checkboxId}">
-                                                    <span class="badge bg-light-primary me-2">${q.question_type}</span>
-                                                    <span class="text-dark small">${shortText}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    `;
+                                                <div class="col-md-12">
+                                                    <div class="form-check border-bottom pb-2">
+                                                        <input class="form-check-input question-source-checkbox" type="checkbox" name="source_question_ids[]" value="${q.id}" id="${checkboxId}">
+                                                        <label class="form-check-label d-block" for="${checkboxId}">
+                                                            <span class="badge bg-light-primary me-2">${q.question_type}</span>
+                                                            <span class="text-dark small">${shortText}</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            `;
                                         questionsContainer.insertAdjacentHTML('beforeend', html);
                                     });
                                 }
