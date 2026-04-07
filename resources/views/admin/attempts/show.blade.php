@@ -27,14 +27,14 @@
                 </div>
                 <div class="text-end mt-3 mt-md-0">
                     @php
-                        $isPassed = $attemptData->total_score >= 65;
+                        $isPassed = (bool) ($attemptData->is_passed ?? false);
                     @endphp
                     <h3 class="mb-0 {{ $isPassed ? 'text-success' : 'text-danger' }}">
-                        {{ round($attemptData->total_score, 1) }}% 
+                        {{ round($attemptData->total_score, 1) }} pts
                         <span class="f-14 fw-normal text-muted">({{ $isPassed ? 'Passed' : 'Failed' }})</span>
                     </h3>
                     <div class="mt-2">
-                        <small class="text-muted">IG: {{ round($attemptData->ig_score, 1) }}% | DM: {{ round($attemptData->dm_score, 1) }}%</small>
+                        <small class="text-muted">IG: {{ round($attemptData->ig_score, 1) }} pts | DM: {{ round($attemptData->dm_score, 1) }} pts</small>
                     </div>
                 </div>
             </div>

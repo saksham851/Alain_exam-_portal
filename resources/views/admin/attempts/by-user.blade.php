@@ -53,7 +53,7 @@
                                 @foreach($headers as $headerName)
                                     <th>{{ $headerName }}</th>
                                 @endforeach
-                                <th>Total Score</th>
+                                <th>Total Points</th>
                                 <th>Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>

@@ -212,7 +212,7 @@
                             <tr>
                                 <th>Students</th>
                                 <th>Exam</th>
-                                <th>Score</th>
+                                <th>Total Points</th>
                                 <th>Duration</th>
                                 <th>Date</th>
                                 <th class="text-end">Actions</th>
@@ -230,11 +230,10 @@
                                 <td>{{ $attempt->exam_name ?? 'N/A' }}</td>
                                 <td>
                                     @php
-                                        // Pass threshold is 65%
-                                        $isPassed = $attempt->total_score >= 65;
+                                        $isPassed = (bool) ($attempt->is_passed ?? false);
                                     @endphp
                                     <span class="badge {{ $isPassed ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }}">
-                                        {{ round($attempt->percentage, 1) }}%
+                                        {{ round($attempt->total_score, 1) }} pts
                                     </span>
                                 </td>
                                 <td>
