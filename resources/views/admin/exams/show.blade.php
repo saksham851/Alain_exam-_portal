@@ -122,8 +122,7 @@
                 data-bs-toggle="collapse"
                 data-bs-target="#complianceTableBody"
                 aria-expanded="false"
-                aria-controls="complianceTableBody"
-                onclick="toggleComplianceLabel(this)">
+                aria-controls="complianceTableBody">
                 <i class="ti ti-eye" id="complianceToggleIcon"></i>
                 <span id="complianceToggleLabel">Show Table</span>
             </button>
@@ -206,21 +205,57 @@
 </div>
 
 <script>
-function toggleComplianceLabel(btn) {
-    const label = document.getElementById('complianceToggleLabel');
-    const icon  = document.getElementById('complianceToggleIcon');
-    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
-    // Note: Bootstrap toggles aria-expanded AFTER click, so current value is pre-toggle state
-    if (!isExpanded) {
-        // About to expand
-        label.textContent = 'Hide Table';
-        icon.className = 'ti ti-eye-off';
-    } else {
-        // About to collapse
-        label.textContent = 'Show Table';
-        icon.className = 'ti ti-eye';
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Compliance Table Toggle Logic
+    const complianceTableBody = document.getElementById('complianceTableBody');
+    if (complianceTableBody) {
+        const toggleLabel = document.getElementById('complianceToggleLabel');
+        const toggleIcon = document.getElementById('complianceToggleIcon');
+        
+        complianceTableBody.addEventListener('show.bs.collapse', function() {
+            if (toggleLabel) toggleLabel.textContent = 'Hide Table';
+            if (toggleIcon) toggleIcon.className = 'ti ti-eye-off';
+        });
+        
+        complianceTableBody.addEventListener('hide.bs.collapse', function() {
+            if (toggleLabel) toggleLabel.textContent = 'Show Table';
+            if (toggleIcon) toggleIcon.className = 'ti ti-eye';
+        });
     }
-}
+
+    // 2. Expand/Collapse All Logic for Sections
+    const expandAllBtn = document.getElementById('expandCollapseAllBtn');
+    if (expandAllBtn) {
+        const sections = document.querySelectorAll('.multi-collapse');
+        
+        expandAllBtn.addEventListener('click', function() {
+            const anyCollapsed = Array.from(sections).some(el => !el.classList.contains('show'));
+            
+            sections.forEach(el => {
+                const bsCollapse = bootstrap.Collapse.getOrCreateInstance(el);
+                if (anyCollapsed) {
+                    bsCollapse.show();
+                } else {
+                    bsCollapse.hide();
+                }
+            });
+        });
+
+        // Update button text based on state
+        const updateExpandBtnText = () => {
+            const anyCollapsed = Array.from(sections).some(el => !el.classList.contains('show'));
+            expandAllBtn.textContent = anyCollapsed ? 'Expand All' : 'Collapse All';
+        };
+
+        sections.forEach(el => {
+            el.addEventListener('shown.bs.collapse', updateExpandBtnText);
+            el.addEventListener('hidden.bs.collapse', updateExpandBtnText);
+        });
+
+        // Initial check
+        updateExpandBtnText();
+    }
+});
 </script>
 @endif
 
@@ -229,8 +264,8 @@ function toggleComplianceLabel(btn) {
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="text-uppercase text-muted small fw-bold tracking-wide mb-0">Exam Curriculum</h4>
-            <button class="btn btn-sm btn-link text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target=".multi-collapse" aria-expanded="false" aria-controls="examAccordion">
-                Expand/Collapse All
+            <button id="expandCollapseAllBtn" class="btn btn-sm btn-link text-decoration-none" type="button">
+                Expand All
             </button>
         </div>
 
