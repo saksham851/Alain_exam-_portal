@@ -219,9 +219,6 @@
                         <div class="col-md-6">
                             <div class="h-100 bg-white border rounded-2 shadow-sm overflow-hidden">
                                 <div class="bg-light px-3 py-2 border-bottom d-flex align-items-center">
-                                    <div class="bg-white p-1 rounded-1 shadow-sm me-2 border border-light">
-                                        <i class="ti ti-category text-primary"></i>
-                                    </div>
                                     <h6 class="mb-0 fw-bold text-dark fs-6">{{ $categoryName }}</h6>
                                 </div>
                                 <div class="p-3 vstack gap-3">
