@@ -5,6 +5,11 @@
     @php
         $routePrefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
     @endphp
+    
+    <!-- Choices.js Library (Loaded early to prevent blink) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    
     <style>
         /* Premium Modal Refinements */
         .modal-content {
@@ -75,17 +80,25 @@
             background-color: #ffffff !important;
             border: 1px solid #d1d5db !important;
             border-radius: 6px !important;
-            min-height: 32px !important;
-            padding: 2px 8px !important;
+            min-height: 31px !important; /* Matches form-control-sm */
+            height: 31px !important;
+            padding: 0 8px !important;
             display: flex;
             align-items: center;
+            overflow: hidden;
         }
 
         .choices__list--single {
-            padding: 0 !important;
+            padding: 0 0 0 4px !important;
             font-size: 0.825rem !important;
             font-weight: 400 !important;
             color: #111827 !important;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Horizontally left */
+            text-align: left;
+            height: 100%;
+            width: 100%;
         }
 
         .choices__list--dropdown {
@@ -124,6 +137,8 @@
         .choices__placeholder {
             opacity: 1;
             color: #6b7280;
+            width: 100%;
+            text-align: left;
         }
     </style>
     
@@ -558,7 +573,7 @@
                             <!-- Exam Filter -->
                             <div class="col-md-2">
                                 <label class="form-label fw-bold text-muted small mb-1">EXAM</label>
-                                <select name="exam" id="examFilter" class="choices-select" onchange="document.getElementById('filterForm').submit()">
+                                <select name="exam" id="examFilter" class="choices-select">
                                     <option value="">All Exams</option>
                                     @foreach($exams as $exam)
                                         <option value="{{ $exam->id }}" {{ request('exam') == $exam->id ? 'selected' : '' }}>
@@ -975,6 +990,42 @@
             });
         });
 
+        // Choices.js for Exam Filter
+        document.addEventListener('DOMContentLoaded', function () {
+            const examSelect = document.getElementById('examFilter');
+            if (examSelect && typeof Choices !== 'undefined') {
+                new Choices(examSelect, {
+                    searchEnabled: true,
+                    itemSelectText: '',
+                    shouldSort: false,
+                    placeholder: true,
+                    placeholderValue: 'All Exams',
+                    searchPlaceholderValue: 'Search exam name...',
+                    classNames: {
+                        containerOuter: 'choices',
+                        containerInner: 'choices__inner',
+                        input: 'choices__input',
+                        inputCloned: 'choices__input--cloned',
+                        list: 'choices__list',
+                        listItems: 'choices__list--multiple',
+                        listSingle: 'choices__list--single',
+                        listDropdown: 'choices__list--dropdown',
+                        item: 'choices__item',
+                        itemSelectable: 'choices__item--selectable',
+                        itemDisabled: 'choices__item--disabled',
+                        itemChoice: 'choices__item--choice',
+                        placeholder: 'choices__placeholder',
+                        activeState: 'is-active',
+                        focusState: 'is-focused',
+                        openState: 'is-open',
+                        disabledState: 'is-disabled',
+                        highlightedState: 'is-highlighted',
+                        selectedState: 'is-selected'
+                    }
+                });
+            }
+        });
+
         // Confirm Delete Function
         function confirmDelete(id) {
             const form = document.getElementById('delete-form-' + id);
@@ -1201,42 +1252,7 @@
         </script>
     @endif
 
-    <!-- Choices.js JS -->
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const examSelect = document.getElementById('examFilter');
-            if (examSelect) {
-                new Choices(examSelect, {
-                    searchEnabled: true,
-                    itemSelectText: '',
-                    shouldSort: false,
-                    placeholder: true,
-                    placeholderValue: 'All Exams',
-                    searchPlaceholderValue: 'Search exam name...',
-                    classNames: {
-                        containerOuter: 'choices',
-                        containerInner: 'choices__inner',
-                        input: 'choices__input',
-                        inputCloned: 'choices__input--cloned',
-                        list: 'choices__list',
-                        listItems: 'choices__list--multiple',
-                        listSingle: 'choices__list--single',
-                        listDropdown: 'choices__list--dropdown',
-                        item: 'choices__item',
-                        itemSelectable: 'choices__item--selectable',
-                        itemDisabled: 'choices__item--disabled',
-                        itemChoice: 'choices__item--choice',
-                        placeholder: 'choices__placeholder',
-                        activeState: 'is-active',
-                        focusState: 'is-focused',
-                        openState: 'is-open',
-                        disabledState: 'is-disabled',
-                        highlightedState: 'is-highlighted',
-                        selectedState: 'is-selected'
-                    }
-                });
-            }
-        });
+        // Any remaining final init code
     </script>
 @endsection

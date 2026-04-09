@@ -223,7 +223,7 @@
                                                                                 </div>
                                                                             </div>
                                                                             <button type="button" class="btn btn-sm btn-icon btn-light-danger rounded-circle"
-                                                                                    @click="study.newVisits.splice(nvIdx, 1)">
+                                                                                    @click="removeNewVisitFromExisting(index, nvIdx)">
                                                                                 <i class="ti ti-trash"></i>
                                                                             </button>
                                                                         </div>
@@ -347,9 +347,7 @@
                 </div>
                 <div class="card-footer bg-light">
                     <div class="d-flex justify-content-between align-items-center">
-                        <button type="button" class="btn btn-sm btn-primary" @click="addCaseStudy()">
-                            <i class="ti ti-plus me-1"></i> Add Another Case Study
-                        </button>
+                        <div></div>
                         <div>
                             <a href="{{ route($routePrefix . '.case-studies-bank.index') }}" class="btn btn-secondary me-2">
                                 <i class="ti ti-x me-1"></i> Cancel
@@ -425,9 +423,7 @@
             compliance: null,
             existingCaseStudies: @json($existingCaseStudies ?? []),
             deletedCaseStudyIds: [],
-            caseStudies: [
-                { title: '', order_no: 1, content: '', visits: [] }
-            ],
+            caseStudies: [],
             
             init() {
                 if(this.selectedExamId) {
@@ -499,10 +495,24 @@
 
             // Remove an existing (DB) visit from an existing case study
             removeExistingVisit(csIndex, vIdx, visitId) {
+                window.showAlert.confirm('Are you sure you want to remove this visit?', 'Remove Visit?', () => {
+                    const study = this.existingCaseStudies[csIndex];
+                    if (!study.deletedVisitIds) study.deletedVisitIds = [];
+                    study.deletedVisitIds.push(visitId);
+                    study.visits.splice(vIdx, 1);
+                });
+            },
+
+            // Remove a new (unsaved) visit from an existing case study
+            removeNewVisitFromExisting(csIndex, nvIdx) {
                 const study = this.existingCaseStudies[csIndex];
-                if (!study.deletedVisitIds) study.deletedVisitIds = [];
-                study.deletedVisitIds.push(visitId);
-                study.visits.splice(vIdx, 1);
+                if (study.newVisits[nvIdx].title || study.newVisits[nvIdx].description) {
+                    window.showAlert.confirm('Are you sure you want to remove this unsaved visit?', 'Remove Visit?', () => {
+                        study.newVisits.splice(nvIdx, 1);
+                    });
+                } else {
+                    study.newVisits.splice(nvIdx, 1);
+                }
             },
 
             removeCaseStudy(index) {

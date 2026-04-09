@@ -25614,6 +25614,7 @@ select.form-control[data-multiselectsplitter-secondselect-selector] {
 
 .choices__item--selectable {
   cursor: pointer;
+  padding-top: 4px;
 }
 
 .choices__item--disabled {
