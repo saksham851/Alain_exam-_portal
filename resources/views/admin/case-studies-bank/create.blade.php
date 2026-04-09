@@ -218,7 +218,7 @@
                                                                             <div class="d-flex align-items-center gap-3">
 
                                                                                 <div>
-                                                                                    <h6 class="fw-bold text-dark mb-0">New Visit #<span x-text="nvIdx + 1"></span></h6>
+                                                                                    <h6 class="fw-bold text-dark mb-0">New Visit #<span x-text="(study.visits ? study.visits.length : 0) + nvIdx + 1"></span></h6>
                                                                                     <small class="text-success d-block" style="font-size: 11px;">Adding to existing case study</small>
                                                                                 </div>
                                                                             </div>
