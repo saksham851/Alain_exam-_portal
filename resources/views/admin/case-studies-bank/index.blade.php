@@ -1080,7 +1080,23 @@
             }
 
             const text = selected === 1 ? 'case study' : 'case studies';
-            return confirm(`Are you sure you want to copy ${selected} ${text} to the selected section?`);
+            const msg = `Are you sure you want to copy ${selected} ${text} to the selected section?`;
+            
+            if (window.showAlert && window.showAlert.confirm) {
+                window.showAlert.confirm(msg, 'Copy Case Studies', function() {
+                    const form = document.getElementById('copyForm');
+                    // Add a hidden field to indicate confirmation or just submit
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'confirmed';
+                    input.value = '1';
+                    form.appendChild(input);
+                    form.submit();
+                });
+                return false;
+            }
+
+            return confirm(msg);
         });
 
         // Initialize

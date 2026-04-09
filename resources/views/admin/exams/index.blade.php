@@ -546,8 +546,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     form.submit();
                 }
             );
-        } else if(confirm('Are you sure you want to unpublish this exam?')) {
-            form.submit();
+        } else {
+             showAlert.confirm(
+                'Are you sure you want to unpublish this exam? It will no longer be visible to students.',
+                'Unpublish Exam',
+                function() {
+                    form.submit();
+                }
+            );
         }
     }
 
@@ -561,16 +567,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             );
         } else {
-            if(confirm('Are you sure you want to activate this exam?')) {
-                form.submit();
-            }
+             showAlert.confirm(
+                'Are you sure you want to activate this exam?',
+                'Activate Exam',
+                function() {
+                    form.submit();
+                }
+            );
         }
     }
+
 
     function showPublishModal(form, examId) {
         if(!examId) {
              // Fallback if no ID provided
-             if(confirm('Are you sure you want to publish this exam?')) form.submit();
+             showAlert.confirm(
+                'Are you sure you want to publish this exam?',
+                'Publish Exam',
+                function() {
+                    form.submit();
+                }
+            );
              return;
         }
         
@@ -816,7 +833,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function autoFixCompliance(examId) {
         if(!examId) return;
-        if(!confirm('This action will automatically distribute uncategorized questions to content areas that are missing questions to meet compliance requirements. This cannot be undone. Do you want to proceed?')) return;
+        if (typeof showAlert !== 'undefined' && showAlert.confirm) {
+            showAlert.confirm(
+                'This action will automatically distribute uncategorized questions to content areas that are missing questions to meet compliance requirements. This cannot be undone. Do you want to proceed?',
+                'Auto-Distribute Questions',
+                function() {
+                    performAutoFix(examId);
+                }
+            );
+            return;
+        } else if(!confirm('This action will automatically distribute uncategorized questions to content areas that are missing questions to meet compliance requirements. This cannot be undone. Do you want to proceed?')) {
+            return;
+        }
+        performAutoFix(examId);
+    }
+
+    function performAutoFix(examId) {
 
         const loadingSpinner = document.getElementById('complianceLoading');
         const contentArea = document.getElementById('complianceContent');

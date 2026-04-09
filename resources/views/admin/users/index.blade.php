@@ -298,10 +298,20 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 // Quick adjust attempts function
 function quickAdjustAttempts(studentId, examId, adjustment, examName) {
-    if (!confirm(`Adjust attempts for "${examName}" by ${adjustment > 0 ? '+' : ''}${adjustment}?`)) {
-        return;
+    if (typeof showAlert !== 'undefined' && showAlert.confirm) {
+        showAlert.confirm(
+            `Adjust attempts for "${examName}" by ${adjustment > 0 ? '+' : ''}${adjustment}?`,
+            'Adjust Attempts',
+            function() {
+                performAdjustment(studentId, examId, adjustment);
+            }
+        );
+    } else if (confirm(`Adjust attempts for "${examName}" by ${adjustment > 0 ? '+' : ''}${adjustment}?`)) {
+        performAdjustment(studentId, examId, adjustment);
     }
+}
 
+function performAdjustment(studentId, examId, adjustment) {
     fetch('/admin/users/manage-attempts', {
         method: 'POST',
         headers: {
@@ -317,15 +327,18 @@ function quickAdjustAttempts(studentId, examId, adjustment, examName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            if(window.showAlert) showAlert.success(data.message);
+            else alert(data.message);
             location.reload();
         } else {
-            alert('Error: ' + data.message);
+            if(window.showAlert) showAlert.error(data.message);
+            else alert('Error: ' + data.message);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Failed to update attempts');
+        if(window.showAlert) showAlert.error('Failed to update attempts');
+        else alert('Failed to update attempts');
     });
 }
 </script>

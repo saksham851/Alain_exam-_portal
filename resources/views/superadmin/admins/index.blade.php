@@ -118,10 +118,11 @@
                                                 </li>
                                                 @if($admin->status)
                                                 <li>
-                                                    <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.deactivate', $admin->id) : route('superadmin.admins.deactivate', $admin->id) }}" method="POST">
+                                                    <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.deactivate', $admin->id) : route('superadmin.admins.deactivate', $admin->id) }}" method="POST" id="deactivate-form-{{ $admin->id }}">
                                                         @csrf
                                                         @method('PATCH')
-                                                        <button type="submit" class="dropdown-item no-debounce text-warning">
+                                                        <button type="button" class="dropdown-item no-debounce text-warning"
+                                                            onclick="showAlert.confirm('Are you sure you want to deactivate this staff account?', 'Deactivate Account', function() { document.getElementById('deactivate-form-{{ $admin->id }}').submit(); })">
                                                             <i class="ti ti-user-off me-2 text-warning"></i>Deactivate
                                                         </button>
                                                     </form>
@@ -139,10 +140,11 @@
                                                 @endif
                                                 <li>
                                                     <form action="{{ auth()->user()->role === 'admin' ? route('admin.admins.destroy', $admin->id) : route('superadmin.admins.destroy', $admin->id) }}" method="POST"
-                                                        onsubmit="return confirm('Are you sure you want to permanently delete this staff member?');">
+                                                        id="delete-form-{{ $admin->id }}">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="dropdown-item no-debounce text-danger">
+                                                        <button type="button" class="dropdown-item no-debounce text-danger" 
+                                                            onclick="showDeleteModal(document.getElementById('delete-form-{{ $admin->id }}'), 'Are you sure you want to permanently delete this staff member?')">
                                                             <i class="ti ti-trash me-2 text-danger"></i>Delete
                                                         </button>
                                                     </form>
