@@ -80,7 +80,11 @@
                                     @endphp
                                     <td>{{ $earned }} pts</td>
                                 @endforeach
-                                <td><strong>{{ $attempt->total_score }} pts</strong></td>
+                                <td>
+                                    <span class="badge {{ $attempt->is_passed ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }} fs-6 fw-bold px-2 py-1">
+                                        {{ $attempt->total_score }} pts
+                                    </span>
+                                </td>
                                 <td>
                                     <span class="badge {{ $attempt->is_passed ? 'bg-success' : 'bg-danger' }}">
                                         {{ $attempt->is_passed ? 'Passed' : 'Failed' }}

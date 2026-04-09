@@ -232,7 +232,7 @@
                                     @php
                                         $isPassed = (bool) ($attempt->is_passed ?? false);
                                     @endphp
-                                    <span class="badge {{ $isPassed ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }}">
+                                    <span class="badge {{ $isPassed ? 'bg-light-success text-success' : 'bg-light-danger text-danger' }} fs-6 fw-bold px-2 py-1">
                                         {{ round($attempt->total_score, 1) }} pts
                                     </span>
                                 </td>

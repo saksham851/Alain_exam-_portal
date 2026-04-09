@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Exam;
 
 class ExamController extends Controller
@@ -169,7 +170,7 @@ class ExamController extends Controller
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
+            'name' => ['required', 'string', 'max:255', 'unique:exams,name', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'exam_code' => 'nullable|string|max:50|unique:exams,exam_code',
             'category_id' => 'required|exists:exam_categories,id',
             'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
@@ -183,6 +184,7 @@ class ExamController extends Controller
             'name.regex' => 'The exam name must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
             'certification_type.regex' => 'The certification type must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
             'duration_minutes.min' => 'The exam duration must be at least 1 minute.',
+            'name.unique' => 'An exam with this name already exists. Please choose a unique name.',
         ]);
 
         $exam = Exam::create([
@@ -293,7 +295,7 @@ class ExamController extends Controller
         $request->merge(['certification_type' => $certificationType]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
+            'name' => ['required', 'string', 'max:255', 'unique:exams,name,' . $id, 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
             'exam_code' => 'nullable|string|max:50|unique:exams,exam_code,' . $id,
             'category_id' => 'required|exists:exam_categories,id',
             'certification_type' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$/'],
@@ -307,6 +309,7 @@ class ExamController extends Controller
             'name.regex' => 'The exam name must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
             'certification_type.regex' => 'The certification type must only contain letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ).',
             'duration_minutes.min' => 'The exam duration must be at least 1 minute.',
+            'name.unique' => 'An exam with this name already exists. Please choose a unique name.',
         ]);
 
         $exam->update([
@@ -421,8 +424,16 @@ class ExamController extends Controller
         $imported = 0;
         while (($data = fgetcsv($handle)) !== false) {
             if (count($data) >= 3) {
+                $examName = trim(preg_replace('/\s+/', ' ', $data[0]));
+                
+                // Check if exam name already exists (case-insensitive)
+                $exists = Exam::where('name', $examName)->exists();
+                if ($exists) {
+                    continue; // Skip existing names
+                }
+
                 Exam::create([
-                    'name' => $data[0],
+                    'name' => $examName,
                     'description' => $data[1] ?? null,
                     'duration_minutes' => $data[2] ?? 60,
                     'status' => 1,
@@ -441,8 +452,10 @@ class ExamController extends Controller
     public function clone(Request $request, $id)
     {
         $request->validate([
-            'new_exam_name' => 'required|string|max:255',
+            'new_exam_name' => 'required|string|max:255|unique:exams,name',
             'new_exam_code' => 'required|string|max:50|unique:exams,exam_code',
+        ], [
+            'new_exam_name.unique' => 'An exam with this name already exists. Please choose a unique name.',
         ]);
 
         $sourceExam = Exam::with([
