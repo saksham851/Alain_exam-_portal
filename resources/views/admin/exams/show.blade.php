@@ -109,11 +109,11 @@
             <i class="ti ti-checklist me-2 text-primary"></i> Standard Compliance Validation
         </h5>
         <div class="d-flex align-items-center gap-2">
-            @if(!$compliance['valid'])
+            {{-- @if(!$compliance['valid'])
                 <span class="badge bg-danger-subtle text-danger"><i class="ti ti-alert-triangle me-1"></i> Issues Found</span>
             @else
                 <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i> Validated</span>
-            @endif
+            @endif --}}
             {{-- Expand/Collapse Toggle Button --}}
             <button
                 class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3"
@@ -188,7 +188,7 @@
                 </table>
             </div>
         </div>
-        @if(!$compliance['valid'] && !empty($compliance['errors']))
+        {{-- @if(!$compliance['valid'] && !empty($compliance['errors']))
             <div class="bg-danger-subtle text-danger p-3">
                 <h6 class="fw-bold"><i class="ti ti-alert-circle me-1"></i> Corrections Needed:</h6>
                 <ul class="mb-0 small">
@@ -200,7 +200,7 @@
                     @endif
                 </ul>
             </div>
-        @endif
+        @endif --}}
     </div>
 </div>
 

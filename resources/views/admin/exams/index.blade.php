@@ -84,15 +84,9 @@
                     <h5 class="mb-0">All Exams <span
                             class="badge bg-light-secondary text-secondary ms-2 small">{{ \App\Models\Exam::where('status', 1)->count() }}
                             Total</span></h5>
-                    @if(auth()->user()->role !== 'manager')
                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createExamModal">
                             <i class="ti ti-plus me-1"></i> Create Exam
                         </button>
-                    @else
-                        <a href="{{ route('manager.exams.create') }}" class="btn btn-primary btn-sm">
-                            <i class="ti ti-plus me-1"></i> Create Exam
-                        </a>
-                    @endif
                 </div>
 
     <!-- Create Exam Modal -->
@@ -111,7 +105,7 @@
                     <div class="row g-3">
                         <!-- Option 1: Scratch -->
                         <div class="col-md-6">
-                            <a href="{{ route('admin.exams.create') }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
+                            <a href="{{ route($routePrefix . '.create') }}" class="card h-100 border-2 hover-shadow text-decoration-none text-dark" style="transition: all 0.3s;">
                                 <div class="card-body text-center p-4">
                                     <div class="mb-3">
                                         <div class="rounded-circle bg-light-primary d-inline-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
@@ -125,8 +119,7 @@
                         </div>
 
                         <!-- Option 2: Clone -->
-                        @if(auth()->user()->role !== 'manager')
-                            <div class="col-md-6">
+                        <div class="col-md-6">
                                 @if($allExams->isNotEmpty())
                                     <div class="card h-100 border-2 border-primary hover-shadow text-decoration-none text-dark" style="cursor: pointer; transition: all 0.3s;" data-bs-toggle="modal" data-bs-target="#cloneExamModal">
                                         <div class="card-body text-center p-4">
@@ -153,7 +146,7 @@
                                     </div>
                                 @endif
                             </div>
-                        @endif
+                        </div>
                     </div>
                 </div>
     </div>

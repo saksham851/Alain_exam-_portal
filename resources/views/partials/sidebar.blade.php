@@ -120,9 +120,7 @@
                             <li class="pc-item {{ request()->routeIs('manager.exams.index') ? 'active' : '' }}">
                                 <a href="{{ route('manager.exams.index') }}" class="pc-link">All Exams</a>
                             </li>
-                            <li class="pc-item {{ request()->routeIs('manager.exams.create') ? 'active' : '' }}">
-                                <a href="{{ route('manager.exams.create') }}" class="pc-link">Create Exam</a>
-                            </li>
+
                             <li class="pc-item {{ request()->routeIs('manager.sections.index') ? 'active' : '' }}">
                                 <a href="{{ route('manager.sections.index') }}" class="pc-link">Sections</a>
                             </li>
