@@ -74,7 +74,7 @@
                                 <td>{{ $exam->category->name ?? 'N/A' }}</td>
                                 <td>
                                     <span class="badge {{ $exam->is_active ? 'bg-success' : 'bg-secondary' }} rounded-pill px-2">
-                                        {{ $exam->is_active ? 'Published' : 'Draft' }}
+                                        {{ $exam->is_active ? 'Published' : 'Unpublished' }}
                                     </span>
                                 </td>
                                 <td class="text-end pe-4">{{ $exam->created_at->diffForHumans() }}</td>

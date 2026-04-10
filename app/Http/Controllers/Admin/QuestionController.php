@@ -135,14 +135,16 @@ class QuestionController extends Controller
         $exams = Exam::where('status', 1)->with('examStandard.categories.contentAreas')->get();
         
         $existingQuestions = collect();
+        $preselectedVisit = null;
         if ($request->has('visit_id')) {
+            $preselectedVisit = \App\Models\Visit::with('caseStudy.section')->find($request->visit_id);
             $existingQuestions = Question::where('visit_id', $request->visit_id)
                 ->where('status', 1)
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
 
-        return view('admin.questions.edit', compact('question', 'exams', 'existingQuestions'));
+        return view('admin.questions.edit', compact('question', 'exams', 'existingQuestions', 'preselectedVisit'));
     }
 
     /**
@@ -220,6 +222,14 @@ class QuestionController extends Controller
         DB::beginTransaction();
 
         try {
+            // Update Visit details if present
+            if ($request->has('visit_title')) {
+                $visit->update([
+                    'title' => $request->visit_title,
+                    'description' => $request->visit_description,
+                ]);
+            }
+
             $createdCount = 0;
             $updatedCount = 0;
 
@@ -342,11 +352,11 @@ class QuestionController extends Controller
 
             DB::commit();
 
-            $messageParts = [];
-            if ($createdCount > 0) $messageParts[] = "created {$createdCount} new " . \Illuminate\Support\Str::plural('question', $createdCount);
-            if ($updatedCount > 0) $messageParts[] = "updated {$updatedCount} existing " . \Illuminate\Support\Str::plural('question', $updatedCount);
-            
-            $message = "Successfully " . implode(' and ', $messageParts) . "!";
+            if ($createdCount > 0) {
+                $message = "Successfully created {$createdCount} new " . \Illuminate\Support\Str::plural('question', $createdCount) . " and updated visit details.";
+            } else {
+                $message = "All changes for visit '{$visit->title}' have been saved successfully!";
+            }
             
             if ($request->has('return_url')) {
                 return redirect($request->return_url)->with('success', $message);

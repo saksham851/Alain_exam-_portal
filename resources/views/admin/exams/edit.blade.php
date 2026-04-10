@@ -601,7 +601,7 @@
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="toggleDeletedSections()" id="deletedSectionsToggleBtn">
                         <i class="ti ti-trash me-1"></i> Deleted Sections
                     </button>
-                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="openCreateSectionModal()">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 d-inline-flex align-items-center" onclick="openCreateSectionModal()">
                         <i class="ti ti-plus me-1"></i> Add Section
                     </button>
                     <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle" type="button" data-bs-toggle="collapse" data-bs-target="#examSectionsBody" aria-expanded="true">
@@ -655,7 +655,7 @@
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3" onclick="openCreateCaseStudyModal()">
+                    <button type="button" class="btn btn-sm btn-success rounded-pill px-3 d-inline-flex align-items-center" onclick="openCreateCaseStudyModal()">
                         <i class="ti ti-plus me-1"></i> Add Case Study
                     </button>
                     <button class="btn btn-sm btn-icon btn-light-secondary rounded-circle" type="button" data-bs-toggle="collapse" data-bs-target="#examContentBody" aria-expanded="true">
@@ -689,6 +689,10 @@ let activeSectionId = null;
 let isExamActive = {{ $exam->is_active ? 'true' : 'false' }};
 const rolePrefix = "{{ $baseUrl }}";
 
+// Global Modals
+var visitModal;
+var visitForm;
+
 function showLockedModal(action = 'modify') {
     Swal.fire({
         title: 'Exam is Published!',
@@ -715,6 +719,12 @@ function showLockedModal(action = 'modify') {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Modals
+    if (document.getElementById('visitModal')) {
+        visitModal = new bootstrap.Modal(document.getElementById('visitModal'));
+    }
+    visitForm = document.getElementById('visitForm');
+
     loadExamSections().then(() => {
         // Check for section_id in URL params
         const urlParams = new URLSearchParams(window.location.search);
@@ -806,7 +816,7 @@ async function loadExamSections() {
                     <img src="https://illustrations.popsy.co/gray/work-from-home.svg" alt="No Sections" style="height: 120px;" class="mb-3">
                     <h6 class="fw-bold">No Sections Found</h6>
                     <p class="text-muted small">Start by adding your first section to organize case studies.</p>
-                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4" onclick="openCreateSectionModal()">
+                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 d-inline-flex align-items-center" onclick="openCreateSectionModal()">
                         <i class="ti ti-plus me-1"></i> Add My First Section
                     </button>
                 </div>
@@ -866,7 +876,7 @@ function renderSectionContent(caseStudies) {
                 <i class="ti ti-notes fs-1 text-muted mb-3 d-block"></i>
                 <h6 class="fw-bold">No Case Studies Found</h6>
                 <p class="text-muted small">This section is currently empty.</p>
-                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4" onclick="openCreateCaseStudyModal()">
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 d-inline-flex align-items-center" onclick="openCreateCaseStudyModal()">
                     <i class="ti ti-plus me-1"></i> Add Case Study
                 </button>
             </div>
@@ -915,7 +925,7 @@ function renderSectionContent(caseStudies) {
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-xs btn-outline-secondary" onclick="editVisit(${visit.id})">Edit</button>
-                            <button class="btn btn-xs btn-primary px-3" onclick="addQuestion(${visit.id})"><i class="ti ti-plus me-1"></i> Question</button>
+                            <button class="btn btn-xs btn-dark d-inline-flex align-items-center px-3" onclick="addQuestion(${visit.id})"><i class="ti ti-plus me-1"></i> Question</button>
                             <button class="btn btn-xs btn-outline-danger" onclick="deleteVisit(${visit.id})">Delete</button>
                         </div>
                     </div>
@@ -1305,38 +1315,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 @endif
 @if(isset($exam))
-<!-- Modals for AJAX operations -->
-<div class="modal fade" id="visitModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-bottom">
-                <h5 class="modal-title fw-bold" id="visitModalTitle">Add Visit</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="visitForm">
-                <div class="modal-body p-4">
-                    <input type="hidden" name="case_study_id" id="modal_visit_cs_id">
-                    <input type="hidden" name="visit_id" id="modal_visit_id">
-                    <div class="mb-3">
-                        <label class="form-label">Visit Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" id="modal_visit_title" class="form-control" placeholder="e.g., Physical Examination" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description (Optional)</label>
-                        <textarea name="description" id="modal_visit_description" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="saveVisitBtn">Save Visit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Visit Modal Removed (Redirecting to Question Bank Page) -->
 
 <script>
-
 function addQuestion(visitId) {
     if (isExamActive) {
         showLockedModal('add questions');
@@ -1420,19 +1401,15 @@ function loadContentAreasForTag(select, selectedAreaId = '') {
     }
 }
 
-const visitModal = new bootstrap.Modal(document.getElementById('visitModal'));
-const visitForm = document.getElementById('visitForm');
+// Modal initialized in top script block
 
 function addVisit(csId) {
     if (isExamActive) {
         showLockedModal('add visits');
         return;
     }
-    visitForm.reset();
-    document.getElementById('modal_visit_cs_id').value = csId;
-    document.getElementById('modal_visit_id').value = '';
-    document.getElementById('visitModalTitle').textContent = 'Add Visit';
-    visitModal.show();
+    // Redirect to the Question Bank page which handles Visit Title/Content + Questions
+    window.location.href = `/${rolePrefix}/questions/create?visit_id_new_for_cs=${csId}&return_url=${getReturnUrl()}`;
 }
 
 async function editVisit(id) {
@@ -1440,66 +1417,9 @@ async function editVisit(id) {
         showLockedModal('edit visits');
         return;
     }
-    try {
-        const response = await fetch(`/${rolePrefix}/api/visits-detail/${id}`);
-        const data = await response.json();
-        if (data.success) {
-            const v = data.visit;
-            document.getElementById('modal_visit_id').value = v.id;
-            document.getElementById('modal_visit_cs_id').value = v.case_study_id;
-            document.getElementById('modal_visit_title').value = v.title;
-            document.getElementById('modal_visit_description').value = v.description || '';
-            document.getElementById('visitModalTitle').textContent = 'Edit Visit';
-            visitModal.show();
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-visitForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const saveBtn = document.getElementById('saveVisitBtn');
-    const id = document.getElementById('modal_visit_id').value;
-    
-    const formData = new FormData(visitForm);
-    const data = Object.fromEntries(formData.entries());
-    data._token = document.querySelector('meta[name="csrf-token"]').content;
-
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
-
-    const url = id ? `/${rolePrefix}/api/visits/${id}` : `/${rolePrefix}/api/visits`;
-    const method = id ? 'PUT' : 'POST';
-
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': data._token,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save Visit';
-
-        if (response.ok) {
-            visitModal.hide();
-            loadSectionContent(activeSectionId);
-            Swal.fire('Success', id ? 'Visit updated' : 'Visit created', 'success');
-        } else {
-            Swal.fire('Error', result.message || 'Something went wrong', 'error');
-        }
-    } catch (err) {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save Visit';
-        console.error(err);
-    }
-});
+    // Redirect to the Question Bank page which now handles Visit Title/Content editing
+    window.location.href = `/${rolePrefix}/questions/create?visit_id=${id}&return_url=${getReturnUrl()}`;
+} // Visit save logic moved to Question Bank page
 
 // Helper to construct return URL with current section state
 function getReturnUrl() {

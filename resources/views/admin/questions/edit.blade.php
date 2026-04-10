@@ -98,11 +98,32 @@
                                     <option :value="v.id" :selected="String(v.id) === String(selectedVisitId)" x-text="v.order_no + '. ' + v.title"></option>
                                 </template>
                             </select>
-                            @error('visit_id') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Visit Details Card (Added for Edit Visit flow) -->
+            <template x-if="selectedVisitId && !isEdit">
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;" :style="isActiveExam ? 'opacity:0.5;pointer-events:none' : ''">
+                    <div class="card-header py-3 px-4" style="background: linear-gradient(135deg, #fffcf5 0%, #fffbf0 100%); border-bottom: 2px solid #fff3cd;">
+                        <h5 class="mb-0 fw-bold text-warning">
+                            <i class="ti ti-edit me-2"></i>Visit Details
+                        </h5>
+                        <small class="text-muted">Update the visit title and clinical content/description.</small>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark">Visit Title <span class="text-danger">*</span></label>
+                            <input type="text" name="visit_title" class="form-control" x-model="visitTitle" required>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold text-dark">Visit Content / Description</label>
+                            <textarea id="visit_description_editor" name="visit_description" class="form-control" x-model="visitDescription" rows="5"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </template>
 
             <!-- Existing Questions (Alpine) -->
             <template x-if="existingQuestions.length > 0">
@@ -589,10 +610,7 @@
 
 @php
     $isEdit = false;
-    // Initial data structure for Alpine
-    // If Editing, we populate ONE question
     $initialQuestions = [];
-    
     $selectedSubCaseId = null;
     $selectedCaseStudyId = null;
     $selectedExamId = null;
@@ -636,6 +654,11 @@
         $selectedSubCaseId = $question->visit ? $question->visit->case_study_id : null;
         $selectedCaseStudyId = ($question->visit && $question->visit->caseStudy) ? $question->visit->caseStudy->section_id : null;
         $selectedExamId = ($question->visit && $question->visit->caseStudy && $question->visit->caseStudy->section) ? $question->visit->caseStudy->section->exam_id : null;
+    } elseif(isset($preselectedVisit)) {
+        $selectedVisitId = $preselectedVisit->id;
+        $selectedSubCaseId = $preselectedVisit->case_study_id;
+        $selectedCaseStudyId = $preselectedVisit->caseStudy ? $preselectedVisit->caseStudy->section_id : null;
+        $selectedExamId = ($preselectedVisit->caseStudy && $preselectedVisit->caseStudy->section) ? $preselectedVisit->caseStudy->section->exam_id : null;
     } else {
         $oldQuestions = old('questions');
         if ($oldQuestions && is_array($oldQuestions)) {
@@ -726,6 +749,9 @@ function questionForm() {
         selectedCaseStudyId: {{ old('section_id', request('section_id') ?? ($selectedCaseStudyId ?? 'null')) }},
         selectedSubCaseId: {{ old('sub_case_id', request('case_study_id') ?? ($selectedSubCaseId ?? 'null')) }},
         selectedVisitId: {{ old('visit_id', request('visit_id') ?? ($selectedVisitId ?? 'null')) }},
+        visitTitle: @json($preselectedVisit->title ?? ''),
+        visitDescription: @json($preselectedVisit->description ?? ''),
+        visitDescriptionEditor: null,
         
         // Exam Standard Data for Tagging
         examStandardCategories: @json($initialStandardCategories), // [{id, name, content_areas: []}]
@@ -755,6 +781,18 @@ function questionForm() {
                     this.questions.forEach((q) => {
                         this.initEditor(q.id);
                     });
+                    
+                    // Initialize Visit Content Editor
+                    const visitEl = document.getElementById('visit_description_editor');
+                    if(visitEl) {
+                        ClassicEditor.create(visitEl).then(editor => {
+                            this.visitDescriptionEditor = editor;
+                            editor.setData(this.visitDescription);
+                            editor.model.document.on('change:data', () => {
+                                this.visitDescription = editor.getData();
+                            });
+                        });
+                    }
                 } else {
                     console.warn('ClassicEditor not loaded yet. Editors will be initialized on first demand.');
                 }
