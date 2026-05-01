@@ -31,6 +31,14 @@ use App\Http\Controllers\SuperAdmin\AdminManagementController;
 Route::get('/gohighlevel/initiate', [GoHighLevelController::class, 'initiate'])->name('ghl.initiate');
 Route::get('/getAccessToken', [GoHighLevelController::class, 'callback'])->name('ghl.callback');
 
+// Temporary Schema Sync Route
+Route::get('/ghl/sync-schema', function() {
+    $token = \App\Models\GoHighLevelToken::first();
+    if (!$token) return "No GHL Token found.";
+    \App\Http\Controllers\GhlController\Jobs\CreateGHLCustomObject::dispatchSync($token);
+    return "GHL Schema Sync Job Dispatched Successfully. Check logs.";
+});
+
 // Auth Routes (Guest only)
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -176,7 +184,15 @@ Route::middleware(['auth'])->group(function () {
         // Note: manager group intentionally excludes:
         // - exams.publish
         // - exams.activate
-        // - attempts (Results)
+        // - attempts (Results) - ADDED BELOW
+        Route::get('attempts', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('attempts.index');
+        Route::get('attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
+        Route::get('attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');
+
+        // Performance Analytics
+        Route::get('performance', [\App\Http\Controllers\Admin\PerformanceController::class, 'index'])->name('performance.index');
+        Route::get('performance/export', [\App\Http\Controllers\Admin\PerformanceController::class, 'export'])->name('performance.export');
+
         // - users.manage-attempts
     });
 
@@ -292,6 +308,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('attempts', [\App\Http\Controllers\Admin\AttemptController::class, 'index'])->name('attempts.index');
         Route::get('attempts/{attempt_id}', [\App\Http\Controllers\Admin\AttemptController::class, 'show'])->name('attempts.show');
         Route::get('attempts/by-user/{userId}', [\App\Http\Controllers\Admin\AttemptController::class, 'byUser'])->name('attempts.by-user');
+
+        // Performance Analytics
+        Route::get('performance', [\App\Http\Controllers\Admin\PerformanceController::class, 'index'])->name('performance.index');
+        Route::get('performance/export', [\App\Http\Controllers\Admin\PerformanceController::class, 'export'])->name('performance.export');
 
     });
 

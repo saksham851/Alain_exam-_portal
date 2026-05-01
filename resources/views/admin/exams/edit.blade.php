@@ -371,7 +371,7 @@
                             <div class="input-group">
                                 <select name="certification_type" id="certificationTypeSelect" class="form-select" required>
                                     <option value="">Select Certification Type</option>
-                                    <option value="NHMCE" {{ old('certification_type', optional($exam)->certification_type) == 'NHMCE' ? 'selected' : '' }}>NHMCE</option>
+                                    <option value="NCMHCE" {{ (old('certification_type', optional($exam ?? null)->certification_type) == 'NCMHCE' || (!isset($exam) && !old('certification_type'))) ? 'selected' : '' }}>NCMHCE</option>
                                 </select>
                                 <input type="text" name="new_certification_type" id="newCertificationTypeInput" class="form-control" placeholder="Enter new certification type" style="display: none;" pattern="^[a-zA-Z0-9\s\-\_\(\)\.\&\:\,]+$" title="Only letters, numbers, spaces, and common symbols ( - _ ( ) . & : , ) are allowed.">
                                 <button type="button" id="addNewTypeBtn" class="btn btn-primary" style="white-space: nowrap;">
@@ -396,7 +396,7 @@
                             let isAddingNew = false;
                             
                             // Check if we should be in "add new" mode initially (e.g. on validation error)
-                            @if(old('new_certification_type') || (isset($exam) && $exam->certification_type && $exam->certification_type != 'NHMCE'))
+                            @if(old('new_certification_type') || (isset($exam) && $exam->certification_type && $exam->certification_type != 'NCMHCE'))
                                 toggleMode();
                             @endif
 
@@ -412,7 +412,7 @@
                                     newInputElement.required = true;
                                     newInputElement.disabled = false;
                                     if(newInputElement.value === '') {
-                                        newInputElement.value = "{{ isset($exam) && $exam->certification_type != 'NHMCE' ? $exam->certification_type : old('new_certification_type') }}";
+                                        newInputElement.value = "{{ isset($exam) && $exam->certification_type != 'NCMHCE' ? $exam->certification_type : old('new_certification_type') }}";
                                     }
                                     newInputElement.focus();
 

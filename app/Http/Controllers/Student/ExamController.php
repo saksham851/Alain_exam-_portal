@@ -7,6 +7,7 @@ use App\Models\StudentExam;
 use Illuminate\Http\Request;
 use App\Http\Controllers\GhlController\Services\GHLRecordService;
 use App\Http\Controllers\GhlController\Jobs\ProcessGHLRecord;
+use App\Http\Controllers\GhlController\GhlConfig;
 
 class ExamController extends Controller
 {
@@ -16,14 +17,14 @@ class ExamController extends Controller
     public function index()
     {
         $studentId = auth()->id();
-        
+
         // Get exams assigned to the logged-in student
         $studentExams = StudentExam::where('student_id', $studentId)
             ->with('exam.category')
             ->get();
-        
+
         // Extract the exam objects with student-specific data
-        $exams = $studentExams->map(function($studentExam) {
+        $exams = $studentExams->map(function ($studentExam) {
             $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
             $exam = $studentExam->exam;
             $exam->attempts_left = $attemptsLeft;
@@ -32,52 +33,52 @@ class ExamController extends Controller
             $exam->student_exam_id = $studentExam->id;
             return $exam;
         });
-        
+
         return view('exams.index', compact('exams'));
     }
-    
+
     /**
      * Show exam details
      */
     public function show($id)
     {
         $studentId = auth()->id();
-        
+
         // Get exam details for student
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
             ->with([
-                'exam.sections' => function($query) {
+                'exam.sections' => function ($query) {
                     $query->where('sections.status', 1);
                 },
-                'exam.sections.caseStudies' => function($query) {
+                'exam.sections.caseStudies' => function ($query) {
                     $query->where('case_studies.status', 1);
                 },
-                'exam.sections.caseStudies.visits' => function($query) {
+                'exam.sections.caseStudies.visits' => function ($query) {
                     $query->where('visits.status', 1);
                 },
-                'exam.sections.caseStudies.visits.questions' => function($query) {
+                'exam.sections.caseStudies.visits.questions' => function ($query) {
                     $query->where('questions.status', 1);
                 },
-                'attempts' => function($query) {
+                'attempts' => function ($query) {
                     $query->where('status', 'submitted')->orderBy('created_at', 'desc');
                 }
             ])
             ->firstOrFail();
-            
+
         $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
         $exam = $studentExam->exam;
         $exam->attempts_left = $attemptsLeft;
         $exam->max_attempts = $studentExam->attempts_allowed;
         $exam->expiry_date = $studentExam->expiry_date;
         $exam->student_exam_id = $studentExam->id;
-        
+
         // Get all completed attempts
         $attempts = $studentExam->attempts;
-        
+
         return view('exams.show', compact('exam', 'attempts'));
     }
-    
+
     /**
      * Show exam instructions before starting
      */
@@ -88,25 +89,25 @@ class ExamController extends Controller
             ->where('exam_id', $id)
             ->with('exam.category')
             ->firstOrFail();
-            
+
         $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
-        
+
         // Validate can start
         if ($attemptsLeft <= 0) {
             return redirect()->route('exams.index')
                 ->with('error', 'No attempts remaining');
         }
-        
+
         if (now() > $studentExam->expiry_date) {
             return redirect()->route('exams.index')
                 ->with('error', 'Exam has expired');
         }
-        
+
         $exam = $studentExam->exam;
-        
+
         return view('exams.instructions', compact('exam', 'studentExam', 'attemptsLeft'));
     }
-    
+
     /**
      * Confirm and create exam attempt
      */
@@ -116,20 +117,20 @@ class ExamController extends Controller
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
             ->firstOrFail();
-            
+
         $attemptsLeft = $studentExam->attempts_allowed - $studentExam->attempts_used;
-        
+
         // Validate can start
         if ($attemptsLeft <= 0) {
             return redirect()->route('exams.index')
                 ->with('error', 'No attempts remaining');
         }
-        
+
         if (now() > $studentExam->expiry_date) {
             return redirect()->route('exams.index')
                 ->with('error', 'Exam has expired');
         }
-        
+
         // Create attempt
         $attempt = \App\Models\ExamAttempt::create([
             'student_exam_id' => $studentExam->id,
@@ -140,13 +141,13 @@ class ExamController extends Controller
             'latitude' => $request->input('latitude'),
             'longitude' => $request->input('longitude'),
         ]);
-        
+
         // Deduct attempt immediately
         $studentExam->increment('attempts_used');
-        
+
         return redirect()->route('exams.take', $id);
     }
-    
+
     /**
      * Take exam - Display questions
      */
@@ -156,44 +157,44 @@ class ExamController extends Controller
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
             ->with([
-                'exam.sections' => function($query) {
+                'exam.sections' => function ($query) {
                     $query->where('sections.status', 1);
                 },
-                'exam.sections.caseStudies' => function($query) {
+                'exam.sections.caseStudies' => function ($query) {
                     $query->where('case_studies.status', 1);
                 },
-                'exam.sections.caseStudies.visits' => function($query) {
+                'exam.sections.caseStudies.visits' => function ($query) {
                     $query->where('visits.status', 1);
                 },
-                'exam.sections.caseStudies.visits.questions' => function($query) {
+                'exam.sections.caseStudies.visits.questions' => function ($query) {
                     $query->where('questions.status', 1);
                 },
                 'exam.sections.caseStudies.visits.questions.options'
             ])
             ->firstOrFail();
-            
+
         // Get active attempt
         $attempt = \App\Models\ExamAttempt::where('student_exam_id', $studentExam->id)
             ->where('status', 'in_progress')
             ->latest()
             ->first();
-            
+
         if (!$attempt) {
             // Check if they have a completed attempt recently? 
             // Or maybe they refreshed and the session was lost?
             // Since we deducted the attempt, we should find the one we just made.
-            
+
             // If strictly "in_progress", user might be locked out if status changed.
             // But standard flow: status is in_progress until submit.
             return redirect()->route('exams.show', $id)
                 ->with('error', 'No active exam session found.');
         }
-        
+
         $exam = $studentExam->exam;
-        
+
         return view('exams.take', compact('exam', 'attempt'));
     }
-    
+
     /**
      * Submit exam answers
      */
@@ -207,7 +208,7 @@ class ExamController extends Controller
         if (!$studentExam) {
             return redirect()->route('exams.index')->with('error', 'Exam assignment not found.');
         }
-            
+
         $attempt = \App\Models\ExamAttempt::where('student_exam_id', $studentExam->id)
             ->latest()
             ->first();
@@ -221,7 +222,7 @@ class ExamController extends Controller
         if ($attempt->status === 'submitted') {
             return redirect()->route('exams.result', $attempt->id);
         }
-            
+
         // Use DB Transaction to handle high concurrency (100-200 users)
         $result = \Illuminate\Support\Facades\DB::transaction(function () use ($attempt, $request) {
             // Save answers
@@ -236,16 +237,16 @@ class ExamController extends Controller
                     'updated_at' => now(),
                 ];
             }
-            
+
             // Bulk insert for performance
             if (!empty($answerData)) {
                 \App\Models\AttemptAnswer::insert($answerData);
             }
-            
+
             // Calculate score using scoring service
             $scoringService = new \App\Services\ExamScoringService();
             $result = $scoringService->calculateScore($attempt->id);
-            
+
             // Update attempt status
             $attempt->update([
                 'ended_at' => now(),
@@ -255,56 +256,77 @@ class ExamController extends Controller
                 'total_score' => $result['total_score'],
                 'is_passed' => $result['is_passed'] ? 1 : 0,
             ]);
-            
+
             return $result;
         });
-        
-        // Prepare data for GoHighLevel Custom Object
+
+        // Prepare data for GoHighLevel Custom Objects
         try {
             $user = auth()->user();
-            $payload = [
+            $exam = $studentExam->exam;
+
+            // Payload: Exam_Tracker Object (Creates a new record for every attempt)
+            $trackerPayload = [
                 "name" => $user->first_name . ' ' . $user->last_name,
                 "email" => $user->email,
-                "total_score" => $result['total_score'],
-                "is_passed" => $result['is_passed'],
-                "breakdown" => $result['category_breakdown'],
-                "attempts" => $studentExam->attempts_used,
-                "status" => $attempt->is_passed ? 'Pass' : 'Fail',
-                "exam_name" => $studentExam->exam->name,
+                "exam_code" => $exam->exam_code,
+                "attempt" => $studentExam->attempts_used,
+                "result" => $attempt->is_passed ? 'Pass' : 'Fail',
+                "earned_points" => $result['total_score'],
+                "exam_length" => $exam->duration_minutes,
+                "duration" => round($attempt->started_at->diffInMinutes($attempt->ended_at)),
+                "submission_date" => now()->format('Y-m-d'),
             ];
 
             // Dispatch synchronously for real-time processing
-            ProcessGHLRecord::dispatchSync($payload);
-            
-            \Illuminate\Support\Facades\Log::info('Exam Completion GHL Job Dispatched for: ' . $user->email);
+            ProcessGHLRecord::dispatchSync($trackerPayload, GhlConfig::OBJECT_KEY_TRACKER);
 
-            // Optional: Also keep the webhook.site call for debugging if needed
-            // \Illuminate\Support\Facades\Http::post('https://webhook.site/4f8b5dd3-8d7d-4526-8f62-9edd16b21ead', $payload);
+            // NEW: Update GHL Contact Custom Fields using Upsert API
+            $ghlService = app(GHLRecordService::class);
+            $contactPayload = [
+                "email" => $user->email,
+                "firstName" => $user->first_name,
+                "lastName" => $user->last_name,
+                "customFields" => [
+                    ["id" => "I3vFo9N5UWcCmMp0FDNh", "field_value" => $exam->duration_minutes], // Exam Length
+                    ["id" => "o4AfsFsbHwPF16Q2u2lu", "field_value" => $exam->exam_code],       // Exam Code
+                    ["id" => "SRRfqyVr068UAjzUZJWF", "field_value" => $exam->name],            // Exam Name
+                    ["id" => "id4mT9MXvP8MlyvdwJKt", "field_value" => $studentExam->attempts_used], // Total Attempts
+                    ["id" => "e86hRukbj13PFx0SrLYX", "field_value" => $attempt->is_passed ? 'Pass' : 'Fail'], // Result
+                    ["id" => "FibV4ODKNsPHLvld5mpR", "field_value" => $result['total_score']], // Earned Points
+                    ["id" => "l1OOfHOuYb0wAefSNLSI", "field_value" => round($attempt->started_at->diffInMinutes($attempt->ended_at))], // Duration
+                    ["id" => "hiLy88vU0MklA4HmGpBo", "field_value" => now()->format('Y-m-d')], // Submission Date
+                ]
+            ];
+
+            $ghlService->upsertContact($contactPayload);
+
+            \Illuminate\Support\Facades\Log::info('GHL Objects and Contact Updated for: ' . $user->email);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error triggering GHL recording: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error triggering GHL recording: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
         }
 
         // Email notification removed as per request
 
         // Note: attempts_used is now incremented in start(), so we don't do it here.
-        
+
         return redirect()->route('exams.result', $attempt->id);
     }
-    
+
     /**
      * Show exam result
      */
     public function result($attemptId)
     {
         $attempt = \App\Models\ExamAttempt::with([
-            'studentExam.exam.sections' => function($query) {
+            'studentExam.exam.sections' => function ($query) {
                 $query->where('sections.status', 1);
             },
-            'studentExam.exam.sections.caseStudies' => function($query) {
+            'studentExam.exam.sections.caseStudies' => function ($query) {
                 $query->where('case_studies.status', 1);
             },
-            'studentExam.exam.sections.caseStudies.questions' => function($query) {
+            'studentExam.exam.sections.caseStudies.questions' => function ($query) {
                 $query->where('questions.status', 1);
             },
             'studentExam.exam.sections.caseStudies.questions.options',
@@ -313,12 +335,12 @@ class ExamController extends Controller
             'answers.question.options'
         ])
             ->findOrFail($attemptId);
-            
+
         // Verify ownership
         if ($attempt->studentExam->student_id !== auth()->id() && !auth()->user()->isManager()) {
             abort(403);
         }
-        
+
         // Create a map of user answers for easy lookup
         $userAnswers = [];
         foreach ($attempt->answers as $answer) {
@@ -328,10 +350,10 @@ class ExamController extends Controller
                 'is_correct' => $answer->is_correct
             ];
         }
-        
+
         return view('exams.result', compact('attempt', 'userAnswers'));
     }
-    
+
     /**
      * Download exam result PDF
      */
@@ -339,24 +361,24 @@ class ExamController extends Controller
     {
         $attempt = \App\Models\ExamAttempt::with([
             'studentExam.student',
-            'studentExam.exam.sections' => function($query) {
+            'studentExam.exam.sections' => function ($query) {
                 $query->where('sections.status', 1);
             },
-            'studentExam.exam.sections.caseStudies' => function($query) {
+            'studentExam.exam.sections.caseStudies' => function ($query) {
                 $query->where('case_studies.status', 1);
             },
-            'studentExam.exam.sections.caseStudies.questions' => function($query) {
+            'studentExam.exam.sections.caseStudies.questions' => function ($query) {
                 $query->where('questions.status', 1);
             },
             'answers'
         ])
             ->findOrFail($attemptId);
-            
+
         // Verify ownership
         if ($attempt->studentExam->student_id !== auth()->id() && !auth()->user()->isManager()) {
             abort(403);
         }
-        
+
         // Get all questions from the exam
         $allQuestions = [];
         foreach ($attempt->studentExam->exam->sections as $section) {
@@ -370,57 +392,57 @@ class ExamController extends Controller
         // Prepare questions data with attempted status
         $questionsData = [];
         $answeredQuestionIds = $attempt->answers->pluck('question_id')->toArray();
-        
+
         foreach ($allQuestions as $questionId) {
             $answer = $attempt->answers->firstWhere('question_id', $questionId);
-            
+
             $questionsData[] = [
                 'is_attempted' => in_array($questionId, $answeredQuestionIds),
                 'is_correct' => $answer ? ($answer->is_correct ?? false) : false,
             ];
         }
-        
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.exam-result', compact('attempt', 'questionsData'));
-        
+
         return $pdf->download('exam-result-' . $attempt->id . '.pdf');
     }
-    
+
     /**
      * Download answer key PDF for an exam
      */
     public function downloadAnswerKey($id)
     {
         $studentId = auth()->id();
-        
+
         // Get exam details for student
         $studentExam = StudentExam::where('student_id', $studentId)
             ->where('exam_id', $id)
             ->with([
-                'exam.sections' => function($query) {
+                'exam.sections' => function ($query) {
                     $query->where('sections.status', 1);
                 },
-                'exam.sections.caseStudies' => function($query) {
+                'exam.sections.caseStudies' => function ($query) {
                     $query->where('case_studies.status', 1);
                 },
-                'exam.sections.caseStudies.questions' => function($query) {
+                'exam.sections.caseStudies.questions' => function ($query) {
                     $query->where('questions.status', 1);
                 },
                 'exam.sections.caseStudies.questions.options'
             ])
             ->firstOrFail();
-            
+
         $exam = $studentExam->exam;
-        
+
         // Collect all questions with their correct answers
         $answerKey = [];
         $questionNumber = 1;
-        
+
         foreach ($exam->sections as $section) {
             foreach ($section->caseStudies as $caseStudy) {
                 foreach ($caseStudy->questions as $question) {
                     // Get correct options - use option_key (A, B, C, D) instead of option_text
                     $correctOptions = $question->options->where('is_correct', true)->pluck('option_key')->toArray();
-                    
+
                     $answerKey[] = [
                         'number' => $questionNumber,
                         'question_text' => $question->question_text,
@@ -428,15 +450,15 @@ class ExamController extends Controller
                         'category' => $question->category,
                         'marks' => $question->marks,
                     ];
-                    
+
                     $questionNumber++;
                 }
             }
         }
-        
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.answer-key', compact('exam', 'answerKey'));
-        
+
         return $pdf->download('answer-key-' . $exam->name . '.pdf');
     }
-    
+
 }

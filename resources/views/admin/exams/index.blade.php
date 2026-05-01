@@ -632,16 +632,16 @@
                     contentArea.style.display = 'block';
 
                     if(data.no_standard) {
-                        // No standard assigned - allow publish immediately
-                        document.getElementById('complianceStatusAlert').className = 'alert alert-info';
-                        document.getElementById('complianceStatusIcon').className = 'ti ti-info-circle me-2 fs-4';
-                        document.getElementById('complianceStatusTitle').innerText = 'Ready to Publish';
-                        document.getElementById('complianceStatusText').innerText = 'This exam does not have a specific standard assigned. Basic structure checks will be performed upon publishing.';
+                        // No standard assigned - BLOCK publishing
+                        document.getElementById('complianceStatusAlert').className = 'alert alert-danger';
+                        document.getElementById('complianceStatusIcon').className = 'ti ti-alert-circle me-2 fs-4';
+                        document.getElementById('complianceStatusTitle').innerText = 'Standard Missing';
+                        document.getElementById('complianceStatusText').innerText = data.message || 'No Exam Standard assigned. Please set a standard blueprint before publishing.';
                         document.getElementById('complianceTableContainer').style.display = 'none';
 
-                        publishBtn.disabled = false;
-                        publishBtn.className = 'btn btn-success';
-                        publishBtn.innerHTML = '<i class="ti ti-upload me-1"></i> Confirm Publish';
+                        publishBtn.disabled = true;
+                        publishBtn.className = 'btn btn-secondary';
+                        publishBtn.innerHTML = '<i class="ti ti-lock me-1"></i> Cannot Publish';
                     } else if(data.success) {
                         const comp = data.compliance;
                         const isValid = comp.valid;

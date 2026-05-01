@@ -4,7 +4,7 @@ namespace App\Http\Controllers\GhlController;
 
 class GhlConfig
 {
-    public const VERSION_ID = '6981c39178b42f8b4e29f060';
+    public const VERSION_ID = '69e0dd75906cc20ced1c8454';
 
     public const APP_URL = 'https://app.gohighlevel.com/v2/location/';
 
@@ -35,12 +35,14 @@ class GhlConfig
 
     public const API_VERSION = '2021-07-28';
 
-    public const OBJECT_KEY = 'custom_objects.exam_portal_result';
+    public const OBJECT_KEY_EXAMS = 'custom_objects.exams';
+    public const OBJECT_KEY_TRACKER = 'custom_objects.exam_tracker';
 
     public const ENDPOINTS = [
         'objects' => '/objects/',
         'custom_fields' => '/custom-fields/',
         'custom_folders' => '/custom-fields/folder',
         'custom_menus' => '/locations/{locationId}/custom-menus',
+        'contacts_upsert' => '/contacts/upsert',
     ];
 }

@@ -3,15 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Exam Portal</title>
+    <title>Welcome to Mentara Health</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             background-color: #f4f4f7;
             margin: 0;
             padding: 0;
-            color: #51545E;
+            color: #1a1a1a;
             line-height: 1.6;
+            font-size: 15px;
         }
         .email-wrapper {
             width: 100%;
@@ -22,35 +23,38 @@
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             overflow: hidden;
         }
         .email-header {
-            background-color: #4f46e5;
-            padding: 24px;
+            background-color: #eaeaea;
+            padding: 30px;
             text-align: center;
         }
-        .email-header h1 {
-            color: #ffffff;
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
+        .email-header img {
+            max-width: 200px;
         }
         .email-body {
-            padding: 32px;
+            padding: 32px 40px;
         }
-        .welcome-text {
-            font-size: 18px;
-            color: #333333;
-            margin-bottom: 24px;
+        .email-body p {
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        .email-body ul {
+            margin-bottom: 16px;
+            padding-left: 20px;
+            color: #1a1a1a;
+        }
+        .email-body li {
+            margin-bottom: 8px;
         }
         .credentials-box {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             padding: 20px;
-            margin-bottom: 24px;
+            margin: 20px 0;
         }
         .credential-item {
             margin-bottom: 10px;
@@ -67,7 +71,7 @@
             font-size: 16px;
             color: #1e293b;
             background: #ffffff;
-            padding: 4px 8px;
+            padding: 6px 12px;
             border-radius: 4px;
             border: 1px solid #cbd5e1;
             display: inline-block;
@@ -79,24 +83,32 @@
         }
         .btn {
             display: inline-block;
-            background-color: #4f46e5;
-            color: #ffffff;
+            background-color: #01365C;
+            color: #ffffff !important;
             font-size: 16px;
             font-weight: 600;
             text-decoration: none;
-            padding: 12px 32px;
-            border-radius: 6px;
+            padding: 14px 40px;
+            border-radius: 8px;
             transition: background-color 0.3s;
         }
         .btn:hover {
-            background-color: #4338ca;
+            background-color: #012b4a;
         }
         .email-footer {
-            background-color: #f4f4f7;
-            padding: 24px;
+            background-color: #2b4c6b;
+            padding: 30px 40px;
             text-align: center;
-            font-size: 12px;
-            color: #6b7280;
+            font-size: 13px;
+            color: #ffffff;
+        }
+        .email-footer p {
+            margin: 0 0 10px 0;
+            color: #ffffff;
+        }
+        .email-footer a {
+            color: #ffffff;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -105,14 +117,39 @@
         <div class="email-content">
             <!-- Header -->
             <div class="email-header">
-                <h1>Welcome to Exam Portal</h1>
+                <img src="{{ asset('assets/images/logo-new.png') }}" alt="Mentara Health">
             </div>
 
             <!-- Body -->
             <div class="email-body">
-                <h2 class="welcome-text">Hello, {{ $user->first_name }}!</h2>
+                <p>Hi {{ $user->first_name }},</p>
                 
-                <p>Welcome to the Exam Portal. We are excited to have you on board! Your account has been successfully created.</p>
+                <p>I hope you're doing well.</p>
+                
+                <p>I wanted to personally thank you for being part of Mentara Health—your participation has truly meant a great deal to us.</p>
+                
+                <p>We are now in the final stages of preparing to launch our online certification exam platform, and we’d love for you to be among the first to experience it.</p>
+                
+                <p>As a valued member of our early cohort, you are invited to take the certification exam completely free of charge, including <strong>three full attempts</strong>.</p>
+                
+                <p><strong>What’s included:</strong></p>
+                
+                <ul>
+                    <li>A realistic simulation of the NCMHCE, designed to mirror the timed format and style of actual exam questions</li>
+                    <li>Authentic NCMHCE-style questions presented under timed conditions</li>
+                    <li>Instant results with a detailed performance report to guide your continued study</li>
+                    <li>Three attempts to strengthen your skills and build confidence</li>
+                    <li>A strong head start on your certification journey at no additional cost</li>
+                </ul>
+
+                <p>In return, we kindly ask that you complete a short feedback survey after your exam. Your insights will help us refine the platform before the official launch.</p>
+                
+                <p><strong>To get started:</strong></p>
+                
+                <ul>
+                    <li>Use the portal link below to create your login credentials</li>
+                    <li>Once logged in, your exam and three attempts will be available</li>
+                </ul>
                 
                 <p>Here are your temporary login credentials:</p>
                 
@@ -132,16 +169,26 @@
                 <p>Please click the button below to verify your account and set a new password provided you want to change it. We recommend changing your password after your first login.</p>
 
                 <div class="btn-container">
-                    <a href="{{ $resetUrl }}" class="btn">Login & Set Password</a>
+                    <a href="{{ $resetUrl }}" class="btn" style="color: #ffffff; text-decoration: none;">Login & Set Password</a>
                 </div>
 
-                <p style="margin-bottom: 0;">If you have any questions, feel free to reply to this email.</p>
+                <p>If you have any questions or experience any issues, please feel free to reply to this email—we’re here to help.</p>
+                
+                <p>Thank you again for your support. We’re excited to have you play a key role in shaping this platform.</p>
+                
+                <p>Warm regards,<br>
+                Lynda S-Taylor</p>
             </div>
 
             <!-- Footer -->
             <div class="email-footer">
-                <p>&copy; {{ date('Y') }} Exam Portal. All rights reserved.</p>
-                <p>If you didn't create this account, you can safely ignore this email.</p>
+                <p style="font-style: italic; font-weight: bold;">Copyright &copy; 2026 Mentara Health, All rights reserved.</p>
+                
+                <p><strong>Our e-mail address is:</strong><br>
+                <a href="mailto:support@mentara.health" style="text-decoration: none; color: #ffffff;">support@mentara.health</a></p>
+                
+                <p style="margin-top: 20px;"><strong>Want to change how you receive these emails?</strong><br>
+                You can <a href="#" style="color: #ffffff;">unsubscribe from this list</a>.</p>
             </div>
         </div>
     </div>

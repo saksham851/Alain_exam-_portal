@@ -26,6 +26,12 @@
                             <span class="pc-mtext">Dashboard</span>
                         </a>
                     </li>
+                    <li class="pc-item {{ request()->routeIs('admin.performance.index') ? 'active' : '' }}">
+                        <a href="{{ route('admin.performance.index') }}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-chart-bar"></i></span>
+                            <span class="pc-mtext">Performance</span>
+                        </a>
+                    </li>
                     <li class="pc-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                         <a href="{{ route('admin.users.index') }}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-users"></i></span>
@@ -102,6 +108,12 @@
                             <span class="pc-mtext">Dashboard</span>
                         </a>
                     </li>
+                    <li class="pc-item {{ request()->routeIs('manager.performance.index') ? 'active' : '' }}">
+                        <a href="{{ route('manager.performance.index') }}" class="pc-link">
+                            <span class="pc-micon"><i class="ti ti-chart-bar"></i></span>
+                            <span class="pc-mtext">Performance</span>
+                        </a>
+                    </li>
                     <li class="pc-item {{ request()->routeIs('manager.students.*') ? 'active' : '' }}">
                         <a href="{{ route('manager.students.index') }}" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-users"></i></span>
@@ -109,13 +121,13 @@
                         </a>
                     </li>
                     <li
-                        class="pc-item pc-hasmenu {{ request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.data.*') || request()->routeIs('manager.questions.*') ? 'active pc-trigger' : '' }}">
+                        class="pc-item pc-hasmenu {{ request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.data.*') || request()->routeIs('manager.questions.*') || request()->routeIs('manager.attempts.*') ? 'active pc-trigger' : '' }}">
                         <a href="#!" class="pc-link">
                             <span class="pc-micon"><i class="ti ti-book"></i></span>
                             <span class="pc-mtext">Exams</span>
                             <span class="pc-arrow"><i data-feather="chevron-right"></i></span>
                         </a>
-                        <ul class="pc-submenu" @if(request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.data.*') || request()->routeIs('manager.questions.*'))
+                        <ul class="pc-submenu" @if(request()->routeIs('manager.exams.*') || request()->routeIs('manager.sections.*') || request()->routeIs('manager.case-studies-bank.*') || request()->routeIs('manager.data.*') || request()->routeIs('manager.questions.*') || request()->routeIs('manager.attempts.*'))
                         style="display: block;" @endif>
                             <li class="pc-item {{ request()->routeIs('manager.exams.index') ? 'active' : '' }}">
                                 <a href="{{ route('manager.exams.index') }}" class="pc-link">All Exams</a>
@@ -133,6 +145,9 @@
                             </li>
                             <li class="pc-item {{ request()->routeIs('manager.data.*') ? 'active' : '' }}">
                                 <a href="{{ route('manager.data.index') }}" class="pc-link">Data Management</a>
+                            </li>
+                            <li class="pc-item {{ request()->routeIs('manager.attempts.*') ? 'active' : '' }}">
+                                <a href="{{ route('manager.attempts.index') }}" class="pc-link">Results & Attempts</a>
                             </li>
                         </ul>
                     </li>

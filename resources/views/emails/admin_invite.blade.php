@@ -27,7 +27,7 @@
             overflow: hidden;
         }
         .email-header {
-            background: linear-gradient(135deg, #01284E 0%, #001a33 100%);
+            background: linear-gradient(135deg, #01365C 0%, #012b4a 100%);
             padding: 40px 24px;
             text-align: center;
         }
@@ -88,14 +88,14 @@
         .info-box {
             background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
             border: 1px solid #c7d2fe;
-            border-left: 4px solid #01284E;
+            border-left: 4px solid #01365C;
             border-radius: 8px;
             padding: 20px 24px;
             margin-bottom: 28px;
         }
         .info-label {
             font-weight: 700;
-            color: #4f46e5;
+            color: #01365C;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -146,7 +146,7 @@
         }
         .btn {
             display: inline-block;
-            background: linear-gradient(135deg, #01284E, #001a33);
+            background: linear-gradient(135deg, #01365C, #012b4a);
             color: #ffffff !important;
             font-size: 16px;
             font-weight: 700;
@@ -237,7 +237,7 @@
 
                 <!-- CTA Button -->
                 <div class="btn-container">
-                    <a href="{{ $resetUrl }}" class="btn">🔐 Set Your Password & Login</a>
+                    <a href="{{ $resetUrl }}" class="btn" style="color: #ffffff; text-decoration: none;">🔐 Set Your Password & Login</a>
                 </div>
 
                 <p class="expiry-note">This link will expire in 60 minutes. If expired, contact your Super Admin.</p>

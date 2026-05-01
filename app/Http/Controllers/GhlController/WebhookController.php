@@ -11,6 +11,8 @@ use App\Models\Exam;
 use App\Models\StudentExam;
 use App\Http\Controllers\GhlController\Services\GHLRecordService;
 use App\Http\Controllers\GhlController\Jobs\ProcessGHLRecord;
+use App\Http\Controllers\GhlController\GhlConfig;
+use App\Models\GoHighLevelToken;
 
 class WebhookController extends Controller
 {
@@ -26,22 +28,41 @@ class WebhookController extends Controller
             // Get all incoming data
             $data = $request->all();
             
+            // Log entire request data to a specific file as requested
+            $webhookLogFile = storage_path('logs/webhook_receive_full_data.log');
+            $logEntry = "=== WEBHOOK RECEIVED AT " . now()->toDateTimeString() . " ===\n";
+            $logEntry .= "METHOD: " . $request->method() . " | URL: " . $request->fullUrl() . " | IP: " . $request->ip() . "\n";
+            $logEntry .= "HEADERS:\n" . json_encode($request->headers->all(), JSON_PRETTY_PRINT) . "\n";
+            $logEntry .= "PAYLOAD (Parsed):\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n";
+            $logEntry .= "RAW BODY:\n" . $request->getContent() . "\n";
+            $logEntry .= "========================================================================\n\n";
+            file_put_contents($webhookLogFile, $logEntry, FILE_APPEND);
+            
             // Log the incoming webhook data for debugging
             Log::info('Webhook received:', $data);
             
-            // Check if customdata exists
-            if (isset($data['customdata'])) {
-                $customData = $data['customdata'];
-                
-                // Extract the data
-                $event = $customData['event'] ?? null;
-                $ghlContactId = $customData['ghl_contact_id'] ?? null;
-                $email = $customData['email'] ?? null;
-                $firstName = $customData['firstName'] ?? null;
-                $lastName = $customData['lastName'] ?? null;
-                $phone = $customData['phone'] ?? null;
+            // Extract custom data, checking both camelCase and lowercase
+            $customData = $data['customData'] ?? $data['customdata'] ?? [];
+            
+            // Proceed if we have customData or at least a root email
+            if (!empty($customData) || !empty($data['email'])) {
+                // Extract the data with fallback to root level
+                $event = $customData['event'] ?? 'contact.created';
+                $ghlContactId = $customData['ghl_contact_id'] ?? $data['contact_id'] ?? null;
+                $email = $customData['email'] ?? $data['email'] ?? null;
+                $firstName = $customData['firstName'] ?? $data['first_name'] ?? null;
+                $lastName = $customData['lastName'] ?? $data['last_name'] ?? null;
+                $phone = $customData['phone'] ?? $data['phone'] ?? null;
                 $examTitle = $customData['exam_title'] ?? null;
                 $examDescription = $customData['exam_description'] ?? null;
+                $purchaseDate = $customData['purchase_date'] ?? null;
+                
+                // If first/last name are empty but full_name exists
+                if (empty($firstName) && empty($lastName) && !empty($data['full_name'])) {
+                    $nameParts = explode(' ', $data['full_name'], 2);
+                    $firstName = $nameParts[0];
+                    $lastName = $nameParts[1] ?? '';
+                }
                 
                 // Log extracted data
                 Log::info('Extracted webhook data:', [
@@ -53,6 +74,7 @@ class WebhookController extends Controller
                     'phone' => $phone,
                     'exam_title' => $examTitle,
                     'exam_description' => $examDescription,
+                    'purchase_date' => $purchaseDate,
                 ]);
                 
                 // Validate required fields
@@ -86,6 +108,7 @@ class WebhookController extends Controller
                             'role' => 'student', // Default role
                             'status' => 1, // 1 = active, 0 = inactive
                             'is_blocked' => false,
+                            'purchase_date' => $purchaseDate ? date('Y-m-d', strtotime($purchaseDate)) : null,
                         ]);
 
                         Log::info('New user created successfully:', [
@@ -94,6 +117,11 @@ class WebhookController extends Controller
                             'generated_password' => $generatedPassword // Log for debugging (remove in production)
                         ]);
                     } else {
+                        // Update purchase date if provided
+                        if ($purchaseDate) {
+                            $user->update(['purchase_date' => date('Y-m-d', strtotime($purchaseDate))]);
+                        }
+
                         Log::info('Existing user found:', [
                             'user_id' => $user->id,
                             'email' => $email
@@ -124,8 +152,11 @@ class WebhookController extends Controller
                                     'exam_name' => $exam->name,
                                     'new_attempts_allowed' => $existingStudentExam->attempts_allowed
                                 ]);
+
+                                // SYNC TO GHL EXAMS OBJECT
+                                $this->syncExamOverviewToGHL($user, $exam, $existingStudentExam, $purchaseDate);
                             } else {
-                                StudentExam::create([
+                                $newStudentExam = StudentExam::create([
                                     'student_id' => $user->id, // Assign to the student
                                     'exam_id' => $exam->id,
                                     'expiry_date' => now()->addWeeks(4), // 4 weeks from now
@@ -142,6 +173,9 @@ class WebhookController extends Controller
                                     'user_id' => $user->id,
                                     'exam_name' => $exam->name
                                 ]);
+
+                                // SYNC TO GHL EXAMS OBJECT
+                                $this->syncExamOverviewToGHL($user, $exam, $newStudentExam, $purchaseDate);
                             }
                         } else {
                             $examAssignmentStatus = 'Failed';
@@ -286,6 +320,43 @@ class WebhookController extends Controller
                 'message' => 'Error processing exam completion webhook',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Sync Exam Overview to GHL Exams Object
+     */
+    protected function syncExamOverviewToGHL($user, $exam, $studentExam, $purchaseDate = null)
+    {
+        try {
+            // Get location ID from the first available token
+            $token = GoHighLevelToken::first();
+            $locationId = $token ? $token->location_id : null;
+
+            if (!$locationId) {
+                Log::warning('Cannot sync to GHL: No location ID found in tokens table.');
+                return;
+            }
+
+            $examPayload = [
+                "name" => $user->first_name . ' ' . $user->last_name,
+                "email" => $user->email,
+                "exam_code" => $exam->exam_code,
+                "exam_name" => $exam->name,
+                "expiration_date" => $studentExam->expiry_date ? $studentExam->expiry_date->format('Y-m-d') : null,
+                "purchase_date" => $purchaseDate,
+                "total_attempts" => $studentExam->attempts_allowed,
+            ];
+
+            Log::info('Syncing Exam Assignment to GHL:', $examPayload);
+            
+            // Dispatch to GHL Synchronously to ensure immediate update
+            ProcessGHLRecord::dispatchSync($examPayload, GhlConfig::OBJECT_KEY_EXAMS, $locationId);
+
+            Log::info('GHL Sync Job Finished in WebhookController');
+
+        } catch (\Exception $e) {
+            Log::error('Error syncing exam to GHL: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
         }
     }
 }

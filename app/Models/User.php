@@ -33,6 +33,7 @@ class User extends Authenticatable
         'status',
         'remember_token',
         'last_login_at',
+        'purchase_date',
     ];
 
     /**
@@ -64,6 +65,7 @@ class User extends Authenticatable
             'is_blocked' => 'boolean',
             'status' => 'boolean',
             'last_login_at' => 'datetime',
+            'purchase_date' => 'date',
         ];
     }
 

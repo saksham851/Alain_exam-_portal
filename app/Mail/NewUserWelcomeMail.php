@@ -33,7 +33,7 @@ class NewUserWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to Exam Portal',
+            subject: 'Welcome to Mentara Health',
         );
     }
 

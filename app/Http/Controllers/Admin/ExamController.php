@@ -636,15 +636,13 @@ class ExamController extends Controller
             }
         }
 
-        // 4. NEW: Validate Exam Standard Compliance (if exam has a standard assigned)
-        if ($exam->exam_standard_id) {
-            $validation = $exam->validateStandardCompliance();
-            
-            if (!$validation['valid']) {
-                $errorMessage = "Cannot publish: Exam does not meet the standard requirements.\n\n";
-                $errorMessage .= implode("\n", $validation['errors']);
-                return back()->with('error', $errorMessage);
-            }
+        // 4. Validate Exam Standard Compliance (Mandatory)
+        $validation = $exam->validateStandardCompliance();
+        
+        if (!$validation['valid']) {
+            $errorMessage = "Cannot publish: Exam does not meet the standard requirements.\n\n";
+            $errorMessage .= implode("\n", $validation['errors']);
+            return back()->with('error', $errorMessage);
         }
 
         // Validation Passed: Update status
@@ -691,19 +689,17 @@ class ExamController extends Controller
                 }
             }
 
-            // 4. EXAM STANDARD VALIDATION (NEW!)
-            if ($exam->exam_standard_id) {
-                $validation = $exam->validateStandardCompliance();
+            // 4. EXAM STANDARD VALIDATION (Mandatory)
+            $validation = $exam->validateStandardCompliance();
+            
+            if (!$validation['valid']) {
+                $errorMessage = "Cannot publish: Exam does not meet standard requirements.\n\n";
                 
-                if (!$validation['valid']) {
-                    $errorMessage = "Cannot publish: Exam does not meet standard requirements.\n\n";
-                    
-                    foreach ($validation['errors'] as $error) {
-                        $errorMessage .= "• " . $error . "\n";
-                    }
-                    
-                    return back()->with('error', $errorMessage);
+                foreach ($validation['errors'] as $error) {
+                    $errorMessage .= "• " . $error . "\n";
                 }
+                
+                return back()->with('error', $errorMessage);
             }
         }
 
@@ -718,11 +714,11 @@ class ExamController extends Controller
     {
         $exam = Exam::with(['examStandard.categories.contentAreas', 'sections.caseStudies.questions'])->findOrFail($id);
         
-        if (!$exam->examStandard) {
+        if (!$exam->exam_standard_id) {
              return response()->json([
-                 'success' => true, 
+                 'success' => false, 
                  'no_standard' => true,
-                 'message' => 'This exam does not follow a specific standard. It can be published immediately.'
+                 'message' => 'Cannot publish: No Exam Standard blueprint assigned. Please edit the exam settings and select a standard blueprint.'
              ]);
         }
 

@@ -15,6 +15,7 @@ class ProcessGHLRecord implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $payload;
+    protected $objectKey;
     protected $locationId;
 
     /**
@@ -35,11 +36,13 @@ class ProcessGHLRecord implements ShouldQueue
      * Create a new job instance.
      *
      * @param array $payload
+     * @param string $objectKey
      * @param string|null $locationId
      */
-    public function __construct(array $payload, ?string $locationId = null)
+    public function __construct(array $payload, string $objectKey, ?string $locationId = null)
     {
         $this->payload = $payload;
+        $this->objectKey = $objectKey;
         $this->locationId = $locationId;
     }
 
@@ -50,9 +53,9 @@ class ProcessGHLRecord implements ShouldQueue
      */
     public function handle(GHLRecordService $ghlService)
     {
-        Log::info('Processing GHL record job for: ' . ($this->payload['email'] ?? 'unknown'));
+        Log::info('Processing GHL record job for: ' . ($this->payload['email'] ?? 'unknown') . ' on object: ' . $this->objectKey);
 
-        $result = $ghlService->createRecord($this->payload, $this->locationId);
+        $result = $ghlService->createRecord($this->payload, $this->objectKey, $this->locationId);
 
         if ($result['success']) {
             Log::info('GHL record processed successfully via job.');

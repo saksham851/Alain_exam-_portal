@@ -29,10 +29,11 @@ class GHLRecordService
      * Create a record in GHL Custom Object
      * 
      * @param array $recordData
+     * @param string $objectKey
      * @param string $locationId (optional - will fetch from DB if not provided)
      * @return array
      */
-    public function createRecord(array $recordData, ?string $locationId = null)
+    public function createRecord(array $recordData, string $objectKey, ?string $locationId = null)
     {
         try {
             // Get the access token and location ID
@@ -42,22 +43,21 @@ class GHLRecordService
                 // We'll mimic old behavior: get latest token.
                 $token = GoHighLevelToken::latest()->first();
                 if (!$token) {
-                     Log::error('No GHL token found in database');
-                     return ['success' => false, 'message' => 'No GHL token found'];
+                    Log::error('No GHL token found in database');
+                    return ['success' => false, 'message' => 'No GHL token found'];
                 }
                 $locationId = $token->location_id;
             }
 
             $accessToken = $this->tokenService->getAccessToken($locationId);
-            
+
             if (!$accessToken) {
                 return [
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Unable to retrieve valid access token'
                 ];
             }
 
-            $objectKey = GhlConfig::OBJECT_KEY;
             $version = GhlConfig::API_VERSION;
             $recordUrl = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['objects'] . $objectKey . '/records';
 
@@ -85,9 +85,9 @@ class GHLRecordService
             // Handle 401 Unauthorized - Retry logic
             if ($response->status() === 401) {
                 Log::warning("Received 401 from GHL. Forcing token refresh for location {$locationId} and retrying.");
-                
+
                 $accessToken = $this->tokenService->forceRefreshToken($locationId);
-                
+
                 if ($accessToken) {
                     $response = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $accessToken,
@@ -107,27 +107,27 @@ class GHLRecordService
             if ($response->successful()) {
                 $responseData = $response->json();
                 Log::info('GHL record created successfully:', $responseData);
-                
+
                 return [
                     'success' => true,
                     'message' => 'Record created successfully',
                     'data' => $responseData
                 ];
             } else {
-            // Handle 400 Bad Request
-            if ($response->status() === 400) {
-                Log::error('Failed to create GHL record. Status: ' . $response->status() . ', Response: ' . $response->body());
-                
-                return [
-                    'success' => false,
-                    'message' => 'Failed to create record in GHL',
-                    'status' => $response->status(),
-                    'error' => $response->body()
-                ];
-            }
+                // Handle 400 Bad Request
+                if ($response->status() === 400) {
+                    Log::error('Failed to create GHL record. Status: ' . $response->status() . ', Response: ' . $response->body());
+
+                    return [
+                        'success' => false,
+                        'message' => 'Failed to create record in GHL',
+                        'status' => $response->status(),
+                        'error' => $response->body()
+                    ];
+                }
 
                 Log::error('Failed to create GHL record. Status: ' . $response->status() . ', Response: ' . $response->body());
-                
+
                 return [
                     'success' => false,
                     'message' => 'Failed to create record in GHL',
@@ -138,7 +138,7 @@ class GHLRecordService
 
         } catch (\Exception $e) {
             Log::error('Exception while creating GHL record: ' . $e->getMessage());
-            
+
             return [
                 'success' => false,
                 'message' => 'Exception occurred',
@@ -148,7 +148,8 @@ class GHLRecordService
     }
 
     /**
-     * Map incoming exam data to GHL custom field keys
+     * Map incoming data to GHL custom field keys by prepending the object key
+     * (except for the 'name' field which is usually the primary display property)
      * 
      * @param array $data
      * @param string $objectKey
@@ -156,38 +157,8 @@ class GHLRecordService
      */
     protected function mapToCustomFields(array $data, string $objectKey)
     {
-        $customFields = [];
-
-        Log::info('mapToCustomFields - Input data:', $data);
-        Log::info('mapToCustomFields - Object key:', ['objectKey' => $objectKey]);
-
-        // Map each field to its corresponding GHL custom field key
-        $fieldMapping = [
-            'name' => 'name',
-            'email' => 'email',
-            'total_score' => 'total_score',
-            'attempts' => 'attempts',
-            'status' => 'status',
-            'exam_name' => 'exam_name',
-        ];
-
-        foreach ($fieldMapping as $dataKey => $fieldKey) {
-            if (isset($data[$dataKey]) && $data[$dataKey] !== null && $data[$dataKey] !== '') {
-                $customFields[$fieldKey] = $data[$dataKey];
-                Log::info("Mapped field: {$dataKey} => {$fieldKey}", ['value' => $customFields[$fieldKey]]);
-            } else {
-                Log::warning("Skipped field: {$dataKey}", [
-                    'isset' => isset($data[$dataKey]),
-                    'value' => $data[$dataKey] ?? 'not set',
-                    'is_null' => ($data[$dataKey] ?? null) === null,
-                    'is_empty' => ($data[$dataKey] ?? '') === ''
-                ]);
-            }
-        }
-
-        Log::info('mapToCustomFields - Output:', $customFields);
-
-        return $customFields;
+        // GHL usually expects short keys in the properties bag when the object is already specified in the URL
+        return $data;
     }
 
 
@@ -196,16 +167,17 @@ class GHLRecordService
      * 
      * @param string $recordId
      * @param array $recordData
+     * @param string $objectKey
      * @param string $locationId (optional)
      * @return array
      */
-    public function updateRecord(string $recordId, array $recordData, ?string $locationId = null)
+    public function updateRecord(string $recordId, array $recordData, string $objectKey, ?string $locationId = null)
     {
         try {
             // Get the access token and location ID
             if (!$locationId) {
                 $token = GoHighLevelToken::latest()->first();
-                
+
                 if (!$token) {
                     Log::error('No GHL token found in database');
                     return [
@@ -213,7 +185,7 @@ class GHLRecordService
                         'message' => 'No GHL token found'
                     ];
                 }
-                
+
                 $locationId = $token->location_id;
             }
 
@@ -226,7 +198,6 @@ class GHLRecordService
                 ];
             }
 
-            $objectKey = GhlConfig::OBJECT_KEY;
             $version = GhlConfig::API_VERSION;
             $recordUrl = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['objects'] . $objectKey . '/records/' . $recordId;
 
@@ -252,9 +223,9 @@ class GHLRecordService
             // Handle 401 Unauthorized - Retry logic
             if ($response->status() === 401) {
                 Log::warning("Received 401 from GHL. Forcing token refresh for location {$locationId} and retrying.");
-                
+
                 $accessToken = $this->tokenService->forceRefreshToken($locationId);
-                
+
                 if ($accessToken) {
                     $response = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $accessToken,
@@ -274,7 +245,7 @@ class GHLRecordService
             if ($response->successful()) {
                 $responseData = $response->json();
                 Log::info('GHL record updated successfully:', $responseData);
-                
+
                 return [
                     'success' => true,
                     'message' => 'Record updated successfully',
@@ -287,11 +258,11 @@ class GHLRecordService
                     Log::warning('GHL record update failed due to invalid phone. Retrying without phone.', [
                         'omitted_phone' => $properties['phone'] ?? 'unknown'
                     ]);
-                    
+
                     // Remove phone from properties and request body
                     unset($properties['phone']);
                     $requestBody['properties'] = $properties;
-                    
+
                     // Retry the request
                     $response = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $accessToken,
@@ -299,11 +270,11 @@ class GHLRecordService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                     ])->put($recordUrl, $requestBody);
-                    
+
                     if ($response->successful()) {
                         $responseData = $response->json();
                         Log::info('GHL record updated successfully (retry without phone):', $responseData);
-                        
+
                         return [
                             'success' => true,
                             'message' => 'Record updated successfully (phone omitted)',
@@ -313,7 +284,7 @@ class GHLRecordService
                 }
 
                 Log::error('Failed to update GHL record. Status: ' . $response->status() . ', Response: ' . $response->body());
-                
+
                 return [
                     'success' => false,
                     'message' => 'Failed to update record in GHL',
@@ -324,7 +295,83 @@ class GHLRecordService
 
         } catch (\Exception $e) {
             Log::error('Exception while updating GHL record: ' . $e->getMessage());
-            
+
+            return [
+                'success' => false,
+                'message' => 'Exception occurred',
+                'error' => $e->getMessage()
+            ];
+        }
+    
+    /**
+     * Upsert a contact in GHL
+     * 
+     * @param array $contactData
+     * @param string|null $locationId
+     * @return array
+     */
+    public function upsertContact(array $contactData, ?string $locationId = null)
+    {
+        try {
+            if (!$locationId) {
+                $token = GoHighLevelToken::latest()->first();
+                if (!$token) {
+                    Log::error('No GHL token found in database');
+                    return ['success' => false, 'message' => 'No GHL token found'];
+                }
+                $locationId = $token->location_id;
+            }
+
+            $accessToken = $this->tokenService->getAccessToken($locationId);
+
+            if (!$accessToken) {
+                return ['success' => false, 'message' => 'Unable to retrieve valid access token'];
+            }
+
+            $version = '2023-02-21'; // Using the newer version for upsert
+            $url = GhlConfig::API_BASE_URL . GhlConfig::ENDPOINTS['contacts_upsert'];
+
+            $payload = array_merge(['locationId' => $locationId], $contactData);
+
+            Log::info('Upserting GHL contact with data:', $payload);
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Version' => $version,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->post($url, $payload);
+
+            if ($response->status() === 401) {
+                $accessToken = $this->tokenService->forceRefreshToken($locationId);
+                if ($accessToken) {
+                    $response = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $accessToken,
+                        'Version' => $version,
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ])->post($url, $payload);
+                }
+            }
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'message' => 'Contact upserted successfully',
+                    'data' => $response->json()
+                ];
+            }
+
+            Log::error('Failed to upsert GHL contact. Status: ' . $response->status() . ', Response: ' . $response->body());
+            return [
+                'success' => false,
+                'message' => 'Failed to upsert contact in GHL',
+                'status' => $response->status(),
+                'error' => $response->body()
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Exception while upserting GHL contact: ' . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Exception occurred',

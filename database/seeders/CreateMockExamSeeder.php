@@ -39,7 +39,7 @@ class CreateMockExamSeeder extends Seeder
             'passing_score_overall' => 65,
             'status' => 1,
             'is_active' => 1,
-            'certification_type' => 'NHMCE'
+            'certification_type' => 'NCMHCE'
         ]);
 
         $section = Section::create([

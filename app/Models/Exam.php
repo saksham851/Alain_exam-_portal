@@ -111,8 +111,8 @@ class Exam extends Model
     {
         if (!$this->exam_standard_id) {
             return [
-                'valid' => true, 
-                'errors' => [], 
+                'valid' => false, 
+                'errors' => ['No Exam Standard blueprint assigned. Please select a standard blueprint in the exam settings.'], 
                 'content_areas' => [],
                 'total_questions' => 0,
                 'uncategorized_count' => 0
