@@ -512,7 +512,7 @@
                     
                     <!-- Action Buttons (Right) -->
                     <div>
-                        <a href="{{ route($routePrefix . '.questions.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                        <a href="{{ request('return_url', route($routePrefix . '.questions.index')) }}" class="btn btn-secondary me-2">Cancel</a>
                         <button type="submit" class="btn btn-primary" :disabled="isActiveExam">
                             <i class="ti ti-check me-1"></i> Save {{ isset($question) ? 'Question' : 'Questions' }}
                         </button>

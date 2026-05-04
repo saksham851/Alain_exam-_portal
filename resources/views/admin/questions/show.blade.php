@@ -10,7 +10,7 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="{{ route('admin.questions.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ request('return_url', route('admin.questions.index')) }}" class="btn btn-outline-secondary">
                     <i class="ti ti-arrow-left me-1"></i> Back to Questions
                 </a>
             </div>

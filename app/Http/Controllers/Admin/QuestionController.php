@@ -700,6 +700,15 @@ class QuestionController extends Controller
             
             DB::commit();
 
+            if ($request->has('return_url')) {
+                return redirect($request->return_url)
+                    ->with('question_created_success', true)
+                    ->with('selected_exam_id', $targetVisit->caseStudy->section->exam_id)
+                    ->with('selected_section_id', $targetVisit->caseStudy->section_id)
+                    ->with('selected_visit_id', $targetVisit->id)
+                    ->with('success', "$clonedCount question(s) cloned successfully!");
+            }
+
             $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';
             return redirect()->route($prefix . '.questions.index')
                 ->with('question_created_success', true)
@@ -778,6 +787,10 @@ class QuestionController extends Controller
         $msg = "Successfully imported $imported questions!";
         if ($skipped > 0) {
             $msg .= " ($skipped duplicates skipped)";
+        }
+
+        if ($request->has('return_url')) {
+            return redirect($request->return_url)->with('success', $msg);
         }
 
         $prefix = auth()->user()->role === 'manager' ? 'manager' : 'admin';

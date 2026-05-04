@@ -177,7 +177,7 @@
                                 <div class="row g-3">
                                     <!-- Option 1: Create from Scratch -->
                                     <div class="col-md-6">
-                                        <a href="{{ route($routePrefix . '.questions.create', request()->only(['exam_id', 'section_id'])) }}"
+                                        <a href="{{ route($routePrefix . '.questions.create', array_merge(request()->only(['exam', 'case_study', 'visit', 'exam_category', 'question_type', 'status']), ['return_url' => request()->fullUrl()])) }}"
                                             class="card h-100 border-2 hover-shadow text-decoration-none text-dark"
                                             style="transition: all 0.3s;">
                                             <div class="card-body text-center p-4">
@@ -562,7 +562,7 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li>
                                                         <a class="dropdown-item"
-                                                            href="{{ route($routePrefix . '.questions.show', $question->id) }}">
+                                                            href="{{ route($routePrefix . '.questions.show', ['question' => $question->id, 'return_url' => request()->fullUrl()]) }}">
                                                             <i class="ti ti-eye me-2"></i>View Question
                                                         </a>
                                                     </li>
@@ -590,7 +590,7 @@
                                                                 </button>
                                                             @else
                                                                 <a class="dropdown-item"
-                                                                    href="{{ route($routePrefix . '.questions.edit', $question->id) }}">
+                                                                     href="{{ route($routePrefix . '.questions.edit', ['question' => $question->id, 'return_url' => request()->fullUrl()]) }}">
                                                                     <i class="ti ti-edit me-2"></i>Edit Question
                                                                 </a>
                                                             @endif
@@ -642,6 +642,7 @@
             <div class="modal-content">
                 <form action="{{ route($routePrefix . '.questions.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ request()->fullUrl() }}">
                     <div class="modal-header bg-primary text-white border-0">
                         <h5 class="modal-title" id="importModalLabel">Import Questions from CSV</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -691,6 +692,7 @@
                 </div>
                 <form action="{{ route($routePrefix . '.questions.clone') }}" method="POST">
                     @csrf
+                    <input type="hidden" name="return_url" value="{{ request()->fullUrl() }}">
                     <div class="modal-body p-4">
                         <p class="text-muted mb-4">Select source questions to clone into a target case study.</p>
 
