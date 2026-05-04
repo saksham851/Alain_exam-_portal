@@ -19,6 +19,9 @@
                 <a href="{{ route($routePrefix . '.index') }}" class="btn btn-outline-secondary">
                     <i class="ti ti-arrow-left me-1"></i> Back to Exams
                 </a>
+                <a href="{{ route($routePrefix . '.export-csv', $exam->id) }}" class="btn btn-success d-none d-sm-inline-block">
+                    <i class="ti ti-download me-1"></i> Download CSV
+                </a>
                 <a href="{{ route($routePrefix . '.edit', $exam->id) }}" class="btn btn-primary d-none d-sm-inline-block">
                     <i class="ti ti-edit me-1"></i> Edit Exam
                 </a>
@@ -109,11 +112,10 @@
             <i class="ti ti-checklist me-2 text-primary"></i> Standard Compliance Validation
         </h5>
         <div class="d-flex align-items-center gap-2">
-            {{-- @if(!$compliance['valid'])
-                <span class="badge bg-danger-subtle text-danger"><i class="ti ti-alert-triangle me-1"></i> Issues Found</span>
-            @else
-                <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i> Validated</span>
-            @endif --}}
+            <a href="{{ route($routePrefix . '.export-csv', $exam->id) }}" class="btn btn-sm btn-success d-flex align-items-center gap-1 px-3">
+                <i class="ti ti-download"></i>
+                <span>Download CSV</span>
+            </a>
             {{-- Expand/Collapse Toggle Button --}}
             <button
                 class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3"
@@ -479,9 +481,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         <!-- Bottom Actions -->
         @if($exam->sections->count() > 0)
-        <div class="d-flex justify-content-start mt-5 mb-5 pb-5">
+        <div class="d-flex justify-content-start gap-3 mt-5 mb-5 pb-5">
             <a href="{{ route($routePrefix . '.index') }}" class="btn btn-outline-secondary px-4">
                 <i class="ti ti-arrow-left me-1"></i> Back to Exam List
+            </a>
+            <a href="{{ route($routePrefix . '.export-csv', $exam->id) }}" class="btn btn-success px-4">
+                <i class="ti ti-download me-1"></i> Download Exam as CSV
             </a>
         </div>
         @endif

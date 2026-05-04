@@ -378,7 +378,7 @@ class ExamController extends Controller
             ->with('success', 'Exam Deleted Successfully! All related content has been soft deleted.');
     }
 
-    // EXPORT TO CSV
+    // EXPORT ALL EXAMS TO CSV (Index Page Export)
     public function export()
     {
         $exams = Exam::where('status', 1)->get();
@@ -402,6 +402,98 @@ class ExamController extends Controller
                     $exam->created_at->format('Y-m-d H:i:s'),
                 ]);
             }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    // EXPORT SPECIFIC EXAM WITH ALL SECTIONS & QUESTIONS
+    public function exportCsv($id)
+    {
+        $exam = Exam::with([
+            'sections' => function($q) { 
+                $q->where('sections.status', 1)->orderBy('order_no'); 
+            },
+            'sections.caseStudies' => function($q) { 
+                $q->where('case_studies.status', 1)->orderBy('order_no'); 
+            },
+            'sections.caseStudies.visits' => function($q) { 
+                $q->where('visits.status', 1)->orderBy('order_no'); 
+            },
+            'sections.caseStudies.visits.questions' => function($q) { 
+                $q->where('questions.status', 1); 
+            },
+            'sections.caseStudies.visits.questions.options',
+            'sections.caseStudies.visits.questions.tags.scoreCategory',
+            'sections.caseStudies.visits.questions.tags.contentArea'
+        ])->findOrFail($id);
+
+        $filename = str_replace([' ', '/', '\\'], '_', $exam->name) . '_export_' . date('Y-m-d_H-i-s') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($exam) {
+            $file = fopen('php://output', 'w');
+            
+            // CSV Headers (Matches the import format)
+            fputcsv($file, [
+                'exam_name',
+                'section_title',
+                'case_study_title',
+                'visit_title',
+                'visit_content',
+                'question_text',
+                'max_point',
+                'option_1',
+                'option_2',
+                'option_3',
+                'option_4',
+                'correct_option',
+                'score_category_1',
+                'content_area_1',
+                'score_category_2',
+                'content_area_2'
+            ]);
+
+            foreach ($exam->sections as $section) {
+                foreach ($section->caseStudies as $caseStudy) {
+                    foreach ($caseStudy->visits as $visit) {
+                        foreach ($visit->questions as $question) {
+                            $options = $question->options->sortBy('option_key');
+                            $correctKeys = $question->options->where('is_correct', 1)->pluck('option_key')->toArray();
+                            
+                            $tags = $question->tags;
+                            $cat1 = isset($tags[0]) ? ($tags[0]->scoreCategory->name ?? '') : '';
+                            $area1 = isset($tags[0]) ? ($tags[0]->contentArea->name ?? '') : '';
+                            $cat2 = isset($tags[1]) ? ($tags[1]->scoreCategory->name ?? '') : '';
+                            $area2 = isset($tags[1]) ? ($tags[1]->contentArea->name ?? '') : '';
+
+                            fputcsv($file, [
+                                $exam->name,
+                                $section->title,
+                                $caseStudy->title,
+                                $visit->title,
+                                $visit->description,
+                                $question->question_text,
+                                $question->max_question_points,
+                                $options->where('option_key', 'A')->first()?->option_text ?? '',
+                                $options->where('option_key', 'B')->first()?->option_text ?? '',
+                                $options->where('option_key', 'C')->first()?->option_text ?? '',
+                                $options->where('option_key', 'D')->first()?->option_text ?? '',
+                                implode(',', $correctKeys),
+                                $cat1,
+                                $area1,
+                                $cat2,
+                                $area2
+                            ]);
+                        }
+                    }
+                }
+            }
+            
             fclose($file);
         };
 

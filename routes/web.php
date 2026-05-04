@@ -104,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
         // Exams Management (Limited)
         Route::resource('exams', ExamController::class);
         Route::get('exams/{id}/validate-compliance', [ExamController::class, 'validateCompliance'])->name('exams.validate-compliance');
+        Route::get('exams/{id}/export-csv', [ExamController::class, 'exportCsv'])->name('exams.export-csv');
         Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
 
         // Sections
@@ -248,6 +249,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('exams/{id}/activate', [ExamController::class, 'activate'])->name('exams.activate');
         Route::post('exams/{id}/publish', [ExamController::class, 'publish'])->name('exams.publish'); // New Publish Route
         Route::get('exams/{id}/validate-compliance', [ExamController::class, 'validateCompliance'])->name('exams.validate-compliance');
+        Route::get('exams/{id}/export-csv', [ExamController::class, 'exportCsv'])->name('exams.export-csv');
         Route::post('exams/{id}/auto-fix-compliance', [ExamController::class, 'autoFixCompliance'])->name('exams.auto-fix-compliance');
         Route::put('exams/{id}/toggle-status', [ExamController::class, 'toggleStatus'])->name('exams.toggle-status');
         Route::post('exams/{id}/clone', [ExamController::class, 'clone'])->name('exams.clone');
