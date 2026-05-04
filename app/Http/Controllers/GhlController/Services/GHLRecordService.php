@@ -302,6 +302,7 @@ class GHLRecordService
                 'error' => $e->getMessage()
             ];
         }
+    }
     
     /**
      * Upsert a contact in GHL

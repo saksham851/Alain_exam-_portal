@@ -9,9 +9,16 @@ use App\Http\Controllers\GhlController\Jobs\CreateGHLCustomObject;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\GhlController\GhlConfig;
+use App\Http\Controllers\GhlController\Services\GHLTokenService;
 
 class GoHighLevelController extends Controller
 {
+    protected $tokenService;
+
+    public function __construct(GHLTokenService $tokenService)
+    {
+        $this->tokenService = $tokenService;
+    }
 
     public function initiate()
     {
@@ -146,4 +153,37 @@ class GoHighLevelController extends Controller
         return response()->json(['status' => 'success', 'message' => 'App processed for uninstall']);
     }
     */
+    /**
+     * Manually refresh all GHL tokens
+     */
+    public function refresh()
+    {
+        Log::info('Manual GHL token refresh triggered.');
+
+        $tokens = GoHighLevelToken::all();
+        $results = [];
+
+        foreach ($tokens as $token) {
+            try {
+                $newToken = $this->tokenService->refreshToken($token);
+                $results[] = [
+                    'location_id' => $token->location_id,
+                    'status' => $newToken ? 'success' : 'failed'
+                ];
+            } catch (\Exception $e) {
+                Log::error("Failed to refresh token for location {$token->location_id}: " . $e->getMessage());
+                $results[] = [
+                    'location_id' => $token->location_id,
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Token refresh process completed',
+            'results' => $results
+        ]);
+    }
 }
+

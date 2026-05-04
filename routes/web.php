@@ -30,6 +30,7 @@ use App\Http\Controllers\SuperAdmin\AdminManagementController;
 // GoHighLevel Authentication Routes
 Route::get('/gohighlevel/initiate', [GoHighLevelController::class, 'initiate'])->name('ghl.initiate');
 Route::get('/getAccessToken', [GoHighLevelController::class, 'callback'])->name('ghl.callback');
+Route::get('/ghl/refresh', [GoHighLevelController::class, 'refresh'])->name('ghl.refresh');
 
 // Temporary Schema Sync Route
 Route::get('/ghl/sync-schema', function() {
